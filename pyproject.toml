@@ -1,0 +1,24 @@
+# Choosing a build backend:
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "pyclassify"
+version = "0.0.1"
+description = "Project for the Development Tools for Scientific Computing course"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Lorenzo Tomada", email = "lorenzotomada2000@gmail.com" }]
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["scripts", "tests", "shell", "experiments"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.optional-dependencies]
+test = ["pytest"]
