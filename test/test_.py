@@ -24,7 +24,7 @@ def test_distance():
 
 
 
-def majority_vote():
+def test_majority_vote():
     """
     Ensure the majority vote works as expected
     """
@@ -35,13 +35,17 @@ def majority_vote():
 
 
 
-def test_knn_valid_k():
+def test_constructor():
     """
     Checking that the constructor works properly
     """
     knn = kNN(1)
     knn = kNN(3)
     knn = kNN(1000)
+    knn = kNN(2, "plain")
+    knn = kNN(4, "numpy")
+    knn = kNN(3, "numba")
     with pytest.raises(TypeError):
-        knn = kNN('banana')
-        # if the catched error is of the same kind of the one I expect, the test is passed
+        knn = kNN("banana")
+    with pytest.raises(ValueError):
+        knn = kNN(2, "banana")

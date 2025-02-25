@@ -1,0 +1,88 @@
+Timer unit: 1e-06 s
+
+Total time: 0 s
+File: /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/utils.py
+Function: distance at line 9
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     9                                           @profile
+    10                                           def distance(point1: list[float], point2: list[float]) -> float:
+    11                                               """
+    12                                               This function computes the square of the Euclidean distance between two points.
+    13                                               """
+    14                                               assert len(point1)==len(point2), f"Points have different dimensions: {len(point1)} != {len(point2)}"
+    15                                               return sum((x - y) ** 2 for x, y in zip(point1, point2))
+
+Total time: 0.000781112 s
+File: /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/utils.py
+Function: majority_vote at line 28
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    28                                           @profile
+    29                                           def majority_vote(neighbors: list[int]) -> int:
+    30                                               """
+    31                                               This class returns the most common class (expressed as an integer) in a given list of neighbor labels.
+    32                                               """
+    33       281        781.1      2.8    100.0      return max(set(neighbors), key=neighbors.count)
+
+Total time: 0.0795381 s
+File: /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/utils.py
+Function: distance_numpy at line 19
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    19                                           @profile
+    20                                           def distance_numpy(point1, point2):
+    21     19670      10337.8      0.5     13.0      assert point1.shape==point2.shape,  f"Points have different dimensions: {point1.shape} != {point2.shape}"
+    22     19670      24239.0      1.2     30.5      difference = point1 - point2
+    23     19670      40534.5      2.1     51.0      square_norm = float(np.dot(difference, difference))
+    24     19670       4426.8      0.2      5.6      return square_norm
+
+Total time: 0.181028 s
+File: /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/classifier.py
+Function: _get_k_nearest_neighbors at line 24
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    24                                               @profile
+    25                                               def _get_k_nearest_neighbors(self, X, y, x):
+    26                                                   """
+    27                                                   Method to get the k nearest neighbors
+    28                                                   """
+    29       281     172495.4    613.9     95.3          enumerated_distances = list(enumerate([self.distance(X_i, x) for X_i in X]))
+    30       281       7093.3     25.2      3.9          sorted_distances = sorted(enumerated_distances, key=lambda x: x[1])        
+    31                                           
+    32       281        639.9      2.3      0.4          k_nearest_neighbors = [index for index, _ in sorted_distances[:self.k]]
+    33       281        734.2      2.6      0.4          y_labels = [y[index] for index in k_nearest_neighbors]
+    34       281         64.9      0.2      0.0          return y_labels
+
+Total time: 0.186173 s
+File: /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/classifier.py
+Function: __call__ at line 37
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    37                                               @profile
+    38                                               def __call__(self, data: tuple[list[list[float]]], new_points: list[list[float]]) -> list[int]:
+    39                                                   """
+    40                                                   This method returns the predicted labels of a new set of points new_points given a training dataset data=(X, y)
+    41                                                   """
+    42         1          1.2      1.2      0.0          predicted_labels = []
+    43                                           
+    44         1          1.0      1.0      0.0          if self.backhand=='numpy':
+    45         1        214.4    214.4      0.1              data = tuple([np.array(data[i]) for i in range(len(data))])
+    46         1        779.7    779.7      0.4              new_points = np.array(new_points)
+    47                                           
+    48       282        154.7      0.5      0.1          for point in new_points:
+    49       281     183070.4    651.5     98.3              closest_neighbors = self._get_k_nearest_neighbors(data[0], data[1], point)
+    50       281       1784.1      6.3      1.0              predicted_label = majority_vote(closest_neighbors)
+    51       281        167.2      0.6      0.1              predicted_labels.append(predicted_label)
+    52         1          0.1      0.1      0.0          return predicted_labels
+
+  0.00 seconds - /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/utils.py:9 - distance
+  0.00 seconds - /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/utils.py:28 - majority_vote
+  0.08 seconds - /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/utils.py:19 - distance_numpy
+  0.18 seconds - /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/classifier.py:24 - _get_k_nearest_neighbors
+  0.19 seconds - /home/lorenzo/miniconda3/envs/devtools_scicomp/lib/python3.9/site-packages/pyclassify/classifier.py:37 - __call__
