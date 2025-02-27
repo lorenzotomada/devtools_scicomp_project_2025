@@ -173,3 +173,9 @@ cython_debug/
 # .dat and .data
 *.dat
 *.data
+
+# temporary folders used for profiling
+tmp_data/*
+
+# for documentation
+docs/_*

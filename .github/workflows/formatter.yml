@@ -1,0 +1,39 @@
+name: black formatter
+
+on:
+  push:
+    branches:
+      - main
+      - final_project
+
+  pull_request:
+    branches:
+      - main
+      - final_project
+
+jobs:
+  linter:
+    name: Testing using black formatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.10.16
+      
+      - name: Set up Python environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          python -m pip install black
+        
+      - name: Check using Black
+        run: |
+          source venv/bin/activate
+          python -m black --check .

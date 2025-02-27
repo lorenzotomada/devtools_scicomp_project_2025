@@ -1,2 +1,2 @@
-Name: Lorenzo Tomada
-email: ltomada@sissa.it
+Names: Lorenzo Tomada, Gaspare Li Causi
+email: ltomada@sissa.it, glicausi@sissa.it
