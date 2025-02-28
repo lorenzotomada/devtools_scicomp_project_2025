@@ -9,6 +9,8 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/jquery.js?v=5d32c60e"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
     <script src="_static/documentation_options.js?v=d45e8c67"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
@@ -33,14 +35,14 @@
           <div class="body" role="main">
             
   <section id="pyclassify-module-documentation">
-<h1>PyClassify Module Documentation<a class="headerlink" href="#pyclassify-module-documentation" title="Link to this heading">¶</a></h1>
+<h1>PyClassify Module Documentation<a class="headerlink" href="#pyclassify-module-documentation" title="Link to this heading"></a></h1>
 <p>This module contains all the functions for the PyClassify package.</p>
 </section>
 <section id="module-pyclassify">
-<span id="functions"></span><h1>Functions:<a class="headerlink" href="#module-pyclassify" title="Link to this heading">¶</a></h1>
+<span id="functions"></span><h1>Functions:<a class="headerlink" href="#module-pyclassify" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.eigenvalues_np">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_np" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_np" title="Link to this definition"></a></dt>
 <dd><p>Compute the eigenvalues of a square matrix using NumPy’s <cite>eig</cite> or <cite>eigh</cite> function.</p>
 <p>This function checks if the input matrix is square (and is actually a matrix) using ‘check_A_square_matrix’, and then computes its eigenvalues.
 If the matrix is symmetric, it uses <cite>eigh</cite> (which is more efficient for symmetric matrices).
@@ -71,7 +73,7 @@ faster computation. If False, uses <cite>eig</cite> for general matrices
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.eigenvalues_sp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_sp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_sp" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_sp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_sp" title="Link to this definition"></a></dt>
 <dd><p>Compute the eigenvalues of a sparse matrix using SciPy’s <cite>eigsh</cite> or <cite>eigs</cite> function.</p>
 <p>This function checks if the input matrix is square, then computes its eigenvalues using
 SciPy’s sparse linear algebra solvers. For symmetric matrices, it uses <cite>eigsh</cite> for
@@ -101,7 +103,7 @@ If False, uses <cite>eigs</cite> for general matrices (default is True).</p></li
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.power_method">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method" title="Link to this definition"></a></dt>
 <dd><p>Compute the dominant eigenvalue of a square matrix using the power method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -130,7 +132,7 @@ If False, uses <cite>eigs</cite> for general matrices (default is True).</p></li
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.power_method_numba">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method_numba" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method_numba" title="Link to this definition"></a></dt>
 <dd><p>Compute the dominant eigenvalue of a matrix using the power method, with Numba optimization.</p>
 <p>This function wraps the <cite>power_method</cite> function and applies Numba’s Just-In-Time (JIT) compilation
 to optimize the performance of the power method for large matrices. The function leverages the
@@ -153,10 +155,10 @@ Remark that numba does not support scipy sparse matrices, so the input matrix mu
 
 </section>
 <section id="module-pyclassify.utils">
-<span id="submodule-utils"></span><h1>Submodule: utils<a class="headerlink" href="#module-pyclassify.utils" title="Link to this heading">¶</a></h1>
+<span id="submodule-utils"></span><h1>Submodule: utils<a class="headerlink" href="#module-pyclassify.utils" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.check_A_square_matrix">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_A_square_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_A_square_matrix" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_A_square_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_A_square_matrix" title="Link to this definition"></a></dt>
 <dd><p>Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy sparse matrix.
 This is done to ensure that the input matrix <cite>A</cite> is both:
 1. Of type <cite>np.ndarray</cite> (NumPy array) or <cite>scipy.sparse</cite> (SciPy sparse matrix).
@@ -176,7 +178,7 @@ This is done to ensure that the input matrix <cite>A</cite> is both:
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.make_symmetric">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">make_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.make_symmetric" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">make_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.make_symmetric" title="Link to this definition"></a></dt>
 <dd><p>Ensures the input matrix is symmetric by averaging it with its transpose.</p>
 <p>This function first checks if the matrix is square using the <cite>check_A_square_matrix</cite> function.
 Then, it makes the matrix symmetric by averaging it with its transpose.</p>
@@ -201,7 +203,7 @@ Then, it makes the matrix symmetric by averaging it with its transpose.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.power_method_numba_helper">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">power_method_numba_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.power_method_numba_helper" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">power_method_numba_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.power_method_numba_helper" title="Link to this definition"></a></dt>
 <dd><p>Approximate the dominant eigenvalue of a square matrix using the power method.</p>
 <p>This helper function applies the power method to a matrix A to estimate its dominant eigenvalue.
 It returns the Rayleigh quotient, x &#64; A &#64; x, which serves as an approximation of the dominant eigenvalue.</p>
@@ -229,7 +231,7 @@ It returns the Rayleigh quotient, x &#64; A &#64; x, which serves as an approxim
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.read_config">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">read_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#pyclassify.utils.read_config" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">read_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#pyclassify.utils.read_config" title="Link to this definition"></a></dt>
 <dd><p>Reads a YAML configuration file and returns its contents as a dictionary.</p>
 <p>This function constructs the absolute path to a YAML file (by appending the ‘.yaml’ extension
 to the provided base file name), opens the file, and parses its content using yaml.safe_load.</p>
