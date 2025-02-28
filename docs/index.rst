@@ -10,11 +10,24 @@ Welcome to the documentation for the final project of the course in Development 
 We are currently working on the project and on the documentation.
 Stay tuned!
 
-Add your content using ``reStructuredText`` syntax. See the
+Recall that the documentation is written following
 `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
 
+
+Table of Contents
+=================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   pyclassify
+
+Module Documentation
+====================
+
+.. automodule:: pyclassify
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
