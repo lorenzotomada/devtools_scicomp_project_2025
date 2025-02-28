@@ -21,6 +21,7 @@ release = "0.0.1"
 
 # here are a few extensions that are not strictly necessary, but might help:
 extensions = [
+    "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
