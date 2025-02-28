@@ -20,4 +20,3 @@ format:
 
 all: tests docs format
 	@echo "Tests completed, documentation generated, and code formatted."
-
