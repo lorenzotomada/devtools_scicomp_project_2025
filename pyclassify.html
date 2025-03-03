@@ -41,6 +41,77 @@
 <section id="module-pyclassify">
 <span id="functions"></span><h1>Functions:<a class="headerlink" href="#module-pyclassify" title="Link to this heading"></a></h1>
 <dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.Lanczos_PRO">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.Lanczos_PRO" title="Link to this definition"></a></dt>
+<dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
+<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that A ≈ Q * T * Q.T,
+where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+of large symmetric matrices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>np.ndarray</em>) – A symmetric square matrix of size n x n.</p></li>
+<li><p><strong>q</strong> (<em>np.ndarray</em>) – Initial vector of size n.</p></li>
+<li><p><strong>m</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of eigenvalues to compute. Must be less than or equal to n.
+If None, defaults to the size of A.</p></li>
+<li><p><strong>toll</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A tuple (Q, alpha, beta) where:</dt><dd><ul class="simple">
+<li><p>Q (np.ndarray): Orthogonal matrix of size n x m.</p></li>
+<li><p>alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.</p></li>
+<li><p>beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A is not square or if m is greater than the size of A.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.QR_method">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A_copy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.QR_method" title="Link to this definition"></a></dt>
+<dd><p>Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.</p>
+<p>This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
+The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
+of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A_copy</strong> (<em>np.ndarray</em>) – Atridiagonal matrix whose eigenvalues are to be computed.</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the off-diagonal elements (default is 1e-10).</p></li>
+<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 100).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
+<li><p>eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix <cite>A_copy</cite>.</p></li>
+<li><p>Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A_copy is not square.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.eigenvalues_np">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_np" title="Link to this definition"></a></dt>
 <dd><p>Compute the eigenvalues of a square matrix using NumPy’s <cite>eig</cite> or <cite>eigh</cite> function.</p>
@@ -280,6 +351,8 @@ to the provided base file name), opens the file, and parses its content using ya
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">PyClassify Module Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-pyclassify">Functions:</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.Lanczos_PRO"><code class="docutils literal notranslate"><span class="pre">Lanczos_PRO()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.QR_method"><code class="docutils literal notranslate"><span class="pre">QR_method()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.eigenvalues_np"><code class="docutils literal notranslate"><span class="pre">eigenvalues_np()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.eigenvalues_sp"><code class="docutils literal notranslate"><span class="pre">eigenvalues_sp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.power_method"><code class="docutils literal notranslate"><span class="pre">power_method()</span></code></a></li>
