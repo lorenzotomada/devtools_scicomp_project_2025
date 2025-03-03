@@ -119,3 +119,110 @@ def power_method_numba(A):
         float: The approximated dominant eigenvalue of the matrix `A`.
     """
     return power_method_numba_helper(A)
+
+
+def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
+    """
+    Perform the Lanczos algorithm for symmetric matrices.
+
+    This function computes an orthogonal matrix Q and tridiagonal matrix T such that A ≈ Q * T * Q.T,
+    where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+    of large symmetric matrices.
+
+    Args:
+        A (np.ndarray): A symmetric square matrix of size n x n.
+        q (np.ndarray): Initial vector of size n.
+        m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
+                           If None, defaults to the size of A.
+        toll (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
+
+    Returns:
+        tuple: A tuple (Q, alpha, beta) where:
+            - Q (np.ndarray): Orthogonal matrix of size n x m.
+            - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
+            - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
+
+    Raises:
+        ValueError: If the input matrix A is not square or if m is greater than the size of A.
+    """
+    q = q / np.linalg.norm(q)
+    Q = np.array([q])
+    r = A @ q
+    alpha = []
+    beta = []
+    alpha.append(q @ r)
+    r = r - alpha[0] * q
+    beta.append(np.linalg.norm(r))
+    count = 0
+    for j in range(1, m):
+        q = r / beta[j - 1]
+        for q_basis in Q[:-1]:
+            if np.abs(q @ q_basis) > toll:
+                for q_bbasis in Q[:-1]:
+                    q = q - (q @ q_bbasis) * q_bbasis
+                    count += 1
+                break
+        q = q / np.linalg.norm(q)
+        Q = np.vstack((Q, q))
+        r = A @ q - beta[j - 1] * Q[j - 1]
+        alpha.append(q @ r)
+        r = r - alpha[j] * q
+        beta.append(np.linalg.norm(r))
+
+        if np.abs(beta[j]) < 1e-15:
+            return Q, alpha, beta[:-1]
+    return Q, alpha, beta[:-1]
+   
+
+
+def QR_method(A_copy, tol=1e-10, max_iter=100):
+    """
+    Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
+
+    This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
+    The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
+    of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.
+
+    Args:
+        A_copy (np.ndarray): Atridiagonal matrix whose eigenvalues are to be computed.
+        tol (float, optional): Tolerance for convergence based on the off-diagonal elements (default is 1e-10).
+        max_iter (int, optional): Maximum number of iterations to perform (default is 100).
+
+    Returns:
+        tuple: A tuple (eigenvalues, Q) where:
+            - eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix `A_copy`.
+            - Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.
+
+    Raises:
+        ValueError: If the input matrix A_copy is not square.
+    """
+
+    A=A_copy.copy()
+    T=A.copy()  
+    A=np.array(A)
+    iter=0
+    
+    while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter<max_iter:
+        Matrix_trigonometry=np.array([]) 
+        QQ, RR=np.linalg.qr(T)
+        T=RR@QQ
+        for i in range(A.shape[0]-1):
+            c=A[i, i]/np.sqrt(A[i, i]**2+A[i+1, i]**2)
+            s=-A[i+1, i]/np.sqrt(A[i, i]**2+A[i+1, i]**2)
+            Matrix_trigonometry=np.vstack((Matrix_trigonometry, [c, s])) if Matrix_trigonometry.size else np.array([[c, s]])
+
+            R=np.array([[c, -s], [s, c]])
+            A[i:i+2, i:i+3]=R@A[i:i+2, i:i+3]
+            A[i+1, i]=0
+        Q=np.eye(A.shape[0])
+        i=0
+        Q[0:2, 0:2]=np.array([[Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]], [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]]])
+        for i in range(1, A.shape[0]-1):
+            R=np.eye(A.shape[0])
+            R[i: i+2, i:i+2]=np.array([[Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]], [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]]])
+            Q = Q@R
+        A=A@Q
+        iter+=1
+
+    
+    return np.diag(A), Q
