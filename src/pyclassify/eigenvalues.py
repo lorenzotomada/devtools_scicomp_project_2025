@@ -145,6 +145,15 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
     Raises:
         ValueError: If the input matrix A is not square or if m is greater than the size of A.
     """
+    if m == None:
+        m = A.shape[0]
+
+    if A.shape[0] != A.shape[1]:
+        raise ValueError("Input matrix A must be square.")
+
+    if A.shape[0] != q.shape[0]:
+        raise ValueError("Input vector q must have the same size as the matrix A.")
+
     q = q / np.linalg.norm(q)
     Q = np.array([q])
     r = A @ q
@@ -172,7 +181,6 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
         if np.abs(beta[j]) < 1e-15:
             return Q, alpha, beta[:-1]
     return Q, alpha, beta[:-1]
-   
 
 
 def QR_method(A_copy, tol=1e-10, max_iter=100):
@@ -197,32 +205,43 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
         ValueError: If the input matrix A_copy is not square.
     """
 
-    A=A_copy.copy()
-    T=A.copy()  
-    A=np.array(A)
-    iter=0
-    
-    while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter<max_iter:
-        Matrix_trigonometry=np.array([]) 
-        QQ, RR=np.linalg.qr(T)
-        T=RR@QQ
-        for i in range(A.shape[0]-1):
-            c=A[i, i]/np.sqrt(A[i, i]**2+A[i+1, i]**2)
-            s=-A[i+1, i]/np.sqrt(A[i, i]**2+A[i+1, i]**2)
-            Matrix_trigonometry=np.vstack((Matrix_trigonometry, [c, s])) if Matrix_trigonometry.size else np.array([[c, s]])
+    A = A_copy.copy()
+    A = np.array(A)
+    iter = 0
+    Q = np.array([])
 
-            R=np.array([[c, -s], [s, c]])
-            A[i:i+2, i:i+3]=R@A[i:i+2, i:i+3]
-            A[i+1, i]=0
-        Q=np.eye(A.shape[0])
-        i=0
-        Q[0:2, 0:2]=np.array([[Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]], [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]]])
-        for i in range(1, A.shape[0]-1):
-            R=np.eye(A.shape[0])
-            R[i: i+2, i:i+2]=np.array([[Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]], [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]]])
-            Q = Q@R
-        A=A@Q
-        iter+=1
+    while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter < max_iter:
+        Matrix_trigonometry = np.array([])
+        for i in range(A.shape[0] - 1):
+            c = A[i, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
+            s = -A[i + 1, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
+            Matrix_trigonometry = (
+                np.vstack((Matrix_trigonometry, [c, s]))
+                if Matrix_trigonometry.size
+                else np.array([[c, s]])
+            )
 
-    
+            R = np.array([[c, -s], [s, c]])
+            A[i : i + 2, i : i + 3] = R @ A[i : i + 2, i : i + 3]
+            A[i + 1, i] = 0
+        Q = np.eye(A.shape[0])
+        i = 0
+        Q[0:2, 0:2] = np.array(
+            [
+                [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
+                [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
+            ]
+        )
+        for i in range(1, A.shape[0] - 1):
+            R = np.eye(A.shape[0])
+            R[i : i + 2, i : i + 2] = np.array(
+                [
+                    [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
+                    [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
+                ]
+            )
+            Q = Q @ R
+        A = A @ Q
+        iter += 1
+
     return np.diag(A), Q

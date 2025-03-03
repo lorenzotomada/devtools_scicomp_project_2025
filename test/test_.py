@@ -1,11 +1,14 @@
 import numpy as np
 import scipy.sparse as sp
+import scipy
 import pytest
 from pyclassify import (
     eigenvalues_np,
     eigenvalues_sp,
     power_method,
     power_method_numba,
+    Lanczos_PRO,
+    QR_method,
 )
 from pyclassify.utils import check_A_square_matrix, make_symmetric
 
@@ -60,3 +63,65 @@ def test_implementations_power_method(size, density):
     assert np.isclose(biggest_eigenvalue_np, biggest_eigenvalue_sp, rtol=1e-4)
     assert np.isclose(biggest_eigenvalue_pm, biggest_eigenvalue_sp, rtol=1e-4)
     assert np.isclose(biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-4)
+
+
+@pytest.mark.parametrize("size", sizes)
+def test_Lanczos(size):
+    matrix = sp.random(size, size, density=0.3, format="csr")
+    matrix = make_symmetric(matrix)
+
+    random_vector = np.random.rand(size)
+
+    _, alpha, beta = Lanczos_PRO(matrix, random_vector)
+
+    T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
+
+    EigVal_T = np.linalg.eig(T)[0]
+    EigVect_T = np.linalg.eig(T)[1]
+
+    EigVal_A = np.linalg.eig(matrix.toarray())[0]
+    EigVect_A = np.linalg.eig(matrix.toarray())[1]
+
+    EigVal_A = np.sort(EigVal_A)
+    EigVal_T = np.sort(EigVal_T)
+
+    assert np.allclose(EigVal_T, EigVal_A, rtol=1e-6)
+
+    with pytest.raises(ValueError):
+        random_matrix = np.random.rand(size, 2 * size)
+        _ = Lanczos_PRO(random_matrix, random_vector)
+
+    with pytest.raises(ValueError):
+        random_matrix = np.random.rand(size, size)
+        _ = Lanczos_PRO(random_matrix, np.random.rand(2 * size))
+
+
+@pytest.mark.parametrize("size", [10, 100])
+def test_QR_method(size):
+    eig = np.arange(1, size + 1)
+    A = np.diag(eig)
+    U = scipy.stats.ortho_group.rvs(size)
+    print(U)
+
+    A = U @ A @ U.T
+    print(A)
+    A = make_symmetric(A)
+    eig = np.linalg.eig(A)
+    print(eig.eigenvalues)
+    index = np.argsort(eig.eigenvalues)
+    eig = eig.eigenvalues
+    eig_vec = np.linalg.eig(A).eigenvectors
+    eig_vec = eig_vec[index]
+    eig = eig[index]
+    eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
+
+    random_vector = np.random.rand(size)
+    _, alpha, beta = Lanczos_PRO(A, random_vector)
+
+    T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
+
+    eig_valQR, eig_vecQR = QR_method(T, max_iter=100 * size)
+    index = np.argsort(eig_valQR)
+    eig_valQR = eig_valQR[index]
+
+    assert np.allclose(eig, eig_valQR, rtol=1e-8)

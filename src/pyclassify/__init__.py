@@ -3,6 +3,8 @@ __all__ = [
     "eigenvalues_sp",
     "power_method",
     "power_method_numba",
+    "Lanczos_PRO",
+    "QR_method",
 ]
 
 from .eigenvalues import (
@@ -10,4 +12,6 @@ from .eigenvalues import (
     eigenvalues_sp,
     power_method,
     power_method_numba,
+    Lanczos_PRO,
+    QR_method,
 )
