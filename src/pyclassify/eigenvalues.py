@@ -10,10 +10,9 @@ from pyclassify.utils import (
 )
 import cupy as cp
 
-cp.cuda.Device(0)
+# cp.cuda.Device(0)
 import cupy.linalg as cpla
-import cupyx.scipy.sparse as cpsp
-from cupyx.scipy.sparse.linalg._eigen import eigsh as cp_eigsh
+from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
 
 
 @profile
@@ -80,14 +79,7 @@ def eigenvalues_cp(A):
 
     This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
     CuPy's sparse linear algebra solvers. It uses `eigsh` for more efficient computation.
-    IMPORTANT: it important to underline a couple of things regarding this function:
-    - installing using the command
-    .. code-block:: shell
-            python -m pip install cupy-cuda12x
-      does not allow, for some reason, to import cupyx.scipy.sparse.linalg, and it necessary to import the
-      function manually form the source code. The problem can be observed using python3.10, while for
-      python3.12 things seem to work.
-    - the eighs function in this case does not allow to compute *all* the eigenvalues, but only a number
+    Remark that the eigsh function in this case does not allow to compute *all* the eigenvalues, but only a number
     $m<n$, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
 
     Args:
@@ -102,7 +94,7 @@ def eigenvalues_cp(A):
     """
     check_symm_square(A)
     k = 5 if A.shape[0] > 5 else A.shape[0] - 2
-    eigenvalues, _ = cp_eigsh(A, k=k)
+    eigenvalues, _ = eigsh_cp(A, k=k)
     return eigenvalues
 
 
