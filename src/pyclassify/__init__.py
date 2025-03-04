@@ -4,6 +4,7 @@ __all__ = [
     "eigenvalues_cp",
     "power_method",
     "power_method_numba",
+    "power_method_cp",
 ]
 
 from .eigenvalues import (
@@ -12,4 +13,5 @@ from .eigenvalues import (
     eigenvalues_cp,
     power_method,
     power_method_numba,
+    power_method_cp,
 )

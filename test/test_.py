@@ -1,9 +1,5 @@
 import numpy as np
 import scipy.sparse as sp
-import cupy as cp
-import os
-os.environ["CUPY_ACCELERATORS"] = "cub"
-cp.use_default_memory_pool = False
 import cupyx.scipy.sparse as cpsp
 import pytest
 from pyclassify import (
@@ -12,6 +8,7 @@ from pyclassify import (
     eigenvalues_cp,
     power_method,
     power_method_numba,
+    power_method_cp,
 )
 from pyclassify.utils import check_square_matrix, make_symmetric, check_symm_square
 
@@ -26,7 +23,7 @@ densities = [0.1, 0.3]
 @pytest.mark.parametrize("size", sizes)
 @pytest.mark.parametrize("density", densities)
 def test_checks_on_A(size, density):
-    ugly_nonsquare_matrix = np.random.rand(size, size+1)
+    ugly_nonsquare_matrix = np.random.rand(size, size + 1)
 
     with pytest.raises(ValueError):
         check_square_matrix(ugly_nonsquare_matrix)
@@ -83,8 +80,20 @@ def test_implementations_power_method(size, density):
 
     biggest_eigenvalue_pm = power_method(matrix)
     biggest_eigenvalue_pm_numba = power_method_numba(matrix.toarray())
+    biggest_eigenvalue_pm_cp = power_method_cp(cp_matrix)
 
-    assert np.isclose(biggest_eigenvalue_np, biggest_eigenvalue_sp, rtol=1e-4)
-    assert np.isclose(biggest_eigenvalue_pm, biggest_eigenvalue_sp, rtol=1e-4)
-    assert np.isclose(biggest_eigenvalue_cp, biggest_eigenvalue_sp, rtol=1e-4)
-    assert np.isclose(biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-4)
+    assert np.isclose(
+        biggest_eigenvalue_np, biggest_eigenvalue_sp, rtol=1e-4
+    )  # ensure numpy and scipy implementations are consistent
+    assert np.isclose(
+        biggest_eigenvalue_cp, biggest_eigenvalue_sp, rtol=1e-4
+    )  # ensure cupy and scipy implementations are consistent
+    assert np.isclose(
+        biggest_eigenvalue_pm, biggest_eigenvalue_sp, rtol=1e-4
+    )  # ensure power method and scipy implementation are consistent
+    assert np.isclose(
+        biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-4
+    )  # ensure numba power method and scipy implementation are consistent
+    assert np.isclose(
+        biggest_eigenvalue_pm_cp, biggest_eigenvalue_sp, rtol=1e-4
+    )  # ensure cupy power method and scipy implementation are consistent

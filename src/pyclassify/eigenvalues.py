@@ -3,11 +3,17 @@ import scipy.sparse as sp
 import scipy.linalg as spla
 from line_profiler import profile
 from numpy.linalg import eig, eigh
-from pyclassify.utils import check_square_matrix, check_symm_square, power_method_numba_helper
+from pyclassify.utils import (
+    check_square_matrix,
+    check_symm_square,
+    power_method_numba_helper,
+)
 import cupy as cp
+
 cp.cuda.Device(0)
 import cupy.linalg as cpla
 import cupyx.scipy.sparse as cpsp
+from cupyx.scipy.sparse.linalg._eigen import eigsh as cp_eigsh
 
 
 @profile
@@ -60,9 +66,9 @@ def eigenvalues_sp(A, symmetric=True):
     """
     check_square_matrix(A)
     eigenvalues, _ = (
-        spla.eigsh(A, k=A.shape[0] - 1)
+        sp.linalg.eigsh(A, k=A.shape[0] - 1)
         if symmetric
-        else spla.eigs(A, k=A.shape[0] - 1)
+        else sp.linalg.eigs(A, k=A.shape[0] - 1)
     )
     return eigenvalues
 
@@ -73,8 +79,16 @@ def eigenvalues_cp(A):
     Compute the eigenvalues of a sparse matrix using CuPy's `eigsh` function.
 
     This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
-    CupY's sparse linear algebra solvers. For symmetric matrices, it uses `eigsh` for
-    more efficient computation.
+    CuPy's sparse linear algebra solvers. It uses `eigsh` for more efficient computation.
+    IMPORTANT: it important to underline a couple of things regarding this function:
+    - installing using the command
+    .. code-block:: shell
+            python -m pip install cupy-cuda12x
+      does not allow, for some reason, to import cupyx.scipy.sparse.linalg, and it necessary to import the
+      function manually form the source code. The problem can be observed using python3.10, while for
+      python3.12 things seem to work.
+    - the eighs function in this case does not allow to compute *all* the eigenvalues, but only a number
+    $m<n$, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
 
     Args:
         A (cpsp.spmatrix): A square sparse matrix whose eigenvalues are to be computed.
@@ -87,7 +101,8 @@ def eigenvalues_cp(A):
         ValueError: If number of rows != number of columns.
     """
     check_symm_square(A)
-    eigenvalues, _ = cpla.eigsh(A, k=A.shape[0] - 1)
+    k = 5 if A.shape[0] > 5 else A.shape[0] - 2
+    eigenvalues, _ = cp_eigsh(A, k=k)
     return eigenvalues
 
 
@@ -239,7 +254,6 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
         if np.abs(beta[j]) < 1e-15:
             return Q, alpha, beta[:-1]
     return Q, alpha, beta[:-1]
-   
 
 
 def QR_method(A_copy, tol=1e-10, max_iter=100):
@@ -264,31 +278,45 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
         ValueError: If the input matrix A_copy is not square.
     """
 
-    A=A_copy.copy()
-    T=A.copy()  
-    A=np.array(A)
-    iter=0
-    
-    while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter<max_iter:
-        Matrix_trigonometry=np.array([]) 
-        QQ, RR=np.linalg.qr(T)
-        T=RR@QQ
-        for i in range(A.shape[0]-1):
-            c=A[i, i]/np.sqrt(A[i, i]**2+A[i+1, i]**2)
-            s=-A[i+1, i]/np.sqrt(A[i, i]**2+A[i+1, i]**2)
-            Matrix_trigonometry=np.vstack((Matrix_trigonometry, [c, s])) if Matrix_trigonometry.size else np.array([[c, s]])
+    A = A_copy.copy()
+    T = A.copy()
+    A = np.array(A)
+    iter = 0
 
-            R=np.array([[c, -s], [s, c]])
-            A[i:i+2, i:i+3]=R@A[i:i+2, i:i+3]
-            A[i+1, i]=0
-        Q=np.eye(A.shape[0])
-        i=0
-        Q[0:2, 0:2]=np.array([[Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]], [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]]])
-        for i in range(1, A.shape[0]-1):
-            R=np.eye(A.shape[0])
-            R[i: i+2, i:i+2]=np.array([[Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]], [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]]])
-            Q = Q@R
-        A=A@Q
-        iter+=1
-    
+    while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter < max_iter:
+        Matrix_trigonometry = np.array([])
+        QQ, RR = np.linalg.qr(T)
+        T = RR @ QQ
+        for i in range(A.shape[0] - 1):
+            c = A[i, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
+            s = -A[i + 1, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
+            Matrix_trigonometry = (
+                np.vstack((Matrix_trigonometry, [c, s]))
+                if Matrix_trigonometry.size
+                else np.array([[c, s]])
+            )
+
+            R = np.array([[c, -s], [s, c]])
+            A[i : i + 2, i : i + 3] = R @ A[i : i + 2, i : i + 3]
+            A[i + 1, i] = 0
+        Q = np.eye(A.shape[0])
+        i = 0
+        Q[0:2, 0:2] = np.array(
+            [
+                [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
+                [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
+            ]
+        )
+        for i in range(1, A.shape[0] - 1):
+            R = np.eye(A.shape[0])
+            R[i : i + 2, i : i + 2] = np.array(
+                [
+                    [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
+                    [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
+                ]
+            )
+            Q = Q @ R
+        A = A @ Q
+        iter += 1
+
     return np.diag(A), Q

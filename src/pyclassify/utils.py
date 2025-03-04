@@ -13,9 +13,9 @@ from line_profiler import profile
 
 def check_square_matrix(A):
     """
-    Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy sparse matrix.
+    Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy or CuPy sparse matrix.
     This is done to ensure that the input matrix `A` is both:
-    1. Of type `np.ndarray` (NumPy array) or `scipy.sparse.spmatrix` (SciPy sparse matrix) or 'cupyx.scipy.sparse.spmatrix'.
+    1. Of type `np.ndarray` (NumPy array) or `scipy.sparse.spmatrix` (SciPy sparse matrix) or 'cupyx.scipy.sparse.spmatrix' (CuPy sparse matrix).
     2. A square matrix.
 
     Args:
@@ -26,7 +26,9 @@ def check_square_matrix(A):
         ValueError: If number of rows != number of columns.
     """
     if not isinstance(A, (np.ndarray, sp.spmatrix, cpsp.spmatrix)):
-        raise TypeError("Input matrix must be a NumPy array or a SciPy/CuPy sparse matrix!")
+        raise TypeError(
+            "Input matrix must be a NumPy array or a SciPy/CuPy sparse matrix!"
+        )
     if A.shape[0] != A.shape[1]:
         raise ValueError("Matrix must be square!")
 
@@ -72,7 +74,7 @@ def check_symm_square(A):
     check_square_matrix(A)
     if isinstance(A, sp.spmatrix) and not np.allclose(A.toarray(), A.toarray().T):
         raise ValueError("Matrix must be symmetric!")
-    elif isinstance(A, cpsp.spmatrix) and not cp.allclose(A.get(), A.get().T):
+    elif isinstance(A, cpsp.spmatrix) and not cp.allclose(A.toarray(), A.toarray().T):
         raise ValueError("Matrix must be symmetric!")
 
 

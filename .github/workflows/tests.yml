@@ -23,13 +23,19 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install system dependencies
+      run: |
+        apt-get update && apt-get install -y python3-venv python3-pip
+
     - name: Install additional dependencies
       run: |
         python3 -m venv venv
         source venv/bin/activate
         python -m pip install .
+      shell: bash -e {0}
 
     - name: Test with pytest
       run: |
         source venv/bin/activate
         python -m pytest
+      shell: bash -e {0}

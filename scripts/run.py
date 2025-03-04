@@ -25,8 +25,9 @@ filename = (
 
 
 kwargs = read_config(filename)
-dim = kwargs["dimension"]
+dim = kwargs["dim"]
 density = kwargs["density"]
+# also tol and max iter
 
 
 matrix = sp.random(dim, dim, density=density, format="csr")

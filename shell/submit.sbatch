@@ -29,8 +29,6 @@ export SLURM_NTASKS_PER_NODE=1  # due to Ulysses's bug
 module load cuda/12.1
 conda init
 source ~/.bashrc
-conda activate ~/miniconda3/envs/devtools_scicomp
-pip install cupy-cuda12x
-python -m pip freeze > requirements.txt
-# Run the script
+conda activate /scratch/ltomada/miniconda3/envs/devtools_scicomp
+python -m pytest -v
 #python scripts/run.py fit --config=experiments/config.yaml
