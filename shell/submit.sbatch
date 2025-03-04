@@ -6,7 +6,7 @@
 #SBATCH --gpus=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-task=1
-#SBATCH --mem=32000
+#SBATCH --mem=2000
 #SBATCH --time=01:00:00
 #SBATCH --mail-user=ltomada@sissa.it
 #SBATCH --output=%x.o%j.%N
@@ -24,11 +24,13 @@ echo '------------------------------------------------------'
 #
 
 cd $SLURM_SUBMIT_DIR           
-export SLURM_NTASKS_PER_NODE=2  # due to Ulysses's bug
+export SLURM_NTASKS_PER_NODE=1  # due to Ulysses's bug
 
 module load cuda/12.1
 conda init
+source ~/.bashrc
 conda activate ~/miniconda3/envs/devtools_scicomp
-
+pip install cupy-cuda12x
+python -m pip freeze > requirements.txt
 # Run the script
-python scripts/run.py fit --config=experiments/config.yaml
+#python scripts/run.py fit --config=experiments/config.yaml

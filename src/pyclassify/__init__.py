@@ -1,6 +1,7 @@
 __all__ = [
     "eigenvalues_np",
     "eigenvalues_sp",
+    "eigenvalues_cp",
     "power_method",
     "power_method_numba",
 ]
@@ -8,6 +9,7 @@ __all__ = [
 from .eigenvalues import (
     eigenvalues_np,
     eigenvalues_sp,
+    eigenvalues_cp,
     power_method,
     power_method_numba,
 )

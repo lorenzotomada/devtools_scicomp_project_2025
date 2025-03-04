@@ -1,8 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
+import scipy.linalg as spla
 from line_profiler import profile
 from numpy.linalg import eig, eigh
-from pyclassify.utils import check_A_square_matrix, power_method_numba_helper
+from pyclassify.utils import check_square_matrix, check_symm_square, power_method_numba_helper
+import cupy as cp
+cp.cuda.Device(0)
+import cupy.linalg as cpla
+import cupyx.scipy.sparse as cpsp
 
 
 @profile
@@ -10,7 +15,7 @@ def eigenvalues_np(A, symmetric=True):
     """
     Compute the eigenvalues of a square matrix using NumPy's `eig` or `eigh` function.
 
-    This function checks if the input matrix is square (and is actually a matrix) using 'check_A_square_matrix', and then computes its eigenvalues.
+    This function checks if the input matrix is square (and is actually a matrix) using 'check_square_matrix', and then computes its eigenvalues.
     If the matrix is symmetric, it uses `eigh` (which is more efficient for symmetric matrices).
     Otherwise, it uses `eig`.
 
@@ -27,7 +32,7 @@ def eigenvalues_np(A, symmetric=True):
         TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
-    check_A_square_matrix(A)
+    check_square_matrix(A)
     eigenvalues, _ = eigh(A) if symmetric else eig(A)
     return eigenvalues
 
@@ -53,12 +58,36 @@ def eigenvalues_sp(A, symmetric=True):
         TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
-    check_A_square_matrix(A)
+    check_square_matrix(A)
     eigenvalues, _ = (
-        sp.linalg.eigsh(A, k=A.shape[0] - 1)
+        spla.eigsh(A, k=A.shape[0] - 1)
         if symmetric
-        else sp.linalg.eigs(A, k=A.shape[0] - 1)
+        else spla.eigs(A, k=A.shape[0] - 1)
     )
+    return eigenvalues
+
+
+@profile
+def eigenvalues_cp(A):
+    """
+    Compute the eigenvalues of a sparse matrix using CuPy's `eigsh` function.
+
+    This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
+    CupY's sparse linear algebra solvers. For symmetric matrices, it uses `eigsh` for
+    more efficient computation.
+
+    Args:
+        A (cpsp.spmatrix): A square sparse matrix whose eigenvalues are to be computed.
+
+    Returns:
+        np.ndarray: An array containing the eigenvalues of the sparse matrix `A`.
+
+    Raises:
+        TypeError: If the input is not a CuPy sparse symmetric matrix.
+        ValueError: If number of rows != number of columns.
+    """
+    check_symm_square(A)
+    eigenvalues, _ = cpla.eigsh(A, k=A.shape[0] - 1)
     return eigenvalues
 
 
@@ -68,7 +97,7 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
     Compute the dominant eigenvalue of a square matrix using the power method.
 
     Args:
-        A (np.ndarray or sp.spmatrix): A square matrix whose dominant eigenvalue is to be computed.
+        A (np.ndarray or sp.spmatrix or cpsp.spmatrix): A square matrix whose dominant eigenvalue is to be computed.
         max_iter (int, optional): Maximum number of iterations to perform (default is 500).
         tol (float, optional): Tolerance for convergence based on the relative change between iterations
                                (default is 1e-4).
@@ -81,10 +110,10 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
         TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
-    check_A_square_matrix(A)
+    check_square_matrix(A)
     if x is None:
         x = np.random.rand(A.shape[0])
-    x /= np.linalg.norm(x)
+    x /= spla.norm(x)
     x_old = x
 
     iteration = 0
@@ -92,8 +121,8 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
 
     while iteration < max_iter and update_norm > tol:
         x = A @ x
-        x /= np.linalg.norm(x)
-        update_norm = np.linalg.norm(x - x_old) / np.linalg.norm(x_old)
+        x /= spla.norm(x)
+        update_norm = spla.norm(x - x_old) / spla.norm(x_old)
         x_old = x.copy()
         iteration += 1
 
@@ -119,6 +148,44 @@ def power_method_numba(A):
         float: The approximated dominant eigenvalue of the matrix `A`.
     """
     return power_method_numba_helper(A)
+
+
+@profile
+def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
+    """
+    Compute the dominant eigenvalue of a square matrix using the power method.
+
+    Args:
+        A (cp.spmatrix): A square matrix whose dominant eigenvalue is to be computed.
+        max_iter (int, optional): Maximum number of iterations to perform (default is 500).
+        tol (float, optional): Tolerance for convergence based on the relative change between iterations
+                               (default is 1e-4).
+        x (cp.ndarray, optional): Initial guess for the eigenvector. If None, a random vector is generated.
+
+    Returns:
+        float: The approximated dominant eigenvalue of the matrix `A`, computed as the Rayleigh quotient x @ A @ x.
+
+    Raises:
+        TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
+        ValueError: If number of rows != number of columns.
+    """
+    check_square_matrix(A)
+    if x is None:
+        x = cp.random.rand(A.shape[0])
+    x /= cpla.norm(x)
+    x_old = x
+
+    iteration = 0
+    update_norm = tol + 1
+
+    while iteration < max_iter and update_norm > tol:
+        x = A @ x
+        x /= cpla.norm(x)
+        update_norm = cpla.norm(x - x_old) / cpla.norm(x_old)
+        x_old = x.copy()
+        iteration += 1
+
+    return x @ A @ x
 
 
 def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
@@ -223,6 +290,5 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
             Q = Q@R
         A=A@Q
         iter+=1
-
     
     return np.diag(A), Q

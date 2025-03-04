@@ -1,29 +1,32 @@
 import numpy as np
 import scipy.sparse as sp
+import cupy as cp
+import cupyx.scipy.sparse as cpsp
 import numba
 import os
 import yaml
 from line_profiler import profile
 
+
 # from numba.pycc import CC
 
 
-def check_A_square_matrix(A):
+def check_square_matrix(A):
     """
     Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy sparse matrix.
     This is done to ensure that the input matrix `A` is both:
-    1. Of type `np.ndarray` (NumPy array) or `scipy.sparse` (SciPy sparse matrix).
+    1. Of type `np.ndarray` (NumPy array) or `scipy.sparse.spmatrix` (SciPy sparse matrix) or 'cupyx.scipy.sparse.spmatrix'.
     2. A square matrix.
 
     Args:
-        A (np.ndarray or sp.spmatrix): The matrix to be checked.
+        A (np.ndarray or sp.spmatrix or cpsp.spmatrix): The matrix to be checked.
 
     Raises:
         TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
-    if not isinstance(A, (np.ndarray, sp.spmatrix)):
-        raise TypeError("Input matrix must be a NumPy array or a SciPy sparse matrix!")
+    if not isinstance(A, (np.ndarray, sp.spmatrix, cpsp.spmatrix)):
+        raise TypeError("Input matrix must be a NumPy array or a SciPy/CuPy sparse matrix!")
     if A.shape[0] != A.shape[1]:
         raise ValueError("Matrix must be square!")
 
@@ -33,22 +36,44 @@ def make_symmetric(A):
     """
     Ensures the input matrix is symmetric by averaging it with its transpose.
 
-    This function first checks if the matrix is square using the `check_A_square_matrix` function.
+    This function first checks if the matrix is square using the `check_square_matrix` function.
     Then, it makes the matrix symmetric by averaging it with its transpose.
 
     Args:
-        A (np.ndarray or sp.spmatrix): The input square matrix to be made symmetric.
+        A (np.ndarray or sp.spmatrix or cpsp.spmatrix): The input square matrix to be made symmetric.
 
     Returns:
-        np.ndarray or sp.spmatrix: The symmetric version of the input matrix.
+        np.ndarray or sp.spmatrix or cpsp.spmatrix: The symmetric version of the input matrix.
 
     Raises:
-        TypeError: If the input matrix is not a NumPy array or SciPy sparse matrix.
+        TypeError: If the input matrix is not a NumPy array or SciPy or CuPy sparse matrix.
         ValueError: If the input matrix is not square.
     """
-    check_A_square_matrix(A)
+    check_square_matrix(A)
     A_sym = (A + A.T) / 2
     return A_sym
+
+
+def check_symm_square(A):
+    """
+    Checks if the input matrix is a square symmetric matrix of type SciPy/CuPy sparse matrix.
+    This is done to ensure that the input matrix `A` is all of the following:
+    1. A scipy sparse matrix or CuPy sparse matrix.
+    2. A square matrix.
+    3. Symmetric.
+
+    Args:
+        A (sp.spmatrix or cpsp.spmatrix): The matrix to be checked.
+
+    Raises:
+        TypeError: If the input is not a SciPy or CuPy sparse matrix.
+        ValueError: If number of rows != number of columns or the matrix is not symmetric.
+    """
+    check_square_matrix(A)
+    if isinstance(A, sp.spmatrix) and not np.allclose(A.toarray(), A.toarray().T):
+        raise ValueError("Matrix must be symmetric!")
+    elif isinstance(A, cpsp.spmatrix) and not cp.allclose(A.get(), A.get().T):
+        raise ValueError("Matrix must be symmetric!")
 
 
 @numba.njit(nogil=True, parallel=True)

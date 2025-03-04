@@ -5,31 +5,27 @@ on:
     branches:
       - main
       - final_project
+      - gpu_branch
 
   pull_request:
     branches:
       - main
       - final_project
+      - gpu_branch
 
 jobs:
-  docs:
+  test:
     name: Testing using pytest
     runs-on: ubuntu-latest
+    container:
+      image: cupy/cupy:v13.4.0
+
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: 3.10.16
-    
-    - name: Set up Python environment
+    - name: Install additional dependencies
       run: |
-        python -m venv venv
-        source venv/bin/activate
-
-    - name: Install dependencies
-      run: |
+        python3 -m venv venv
         source venv/bin/activate
         python -m pip install .
 
