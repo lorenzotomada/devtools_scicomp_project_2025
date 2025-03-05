@@ -17,29 +17,32 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    container:
+      image: cupy/cupy:v13.4.0
+
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: 3.12.0
-    
-    - name: Set up Python environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+    - name: Set up git
+      run: apt-get update && apt-get install git -y
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
+        apt-get update && apt-get install -y python3-venv python3-pip
+
+    - name: Install additional dependencies
+      run: |
+        python3 -m venv venv
         source venv/bin/activate
         python -m pip install .
+      shell: bash -e {0}
 
     - name: Generate documentation
       run: |
         source venv/bin/activate
         cd docs
         make html
+      shell: bash -e {0}
     
     - name: Deploy
       if: success()

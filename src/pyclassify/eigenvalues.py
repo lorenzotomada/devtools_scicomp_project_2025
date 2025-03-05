@@ -80,7 +80,7 @@ def eigenvalues_cp(A):
     This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
     CuPy's sparse linear algebra solvers. It uses `eigsh` for more efficient computation.
     Remark that the eigsh function in this case does not allow to compute *all* the eigenvalues, but only a number
-    $m<n$, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
+    m<n, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
 
     Args:
         A (cpsp.spmatrix): A square sparse matrix whose eigenvalues are to be computed.
@@ -196,12 +196,12 @@ def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
 
 
 def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
-    """
+    r"""
     Perform the Lanczos algorithm for symmetric matrices.
 
-    This function computes an orthogonal matrix Q and tridiagonal matrix T such that A ≈ Q * T * Q.T,
-    where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
-    of large symmetric matrices.
+    This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
+    equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
+    eigenvalues and eigenvectors of large symmetric matrices.
 
     Args:
         A (np.ndarray): A symmetric square matrix of size n x n.

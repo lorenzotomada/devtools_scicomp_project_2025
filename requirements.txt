@@ -17,7 +17,7 @@ fonttools==4.56.0
 idna==3.10
 imagesize==1.4.1
 iniconfig==2.0.0
-ipython==9.0.1
+ipython==8.33.0
 ipython_pygments_lexers==1.1.1
 jedi==0.19.2
 Jinja2==3.1.5
@@ -46,6 +46,7 @@ pytest==8.3.4
 python-dateutil==2.9.0.post0
 PyYAML==6.0.2
 requests==2.32.3
+roman-numerals-py==3.1.0
 scipy==1.15.2
 setuptools==75.8.0
 six==1.17.0
