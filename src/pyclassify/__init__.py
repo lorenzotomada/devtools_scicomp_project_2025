@@ -5,6 +5,8 @@ __all__ = [
     "power_method",
     "power_method_numba",
     "power_method_cp",
+    "Lanczos_PRO",
+    "QR_method",
 ]
 
 from .eigenvalues import (
@@ -14,4 +16,6 @@ from .eigenvalues import (
     power_method,
     power_method_numba,
     power_method_cp,
+    Lanczos_PRO,
+    QR_method,
 )

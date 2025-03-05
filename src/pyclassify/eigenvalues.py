@@ -137,7 +137,7 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
 
 
 @profile
-def power_method_numba(A):
+def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
     """
     Compute the dominant eigenvalue of a matrix using the power method, with Numba optimization.
 
@@ -154,7 +154,7 @@ def power_method_numba(A):
     Returns:
         float: The approximated dominant eigenvalue of the matrix `A`.
     """
-    return power_method_numba_helper(A)
+    return power_method_numba_helper(A, max_iter, tol, x)
 
 
 @profile
@@ -219,6 +219,15 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
     Raises:
         ValueError: If the input matrix A is not square or if m is greater than the size of A.
     """
+    if m == None:
+        m = A.shape[0]
+
+    if A.shape[0] != A.shape[1]:
+        raise ValueError("Input matrix A must be square.")
+
+    if A.shape[0] != q.shape[0]:
+        raise ValueError("Input vector q must have the same size as the matrix A.")
+
     q = q / np.linalg.norm(q)
     Q = np.array([q])
     r = A @ q
@@ -271,14 +280,12 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
     """
 
     A = A_copy.copy()
-    T = A.copy()
     A = np.array(A)
     iter = 0
+    Q = np.array([])
 
     while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter < max_iter:
         Matrix_trigonometry = np.array([])
-        QQ, RR = np.linalg.qr(T)
-        T = RR @ QQ
         for i in range(A.shape[0] - 1):
             c = A[i, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
             s = -A[i + 1, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
