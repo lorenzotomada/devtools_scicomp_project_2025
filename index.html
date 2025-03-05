@@ -76,9 +76,9 @@ Stay tuned!</p>
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
-<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that $AapproxQ * T * Q.T$,
-where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
-of large symmetric matrices.</p>
+<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
+equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
+eigenvalues and eigenvectors of large symmetric matrices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
