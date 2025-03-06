@@ -4,6 +4,8 @@
 #include <iostream>
 #include <algorithm>
 #include <array>
+#include <iomanip>
+#include <chrono>
 
 
 //std::pair<std::vector<double>, std::vector<std::vector<double>> > 
@@ -13,11 +15,9 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
     std::vector<std::vector<double>> Q(n, std::vector<double>(n, 0));
 
-    for(unsigned int i = 1; i < n-1; i++){
+    for(unsigned int i = 0; i < n; i++){
         Q[i][i] = 1;
     }
-    Q[0][0] = 1;
-    Q[n-1][n-1] = 1;
 
 
     std::vector<std::array<double, 2>> Matrix_trigonometric(n-1, {0, 0});
@@ -56,6 +56,26 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
                 r=std::sqrt(x*x+y*y);
                 c=x/r;
                 s=-y/r;
+                Matrix_trigonometric[i][0] = c;
+                Matrix_trigonometric[i][1] = s;
+                
+                w=c*x-s*y;
+                d=diag[i]-diag[i+1];
+                z=(2*c*off_diag[i] +d*s)*s;
+                diag[i] -= z;
+                diag[i+1] += z;
+                off_diag[i]= d*c*s + (c*c-s*s)*off_diag[i];
+                x=off_diag[i];
+                if (i>0)
+                {
+                    off_diag[i-1]=w;
+                }
+    
+                if(i<m-1){
+                    y=-s*off_diag[i+1];
+                    off_diag[i+1]=c*off_diag[i+1];
+                }
+    
             }else{
                 if(std::abs(d)<toll_equivalence){
                     if (off_diag[0]*d>0)
@@ -77,48 +97,48 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
                     unsigned int iter_newton=0;
                     while (err_rel>1e-10 && iter_newton<1000)
                     {
-                        x_new=x_0+std::cos(x_0)*std::cos(x_0)*(std::tan(x_0) + b_2/d);
+                        x_new=x_0-std::cos(x_0)*std::cos(x_0)*(std::tan(x_0) + b_2/d);
                         err_rel=std::abs((x_new-x_0)/x_new);
                         x_0=x_new;
                         ++iter_newton;
                     }
                     c=std::cos(x_new/2);
                     s=std::sin(x_new/2);
-                    x=x+mu;
+
+                    Matrix_trigonometric[i][0] = c;
+                    Matrix_trigonometric[i][1] = s;  
+                    
+                    double a_0=diag[0], b_1=off_diag[0];
+
+                    off_diag[0]=0; //c*s*(a_0-diag[1])+b_1*(c*c-s*s);
+                    diag[0]=c*c*a_0+s*s*diag[1]-2*s*c*b_1;
+                    diag[1]=c*c*diag[1]+s*s*a_0+2*s*c*b_1;
+                    
 
                 }
 
             }
 
-            Matrix_trigonometric[i][0] = c;
-            Matrix_trigonometric[i][1] = s;
-            
-            w=c*x-s*y;
-            d=diag[i]-diag[i+1];
-            z=(2*c*off_diag[i] +d*s)*s;
-            diag[i] -= z;
-            diag[i+1] += z;
-            off_diag[i]= d*c*s + (c*c-s*s)*off_diag[i];
-            x=off_diag[i];
-            if (i>0)
-            {
-                off_diag[i-1]=w;
-            }
-
-            if(i<m-1){
-                y=-s*off_diag[i+1];
-                off_diag[i+1]=c*off_diag[i+1];
-            }
-            
+      
         }
+
+        //Uncomment to compute the eigenvalue
+        // for(unsigned int i=0; i<n-1; i++){
+        //     for(unsigned j=0; j<n;j++){
+        //         tmp=Q[j][i];
+        //         Q[j][i]=tmp*Matrix_trigonometric[i][0]-Q[j][i+1]*Matrix_trigonometric[i][1];
+        //         Q[j][i+1]=tmp*Matrix_trigonometric[i][1]+Q[j][i+1]*Matrix_trigonometric[i][0];
+        //     }
+        // }
         iter++;
         if ( std::abs(off_diag[m-1]) < toll*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
         {
             --m;
         }
-        
-        
     }
+
+
+
     
 
 }
@@ -126,7 +146,20 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
 int main(){
 
-    std::vector<double> diag{1, 2, 3, 4, 5}, offdiag(4, 2);
+    std::vector<double> diag(500, 5), offdiag(499, 20);
+
     QR_algorithm(diag, offdiag);
+    
+    auto start = std::chrono::high_resolution_clock::now();
+
+    QR_algorithm(diag, offdiag);
+
+    // Capture the end time
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Compute the elapsed time as a duration
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    std::cout << "Elapsed time: " << elapsed.count() << " milliseconds" << std::endl;
     return 0;
 }

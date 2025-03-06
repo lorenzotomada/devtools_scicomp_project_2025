@@ -5,6 +5,7 @@ from numpy.linalg import eig, eigh
 from pyclassify.utils import check_A_square_matrix, power_method_numba_helper
 from numba import jit
 
+
 @profile
 def eigenvalues_np(A, symmetric=True):
     """
@@ -120,6 +121,7 @@ def power_method_numba(A):
     """
     return power_method_numba_helper(A)
 
+
 @jit(nopython=True)
 def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
     """
@@ -156,7 +158,7 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
 
     if np.any(A != A.T):
         raise ValueError("Input matrix A must be symmetric.")
-    
+
     q = q / np.linalg.norm(q)
     # Q=np.array([q])
     Q = np.zeros((m, A.shape[0]))
@@ -186,7 +188,8 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
             return Q, alpha, beta[:-1]
     return Q, alpha, beta[:-1]
 
-@jit(nopython=True) 
+
+@jit(nopython=True)
 def QR_method(A_copy, tol=1e-10, max_iter=100):
     """
     Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
@@ -211,10 +214,10 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
 
     if A_copy.shape[0] != A_copy.shape[1]:
         raise ValueError("Input matrix A_copy must be square.")
-    
-    if np.any( np.tril(A_copy, -2) != 0) or np.any( np.triu(A_copy, 2) != 0):
+
+    if np.any(np.tril(A_copy, -2) != 0) or np.any(np.triu(A_copy, 2) != 0):
         raise ValueError("Input matrix A_copy must be tridiagonal.")
-    
+
     A = A_copy.copy()
     iter = 0
     Q = np.eye(A.shape[0])

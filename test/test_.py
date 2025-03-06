@@ -69,9 +69,9 @@ def test_implementations_power_method(size, density):
 def test_Lanczos(size):
     A = np.random.rand(size, size)
     A = (A + A.T) / 2
-    A=np.array(A, dtype=float)
+    A = np.array(A, dtype=float)
     q = np.random.rand(size)
-    #matrix =np.array(matrix, dtype=np.float64)
+    # matrix =np.array(matrix, dtype=np.float64)
     random_vector = np.random.rand(size)
 
     _, alpha, beta = Lanczos_PRO(A, random_vector)
