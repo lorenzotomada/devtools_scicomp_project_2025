@@ -8,6 +8,9 @@ __all__ = [
     "Lanczos_PRO",
     "QR_method",
     "QR",
+    "Lanczos_PRO_cp",
+    "QR_method_cp",
+    "QR_cp",
 ]
 
 from .eigenvalues import (
@@ -20,4 +23,7 @@ from .eigenvalues import (
     Lanczos_PRO,
     QR_method,
     QR,
+    Lanczos_PRO_cp,
+    QR_method_cp,
+    QR_cp,
 )

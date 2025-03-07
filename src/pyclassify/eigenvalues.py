@@ -197,7 +197,7 @@ def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
 
 
 @jit(nopython=True)
-def Lanczos_PRO(A, q=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
+def Lanczos_PRO(A, q=None, m=None, tol=1e-8):
     r"""
     Perform the Lanczos algorithm for symmetric matrices.
 
@@ -210,7 +210,7 @@ def Lanczos_PRO(A, q=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
         q (np.ndarray): Initial vector of size n.
         m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
                            If None, defaults to the size of A.
-        toll (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
+        tol (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
 
     Returns:
         tuple: A tuple (Q, alpha, beta) where:
@@ -251,7 +251,7 @@ def Lanczos_PRO(A, q=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
 
     for j in range(1, m):
         q = r / beta[j - 1]
-        if np.any(np.abs(q @ Q[: j - 1].T) > toll):
+        if np.any(np.abs(q @ Q[: j - 1].T) > tol):
             for q_bbasis in Q[: j - 1]:
                 q = q - (q @ q_bbasis) * q_bbasis
 
@@ -263,9 +263,8 @@ def Lanczos_PRO(A, q=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
         beta.append(np.linalg.norm(r))
 
         if np.abs(beta[j]) < 1e-15:
-
-            return Q, alpha, beta[:-1]
-    return Q, alpha, beta[:-1]
+            return Q, np.array(alpha), np.array(beta[:-1])
+    return Q, np.array(alpha), np.array(beta[:-1])
 
 
 @jit(nopython=True)
@@ -297,15 +296,15 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
     Matrix_trigonometric = np.zeros((n - 1, 2))
 
     iter = 0
-    #eigenvalues_old = np.array(diag)
+    # eigenvalues_old = np.array(diag)
 
     r, c, s = 0, 0, 0
     d, mu = 0, 0  # mu: Wilkinson shift
     a_m, b_m_1 = 0, 0
-    #tmp = 0
+    # tmp = 0
     x, y = 0, 0
     m = n - 1
-    toll_equivalence = 1e-10
+    tol_equivalence = 1e-10
     w, z = 0, 0
 
     while iter < max_iter and m > 0:
@@ -314,7 +313,7 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
         b_m_1 = off_diag[m - 1]
         d = (diag[m - 1] - a_m) * 0.5
 
-        if np.abs(d) < toll_equivalence:
+        if np.abs(d) < tol_equivalence:
             mu = diag[m] - np.abs(b_m_1)
         else:
             mu = a_m - b_m_1 * b_m_1 / (
@@ -347,7 +346,7 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
                     off_diag[i + 1] = c * off_diag[i + 1]
 
             else:
-                if abs(d) < toll_equivalence:
+                if abs(d) < tol_equivalence:
                     if off_diag[0] * d > 0:
                         c = np.sqrt(2) / 2
                         s = -np.sqrt(2) / 2
@@ -364,7 +363,9 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
                     err_rel = 1
                     iter_newton = 0
                     while err_rel > 1e-10 and iter_newton < 1000:
-                        x_new = x_0 - np.cos(x_0) * np.cos(x_0) * (np.tan(x_0) + b_2 / d)
+                        x_new = x_0 - np.cos(x_0) * np.cos(x_0) * (
+                            np.tan(x_0) + b_2 / d
+                        )
                         err_rel = np.abs((x_new - x_0) / x_new)
                         x_0 = x_new
                         iter_newton += 1
@@ -383,7 +384,7 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
                     diag[1] = c * c * diag[1] + s * s * a_0 + 2 * s * c * b_1
 
         # Uncomment to compute the eigenvalue
-        #Q[:, :m] = Q[:, :m] @ Matrix_trigonometric[:m, :]
+        # Q[:, :m] = Q[:, :m] @ Matrix_trigonometric[:m, :]
 
         iter += 1
         if abs(off_diag[m - 1]) < tol * (np.abs(diag[m]) + np.abs(diag[m - 1])):
@@ -413,7 +414,221 @@ def QR(A, q0=None, tol=1e-8, max_iter=100):
     Raises:
         ValueError: If the input matrix is not square.
     """
-    _, alpha, beta = Lanczos_PRO(A, q=q0, m=None, toll=1e-8)
-    alpha = np.array(alpha)
-    beta = np.array(beta)
+    _, alpha, beta = Lanczos_PRO(A, q=q0, m=None, tol=1e-8)
     return QR_method(alpha, beta, tol=tol, max_iter=max_iter)
+
+
+def Lanczos_PRO_cp(A, q=None, m=None, tol=1e-8):
+    r"""
+    Perform the Lanczos algorithm for symmetric matrices.
+
+    This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
+    equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
+    eigenvalues and eigenvectors of large symmetric matrices.
+
+    Args:
+        A (cp.ndarray or cpsp.spmatrix): A symmetric square matrix of size n x n.
+        q (cp.ndarray): Initial vector of size n.
+        m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
+                           If None, defaults to the size of A.
+        tol (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
+
+    Returns:
+        tuple: A tuple (Q, alpha, beta) where:
+            - Q (cp.ndarray): Orthogonal matrix of size n x m.
+            - alpha (cp.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
+            - beta (cp.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
+
+    Raises:
+        ValueError: If the input matrix A is not square or if m is greater than the size of A.
+    """
+    if q is None:
+        q = cp.random.rand(A.shape[0])
+        if q[0] == 0:
+            q[0] += 1
+
+    if m == None:
+        m = A.shape[0]
+
+    check_symm_square(A)
+
+    if A.shape[0] != q.shape[0]:
+        raise ValueError("Input vector q must have the same size as the matrix A.")
+
+    q = q / cp.linalg.norm(q)
+    # Q=np.array([q])
+    Q = cp.zeros((m, A.shape[0]))
+    Q[0] = q
+    r = A @ q
+    alpha = []
+    beta = []
+    alpha.append(q @ r)
+    r = r - alpha[0] * q
+    beta.append(cp.linalg.norm(r))
+
+    for j in range(1, m):
+        q = r / beta[j - 1]
+        if cp.any(cp.abs(q @ Q[: j - 1].T) > tol):
+            for q_bbasis in Q[: j - 1]:
+                q = q - (q @ q_bbasis) * q_bbasis
+
+        q = q / cp.linalg.norm(q)
+        Q[j] = q
+        r = A @ q - beta[j - 1] * Q[j - 1]
+        alpha.append(q @ r)
+        r = r - alpha[j] * q
+        beta.append(cp.linalg.norm(r))
+
+        if cp.abs(beta[j]) < 1e-15:
+
+            return cp.array(alpha), cp.array(beta[:-1])
+    return Q, cp.array(alpha), cp.array(beta[:-1])
+
+
+def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=100):
+    """
+    Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
+
+    This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
+    The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
+    of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.
+
+    Args:
+        diag (cp.ndarray): Diagonal elements of the tridiagonal matrix.
+        off_diag (cp.ndarray): Off-diagonal elements of the tridiagonal matrix.
+        tol (float, optional): Tolerance for convergence based on the off-diagonal elements (default is 1e-10).
+        max_iter (int, optional): Maximum number of iterations to perform (default is 100).
+
+    Returns:
+        tuple: A tuple (eigenvalues, Q) where:
+            - eigenvalues (cp.ndarray): An array containing the eigenvalues of the matrix.
+            - Q (cp.ndarray): The orthogonal matrix Q from the final QR decomposition.
+
+    Raises:
+        ValueError: If the input matrix is not square.
+    """
+    n = diag.shape[0]
+    Q = cp.eye(n)
+
+    Matrix_trigonometric = cp.zeros((n - 1, 2))
+
+    iter = 0
+    # eigenvalues_old = np.array(diag)
+
+    r, c, s = 0, 0, 0
+    d, mu = 0, 0  # mu: Wilkinson shift
+    a_m, b_m_1 = 0, 0
+    x, y = 0, 0
+    m = n - 1
+    tol_equivalence = 1e-10
+    w, z = 0, 0
+
+    while iter < max_iter and m > 0:
+        # prefetching most used value to avoid call overhead
+        a_m = diag[m]
+        b_m_1 = off_diag[m - 1]
+        d = (diag[m - 1] - a_m) * 0.5
+
+        if cp.abs(d) < tol_equivalence:
+            mu = diag[m] - cp.abs(b_m_1)
+        else:
+            mu = a_m - b_m_1 * b_m_1 / (
+                d * (1 + cp.sqrt(d * d + b_m_1 * b_m_1) / cp.abs(d))
+            )
+
+        x = diag[0] - mu
+        y = off_diag[0]
+
+        for i in range(m):
+            if m > 1:
+                r = np.sqrt(x * x + y * y)
+                c = x / r
+                s = -y / r
+                Matrix_trigonometric[i][0] = c
+                Matrix_trigonometric[i][1] = s
+
+                w = c * x - s * y
+                d = diag[i] - diag[i + 1]
+                z = (2 * c * off_diag[i] + d * s) * s
+                diag[i] -= z
+                diag[i + 1] += z
+                off_diag[i] = d * c * s + (c * c - s * s) * off_diag[i]
+                x = off_diag[i]
+                if i > 0:
+                    off_diag[i - 1] = w
+
+                if i < m - 1:
+                    y = -s * off_diag[i + 1]
+                    off_diag[i + 1] = c * off_diag[i + 1]
+
+            else:
+                if abs(d) < tol_equivalence:
+                    if off_diag[0] * d > 0:
+                        c = cp.sqrt(2) / 2
+                        s = -cp.sqrt(2) / 2
+                    else:
+                        c = s = cp.sqrt(2) / 2
+
+                else:
+                    b_2 = off_diag[0]
+                    if off_diag[0] * d > 0:
+                        x_0 = -cp.pi / 4
+                    else:
+                        x_0 = cp.pi / 4
+
+                    err_rel = 1
+                    iter_newton = 0
+                    while err_rel > 1e-10 and iter_newton < 1000:
+                        x_new = x_0 - cp.cos(x_0) * cp.cos(x_0) * (
+                            cp.tan(x_0) + b_2 / d
+                        )
+                        err_rel = cp.abs((x_new - x_0) / x_new)
+                        x_0 = x_new
+                        iter_newton += 1
+
+                    c = cp.cos(x_new / 2)
+                    s = cp.sin(x_new / 2)
+
+                    Matrix_trigonometric[i][0] = c
+                    Matrix_trigonometric[i][1] = s
+
+                    a_0 = diag[0]
+                    b_1 = off_diag[0]
+
+                    off_diag[0] = 0  # c * s * (a_0 - diag[1]) + b_1 * (c * c - s * s)
+                    diag[0] = c * c * a_0 + s * s * diag[1] - 2 * s * c * b_1
+                    diag[1] = c * c * diag[1] + s * s * a_0 + 2 * s * c * b_1
+
+        # Uncomment to compute the eigenvalue
+        # Q[:, :m] = Q[:, :m] @ Matrix_trigonometric[:m, :]
+
+        iter += 1
+        if abs(off_diag[m - 1]) < tol * (cp.abs(diag[m]) + cp.abs(diag[m - 1])):
+            m -= 1
+
+    return diag, Q
+
+
+@profile
+def QR_cp(A, q0=None, tol=1e-8, max_iter=100):
+    """
+    Compute the eigenvalues of a square matrix using the QR algorithm.
+    Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
+    algorithm to compute the eigenvalues.
+
+    Args:
+        A (cp.ndarray or cpsp.spmatrix): A square matrix whose eigenvalues are to be computed.
+        q0 (cp.ndarray, optional): An initial vector for the Lanczos process. If None, a random vector is used.
+        tol (float, optional): Convergence tolerance for the QR algorithm. Default is 1e-8
+        max_iter (int, optional): Maximum number of iterations for the QR algorithm. Deault is 100.
+
+    Returns:
+        tuple: A tuple (eigenvalues, Q) where:
+            - eigenvalues (cp.ndarray): An array containing the eigenvalues of the matrix.
+            - Q (cp.ndarray): The orthogonal matrix Q from the final QR decomposition.
+
+    Raises:
+        ValueError: If the input matrix is not square.
+    """
+    _, alpha, beta = Lanczos_PRO_cp(A, q=q0, m=None, tol=1e-8)
+    return QR_method_cp(alpha, beta, tol=tol, max_iter=max_iter)

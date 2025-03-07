@@ -14,6 +14,7 @@ from pyclassify import (
     Lanczos_PRO,
     QR_method,
     QR,
+    QR_cp,
 )
 from pyclassify.utils import check_square_matrix, make_symmetric, check_symm_square
 
@@ -24,7 +25,7 @@ def set_random_seed():
     np.random.seed(seed)
 
 
-sizes = [10, 100]
+sizes = [20, 100]
 densities = [0.1, 0.3]
 
 
@@ -96,31 +97,6 @@ def test_implementations_power_method(size, density):
 
 
 @pytest.mark.parametrize("size", sizes)
-@pytest.mark.parametrize("density", densities)
-def test_cupy(size, density):
-    try:
-        if not cp.cuda.is_available():
-            pytest.skip("Skipping test because CUDA is not available")
-    except cp.cuda.runtime.CUDARuntimeError as e:
-        pytest.skip(f"Skipping test due to CUDA driver issues: {str(e)}")
-
-    matrix = sp.random(size, size, density=density, format="csr")
-    symmetric_matrix = make_symmetric(matrix)
-    cp_symm_matrix = cpsp.csr_matrix(symmetric_matrix)
-    check_square_matrix(cp_symm_matrix)
-
-    eigs_cp = eigenvalues_cp(cp_symm_matrix)
-
-    index_cp = np.argmax(np.abs(eigs_cp))
-    biggest_eigenvalue_cp = eigs_cp[index_cp]
-    biggest_eigenvalue_pm_cp = power_method_cp(cp_symm_matrix, max_iter=1000, tol=1e-5)
-
-    assert np.isclose(
-        biggest_eigenvalue_cp, biggest_eigenvalue_pm_cp, rtol=1e-4
-    )  # ensure cupy native and cupy power method implementations are consistent
-
-
-@pytest.mark.parametrize("size", sizes)
 def test_Lanczos(size):
     A = np.random.rand(size, size)
     A = (A + A.T) / 2
@@ -160,7 +136,7 @@ def test_QR_method(size):
     U = scipy.stats.ortho_group.rvs(size)
 
     A = U @ A @ U.T
-    A = make_symmetric(A) #  not needed actually
+    A = make_symmetric(A)  #  not needed probably
     eig = np.linalg.eig(A)
     index = np.argsort(eig.eigenvalues)
     eig = eig.eigenvalues
@@ -171,8 +147,6 @@ def test_QR_method(size):
 
     random_vector = np.random.rand(size)
     _, alpha, beta = Lanczos_PRO(A, random_vector)
-    alpha = np.array(alpha)
-    beta = np.array(beta)
 
     # T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
 
@@ -206,3 +180,36 @@ def test_qr(size):
     eig_QR = eigs_QR[index]
 
     assert np.allclose(eig, eig_QR, rtol=1e-4)
+
+
+@pytest.mark.parametrize("size", sizes)
+@pytest.mark.parametrize("density", densities)
+def test_cupy(size, density):
+    try:
+        if not cp.cuda.is_available():
+            pytest.skip("Skipping test because CUDA is not available")
+    except cp.cuda.runtime.CUDARuntimeError as e:
+        pytest.skip(f"Skipping test due to CUDA driver issues: {str(e)}")
+
+    cp.random.seed(8422)
+
+    matrix = sp.random(size, size, density=density, format="csr")
+    symmetric_matrix = make_symmetric(matrix)
+    cp_symm_matrix = cpsp.csr_matrix(symmetric_matrix)
+    check_square_matrix(cp_symm_matrix)
+
+    eigs_cp = eigenvalues_cp(cp_symm_matrix)
+
+    index_cp = cp.argmax(cp.abs(eigs_cp))
+    biggest_eigenvalue_cp = eigs_cp[index_cp]
+    biggest_eigenvalue_pm_cp = power_method_cp(cp_symm_matrix, max_iter=1000, tol=1e-5)
+
+    assert np.isclose(
+        biggest_eigenvalue_cp, biggest_eigenvalue_pm_cp, rtol=1e-4
+    )  # ensure cupy native and cupy power method implementations are consistent
+
+    random_vector = cp.random.rand(size)
+    eigs_QR, _ = QR_cp(cp_symm_matrix, random_vector, tol=1e-4, max_iter=500 * size)
+    index_cp_QR = cp.argmax(cp.abs(eigs_QR))
+    biggest_eigenvalue_QR = eigs_QR[index_cp_QR]
+    assert cp.isclose(biggest_eigenvalue_cp, biggest_eigenvalue_QR, rtol=1e-3)
