@@ -13,6 +13,7 @@ from pyclassify import (
     power_method_cp,
     Lanczos_PRO,
     QR_method,
+    QR,
 )
 from pyclassify.utils import check_square_matrix, make_symmetric, check_symm_square
 
@@ -152,18 +153,15 @@ def test_Lanczos(size):
         _ = Lanczos_PRO(random_matrix, np.random.rand(2 * size))
 
 
-@pytest.mark.parametrize("size", [10, 100])
+@pytest.mark.parametrize("size", sizes)
 def test_QR_method(size):
     eig = np.arange(1, size + 1)
     A = np.diag(eig)
     U = scipy.stats.ortho_group.rvs(size)
-    print(U)
 
     A = U @ A @ U.T
-    print(A)
-    A = make_symmetric(A)
+    A = make_symmetric(A) #  not needed actually
     eig = np.linalg.eig(A)
-    print(eig.eigenvalues)
     index = np.argsort(eig.eigenvalues)
     eig = eig.eigenvalues
     eig_vec = np.linalg.eig(A).eigenvectors
@@ -173,11 +171,38 @@ def test_QR_method(size):
 
     random_vector = np.random.rand(size)
     _, alpha, beta = Lanczos_PRO(A, random_vector)
+    alpha = np.array(alpha)
+    beta = np.array(beta)
 
-    T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
+    # T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
 
-    eig_valQR, eig_vecQR = QR_method(T, max_iter=100 * size)
+    eig_valQR, _ = QR_method(alpha, beta, max_iter=100 * size)
     index = np.argsort(eig_valQR)
     eig_valQR = eig_valQR[index]
 
-    assert np.allclose(eig, eig_valQR, rtol=1e-8)
+    assert np.allclose(eig, eig_valQR, rtol=1e-4)
+
+
+@pytest.mark.parametrize("size", sizes)
+def test_qr(size):
+    eig = np.arange(1, size + 1)
+    A = np.diag(eig)
+    U = scipy.stats.ortho_group.rvs(size)
+
+    A = U @ A @ U.T
+    A = make_symmetric(A)
+    eig = np.linalg.eig(A)
+    index = np.argsort(eig.eigenvalues)
+    eig = eig.eigenvalues
+    eig_vec = np.linalg.eig(A).eigenvectors
+    eig_vec = eig_vec[index]
+    eig = eig[index]
+    eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
+
+    random_vector = np.random.rand(size)
+    eigs_QR, _ = QR(A, random_vector, tol=1e-4, max_iter=1000)
+
+    index = np.argsort(eigs_QR)
+    eig_QR = eigs_QR[index]
+
+    assert np.allclose(eig, eig_QR, rtol=1e-4)

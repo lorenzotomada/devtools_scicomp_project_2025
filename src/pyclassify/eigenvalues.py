@@ -196,9 +196,8 @@ def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
     return x @ A @ x
 
 
-
 @jit(nopython=True)
-def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
+def Lanczos_PRO(A, q=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
     r"""
     Perform the Lanczos algorithm for symmetric matrices.
 
@@ -222,6 +221,11 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
     Raises:
         ValueError: If the input matrix A is not square or if m is greater than the size of A.
     """
+    if q is None:
+        q = np.random.rand(A.shape[0])
+        if q[0] == 0:
+            q[0] += 1
+
     if m == None:
         m = A.shape[0]
 
@@ -265,7 +269,7 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
 
 
 @jit(nopython=True)
-def QR_method(A_copy, tol=1e-10, max_iter=100):
+def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
     """
     Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
 
@@ -274,57 +278,142 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
     of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.
 
     Args:
-        A_copy (np.ndarray): Atridiagonal matrix whose eigenvalues are to be computed.
+        diag (np.ndarray): Diagonal elements of the tridiagonal matrix.
+        off_diag (np.ndarray): Off-diagonal elements of the tridiagonal matrix.
         tol (float, optional): Tolerance for convergence based on the off-diagonal elements (default is 1e-10).
         max_iter (int, optional): Maximum number of iterations to perform (default is 100).
 
     Returns:
         tuple: A tuple (eigenvalues, Q) where:
-            - eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix `A_copy`.
+            - eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix.
             - Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.
 
     Raises:
-        ValueError: If the input matrix A_copy is not square.
+        ValueError: If the input matrix is not square.
     """
+    n = diag.shape[0]
+    Q = np.eye(n)
 
-    if A_copy.shape[0] != A_copy.shape[1]:
-        raise ValueError("Input matrix A_copy must be square.")
+    Matrix_trigonometric = np.zeros((n - 1, 2))
 
-    if np.any(np.tril(A_copy, -2) != 0) or np.any(np.triu(A_copy, 2) != 0):
-        raise ValueError("Input matrix A_copy must be tridiagonal.")
-
-    A = A_copy.copy()
     iter = 0
-    Q = np.eye(A.shape[0])
+    #eigenvalues_old = np.array(diag)
 
-    # Correctly preallocate as a 2D array (n-1, 2)
-    Matrix_trigonometry = np.zeros((A.shape[0] - 1, 2))
-    # d=np.zeros(A.shape[0])
-    while np.linalg.norm((np.diag(A, -1)), np.inf) > tol and iter < max_iter:
-        # while np.linalg.norm((np.diag(A, 0)-d)/np.diag(A, 0), np.inf) > tol and iter < max_iter:
-        # Compute Givens rotation
-        # d=np.diag(A, 0)
-        for i in range(A.shape[0] - 1):
-            c = A[i, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
-            s = -A[i + 1, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
-            Matrix_trigonometry[i, :] = [c, s]
+    r, c, s = 0, 0, 0
+    d, mu = 0, 0  # mu: Wilkinson shift
+    a_m, b_m_1 = 0, 0
+    #tmp = 0
+    x, y = 0, 0
+    m = n - 1
+    toll_equivalence = 1e-10
+    w, z = 0, 0
 
-            # Apply the Givens rotation to A (modify in place)
-            R = np.array([[c, -s], [s, c]])
-            A[i : i + 2, i:] = R @ A[i : i + 2, i:]
-            A[i + 1, i] = 0
+    while iter < max_iter and m > 0:
+        # prefetching most used value to avoid call overhead
+        a_m = diag[m]
+        b_m_1 = off_diag[m - 1]
+        d = (diag[m - 1] - a_m) * 0.5
 
-        # Construct full Q matrix from stored Givens rotations
-        Q = np.eye(A.shape[0])
-        for i in range(A.shape[0] - 1):
-            R = np.array(
-                [
-                    [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
-                    [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
-                ]
+        if np.abs(d) < toll_equivalence:
+            mu = diag[m] - np.abs(b_m_1)
+        else:
+            mu = a_m - b_m_1 * b_m_1 / (
+                d * (1 + np.sqrt(d * d + b_m_1 * b_m_1) / np.abs(d))
             )
-            Q[:, i : i + 2] = Q[:, i : i + 2] @ R
-        A = A @ Q  # Update A
-        iter += 1
 
-    return np.diag(A), Q
+        x = diag[0] - mu
+        y = off_diag[0]
+
+        for i in range(m):
+            if m > 1:
+                r = np.sqrt(x * x + y * y)
+                c = x / r
+                s = -y / r
+                Matrix_trigonometric[i][0] = c
+                Matrix_trigonometric[i][1] = s
+
+                w = c * x - s * y
+                d = diag[i] - diag[i + 1]
+                z = (2 * c * off_diag[i] + d * s) * s
+                diag[i] -= z
+                diag[i + 1] += z
+                off_diag[i] = d * c * s + (c * c - s * s) * off_diag[i]
+                x = off_diag[i]
+                if i > 0:
+                    off_diag[i - 1] = w
+
+                if i < m - 1:
+                    y = -s * off_diag[i + 1]
+                    off_diag[i + 1] = c * off_diag[i + 1]
+
+            else:
+                if abs(d) < toll_equivalence:
+                    if off_diag[0] * d > 0:
+                        c = np.sqrt(2) / 2
+                        s = -np.sqrt(2) / 2
+                    else:
+                        c = s = np.sqrt(2) / 2
+
+                else:
+                    b_2 = off_diag[0]
+                    if off_diag[0] * d > 0:
+                        x_0 = -np.pi / 4
+                    else:
+                        x_0 = np.pi / 4
+
+                    err_rel = 1
+                    iter_newton = 0
+                    while err_rel > 1e-10 and iter_newton < 1000:
+                        x_new = x_0 - np.cos(x_0) * np.cos(x_0) * (np.tan(x_0) + b_2 / d)
+                        err_rel = np.abs((x_new - x_0) / x_new)
+                        x_0 = x_new
+                        iter_newton += 1
+
+                    c = np.cos(x_new / 2)
+                    s = np.sin(x_new / 2)
+
+                    Matrix_trigonometric[i][0] = c
+                    Matrix_trigonometric[i][1] = s
+
+                    a_0 = diag[0]
+                    b_1 = off_diag[0]
+
+                    off_diag[0] = 0  # c * s * (a_0 - diag[1]) + b_1 * (c * c - s * s)
+                    diag[0] = c * c * a_0 + s * s * diag[1] - 2 * s * c * b_1
+                    diag[1] = c * c * diag[1] + s * s * a_0 + 2 * s * c * b_1
+
+        # Uncomment to compute the eigenvalue
+        #Q[:, :m] = Q[:, :m] @ Matrix_trigonometric[:m, :]
+
+        iter += 1
+        if abs(off_diag[m - 1]) < tol * (np.abs(diag[m]) + np.abs(diag[m - 1])):
+            m -= 1
+
+    return diag, Q
+
+
+@profile
+def QR(A, q0=None, tol=1e-8, max_iter=100):
+    """
+    Compute the eigenvalues of a square matrix using the QR algorithm.
+    Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
+    algorithm to compute the eigenvalues.
+
+    Args:
+        A (np.ndarray): A square matrix whose eigenvalues are to be computed.
+        q0 (np.ndarray, optional): An initial vector for the Lanczos process. If None, a random vector is used.
+        tol (float, optional): Convergence tolerance for the QR algorithm. Default is 1e-8
+        max_iter (int, optional): Maximum number of iterations for the QR algorithm. Deault is 100.
+
+    Returns:
+        tuple: A tuple (eigenvalues, Q) where:
+            - eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix.
+            - Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.
+
+    Raises:
+        ValueError: If the input matrix is not square.
+    """
+    _, alpha, beta = Lanczos_PRO(A, q=q0, m=None, toll=1e-8)
+    alpha = np.array(alpha)
+    beta = np.array(beta)
+    return QR_method(alpha, beta, tol=tol, max_iter=max_iter)
