@@ -121,20 +121,22 @@ def test_cupy(size, density):
 
 @pytest.mark.parametrize("size", sizes)
 def test_Lanczos(size):
-    matrix = sp.random(size, size, density=0.3, format="csr")
-    matrix = make_symmetric(matrix)
-
+    A = np.random.rand(size, size)
+    A = (A + A.T) / 2
+    A = np.array(A, dtype=float)
+    q = np.random.rand(size)
+    # matrix =np.array(matrix, dtype=np.float64)
     random_vector = np.random.rand(size)
 
-    _, alpha, beta = Lanczos_PRO(matrix, random_vector)
+    _, alpha, beta = Lanczos_PRO(A, random_vector)
 
     T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
 
     EigVal_T = np.linalg.eig(T)[0]
     EigVect_T = np.linalg.eig(T)[1]
 
-    EigVal_A = np.linalg.eig(matrix.toarray())[0]
-    EigVect_A = np.linalg.eig(matrix.toarray())[1]
+    EigVal_A = np.linalg.eig(A)[0]
+    EigVect_A = np.linalg.eig(A)[1]
 
     EigVal_A = np.sort(EigVal_A)
     EigVal_T = np.sort(EigVal_T)

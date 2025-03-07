@@ -13,6 +13,7 @@ import cupy as cp
 # cp.cuda.Device(0)
 import cupy.linalg as cpla
 from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
+from numba import jit
 
 
 @profile
@@ -195,6 +196,8 @@ def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
     return x @ A @ x
 
 
+
+@jit(nopython=True)
 def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
     r"""
     Perform the Lanczos algorithm for symmetric matrices.
@@ -228,35 +231,40 @@ def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
     if A.shape[0] != q.shape[0]:
         raise ValueError("Input vector q must have the same size as the matrix A.")
 
+    if np.any(A != A.T):
+        raise ValueError("Input matrix A must be symmetric.")
+
     q = q / np.linalg.norm(q)
-    Q = np.array([q])
+    # Q=np.array([q])
+    Q = np.zeros((m, A.shape[0]))
+    Q[0] = q
     r = A @ q
     alpha = []
     beta = []
     alpha.append(q @ r)
     r = r - alpha[0] * q
     beta.append(np.linalg.norm(r))
-    count = 0
+
     for j in range(1, m):
         q = r / beta[j - 1]
-        for q_basis in Q[:-1]:
-            if np.abs(q @ q_basis) > toll:
-                for q_bbasis in Q[:-1]:
-                    q = q - (q @ q_bbasis) * q_bbasis
-                    count += 1
-                break
+        if np.any(np.abs(q @ Q[: j - 1].T) > toll):
+            for q_bbasis in Q[: j - 1]:
+                q = q - (q @ q_bbasis) * q_bbasis
+
         q = q / np.linalg.norm(q)
-        Q = np.vstack((Q, q))
+        Q[j] = q
         r = A @ q - beta[j - 1] * Q[j - 1]
         alpha.append(q @ r)
         r = r - alpha[j] * q
         beta.append(np.linalg.norm(r))
 
         if np.abs(beta[j]) < 1e-15:
+
             return Q, alpha, beta[:-1]
     return Q, alpha, beta[:-1]
 
 
+@jit(nopython=True)
 def QR_method(A_copy, tol=1e-10, max_iter=100):
     """
     Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
@@ -279,43 +287,44 @@ def QR_method(A_copy, tol=1e-10, max_iter=100):
         ValueError: If the input matrix A_copy is not square.
     """
 
-    A = A_copy.copy()
-    A = np.array(A)
-    iter = 0
-    Q = np.array([])
+    if A_copy.shape[0] != A_copy.shape[1]:
+        raise ValueError("Input matrix A_copy must be square.")
 
-    while np.linalg.norm(np.diag(A, -1), np.inf) > tol and iter < max_iter:
-        Matrix_trigonometry = np.array([])
+    if np.any(np.tril(A_copy, -2) != 0) or np.any(np.triu(A_copy, 2) != 0):
+        raise ValueError("Input matrix A_copy must be tridiagonal.")
+
+    A = A_copy.copy()
+    iter = 0
+    Q = np.eye(A.shape[0])
+
+    # Correctly preallocate as a 2D array (n-1, 2)
+    Matrix_trigonometry = np.zeros((A.shape[0] - 1, 2))
+    # d=np.zeros(A.shape[0])
+    while np.linalg.norm((np.diag(A, -1)), np.inf) > tol and iter < max_iter:
+        # while np.linalg.norm((np.diag(A, 0)-d)/np.diag(A, 0), np.inf) > tol and iter < max_iter:
+        # Compute Givens rotation
+        # d=np.diag(A, 0)
         for i in range(A.shape[0] - 1):
             c = A[i, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
             s = -A[i + 1, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
-            Matrix_trigonometry = (
-                np.vstack((Matrix_trigonometry, [c, s]))
-                if Matrix_trigonometry.size
-                else np.array([[c, s]])
-            )
+            Matrix_trigonometry[i, :] = [c, s]
 
+            # Apply the Givens rotation to A (modify in place)
             R = np.array([[c, -s], [s, c]])
-            A[i : i + 2, i : i + 3] = R @ A[i : i + 2, i : i + 3]
+            A[i : i + 2, i:] = R @ A[i : i + 2, i:]
             A[i + 1, i] = 0
+
+        # Construct full Q matrix from stored Givens rotations
         Q = np.eye(A.shape[0])
-        i = 0
-        Q[0:2, 0:2] = np.array(
-            [
-                [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
-                [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
-            ]
-        )
-        for i in range(1, A.shape[0] - 1):
-            R = np.eye(A.shape[0])
-            R[i : i + 2, i : i + 2] = np.array(
+        for i in range(A.shape[0] - 1):
+            R = np.array(
                 [
                     [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
                     [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
                 ]
             )
-            Q = Q @ R
-        A = A @ Q
+            Q[:, i : i + 2] = Q[:, i : i + 2] @ R
+        A = A @ Q  # Update A
         iter += 1
 
     return np.diag(A), Q
