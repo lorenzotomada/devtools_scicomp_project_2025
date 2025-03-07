@@ -33,7 +33,6 @@ def check_square_matrix(A):
         raise ValueError("Matrix must be square!")
 
 
-@profile
 def make_symmetric(A):
     """
     Ensures the input matrix is symmetric by averaging it with its transpose.
