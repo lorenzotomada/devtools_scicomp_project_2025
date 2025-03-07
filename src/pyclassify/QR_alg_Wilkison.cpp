@@ -6,6 +6,130 @@
 #include <array>
 #include <iomanip>
 #include <chrono>
+#include <future>
+#include <algorithm>
+#include <numeric>
+
+std::vector<std::vector<double>> 
+GivensProduct(const std::vector<std::array<double, 2>>& Matrix_trigonometric,
+              unsigned int start,
+              unsigned int end,
+              unsigned int n)
+{
+    // Create identity matrix Q of size n x n.
+    std::vector<std::vector<double>> Q(n, std::vector<double>(n, 0.0));
+    for (unsigned int row = 0; row < n; ++row) {
+        Q[row][row] = 1.0;
+    }
+
+    // For each rotation from start to end-1, update columns i and i+1.
+    for (unsigned int i = start; i < end; ++i)
+    {
+        double c = Matrix_trigonometric[i][0];
+        double s = Matrix_trigonometric[i][1];
+
+        // Rotate columns i and i+1 in Q (parallelizing over rows)
+        #pragma omp parallel for
+        for (int row = start; row < i+2; ++row)
+        {
+            double tmp = Q[row][i];
+            Q[row][i]   = c * tmp - s * Q[row][i + 1];
+            Q[row][i+1] = s * tmp + c * Q[row][i + 1];
+        }
+    }
+    return Q;
+}
+
+void operator/=(std::vector<double> & x, const double scale_factor){
+    std::for_each(x.begin(), x.end(), [scale_factor](double element){return element/scale_factor;});
+}
+std::vector<double> operator/(const std::vector<double> & x, const double scale_factor){
+    std::vector<double> z;
+    std::transform(x.cbegin(), x.cend(), std::front_inserter(z), [scale_factor](double element){return element/scale_factor;});
+    return z;
+}
+std::vector<double> operator*(std::vector<double> & x, const double scale_factor){
+    std::for_each(x.begin(), x.end(), [scale_factor](double element){return element*scale_factor;});
+    return x;
+}
+
+double norm_2(std::vector<double> & x){
+    double sum=std::accumulate(x.begin(), x.end(), 0, [](double a, double b) { return a + b*b; });
+    return std::sqrt(sum);
+}
+void operator-=(std::vector<double> & x, const std::vector<double>& y){
+    std::transform(x.begin(), x.end(), y.begin(), x.begin(), std::minus<double>());
+}
+std::vector<double> operator-(std::vector<double> & x, const std::vector<double>& y){
+    std::vector<double> z;
+    std::transform(x.begin(), x.end(), y.begin(), std::front_inserter(z), std::minus<double>());
+    return z;
+}
+std::vector<double> operator*(const std::vector<std::vector<double>> & A, const std::vector<double> & b){
+    std::vector<double> x(A.size(), 0);
+
+    // Parallelize this  loop
+    for(unsigned int i=0; i<A.size(); ++i){
+        x[i]=std::inner_product(A[i].begin(), A[i].end(), b.begin(), 0);
+    }
+    return x;
+}
+
+double operator*(const std::vector<double> & x, const std::vector<double> & y){
+
+    return std::inner_product(x.cbegin(), x.cend(), y.cbegin(), 0);
+
+}
+
+void Lanczos_PRO(std::vector<std::vector<double>> A, std::vector<double> q, const unsigned int m, const double toll=1e-6){
+
+    q/=norm_2(q);    
+    std::vector<std::vector<double>> Q{q};
+
+    std::vector<double> r=A*q;
+
+    std::vector<double> alpha, beta;
+
+    alpha.push_back(q*r);
+    r=r-q*alpha[0];
+
+    beta.push_back(norm_2(r));
+    std::vector<double> res;
+
+    for (unsigned int j = 1; j < m; j++)
+    {
+        q= r/beta[j-1];
+        res= Q*q;
+
+        for(auto const ele: res){
+            if(std::abs(ele)>toll){
+                
+                for(unsigned int i=0;i<Q.size(); ++i){
+                    double h=(q*Q[i]);
+                    q=q-Q[i]*h;
+                }
+                break;
+            }
+        }
+        q/=norm_2(q);
+        Q.push_back(q);
+        r=A*q-(Q[j-1]*beta[j-1]); 
+        alpha.push_back(q * r);
+        r = r -  q *alpha[j];
+        beta.push_back(norm_2(r));
+
+        if (std::abs(beta[j]) < 1e-15){
+
+        }
+
+            return Q, alpha, beta[:-1]    
+
+
+    }
+    
+
+
+}
 
 
 //std::pair<std::vector<double>, std::vector<std::vector<double>> > 
@@ -122,14 +246,31 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
       
         }
 
+
+
+
         //Uncomment to compute the eigenvalue
-        // for(unsigned int i=0; i<n-1; i++){
-        //     for(unsigned j=0; j<n;j++){
-        //         tmp=Q[j][i];
-        //         Q[j][i]=tmp*Matrix_trigonometric[i][0]-Q[j][i+1]*Matrix_trigonometric[i][1];
-        //         Q[j][i+1]=tmp*Matrix_trigonometric[i][1]+Q[j][i+1]*Matrix_trigonometric[i][0];
-        //     }
-        // }
+        for(unsigned int i=0; i<n-1; i++){
+            for(unsigned j=0; j<n;j++){
+                tmp=Q[j][i];
+                Q[j][i]=tmp*Matrix_trigonometric[i][0]-Q[j][i+1]*Matrix_trigonometric[i][1];
+                Q[j][i+1]=tmp*Matrix_trigonometric[i][1]+Q[j][i+1]*Matrix_trigonometric[i][0];
+            }
+        }
+    
+
+        unsigned int n_processor, delta_i=n/n_processor;
+        std::future<std::vector<std::vector<double>>> future1 = std::async(std::launch::async, GivensProduct, Matrix_trigonometric, 0, 250 - 1, 500);
+        std::future<std::vector<std::vector<double>>> future2 = std::async(std::launch::async, GivensProduct, Matrix_trigonometric, 250, 500 - 1 ,500);
+
+        std::vector<  std::future<std::vector<std::vector<double>>> > vector_thread;
+        std::vector <unsigned int> index;
+        for(unsigned int i=0;i<n_processor;i++){
+            index.push_back(i*delta_i);
+        }
+
+        index.push_back(n-1);
+
         iter++;
         if ( std::abs(off_diag[m-1]) < toll*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
         {
