@@ -55,5 +55,8 @@ biggest_eigenvalue_sp = eigs_sp[index_sp]
 biggest_eigenvalue_cp = eigs_cp[index_cp]
 
 biggest_eigenvalue_pm = power_method(matrix)
-biggest_eigenvalue_pm_numba = power_method_numba(matrix.toarray())
+# biggest_eigenvalue_pm_numba = power_method_numba(matrix.toarray())
 biggest_eigenvalue_cp = power_method_cp(cp_symm_matrix)
+
+_, __ = QR(A)
+_, __ = QR_cp(A)

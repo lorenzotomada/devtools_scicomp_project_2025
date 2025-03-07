@@ -41,7 +41,7 @@ tol=0.0001
 max_iter=1000
 
 
-for dim in 100 500 1000; do
+for dim in 100 500 1000 5000; do
     echo "d: $dim" # for readability
     echo "dim: $dim" > experiments/config.yaml    
     echo "density: $density" >> experiments/config.yaml
