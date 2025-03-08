@@ -50,22 +50,15 @@ Stay tuned!</p>
 <li class="toctree-l1"><a class="reference internal" href="pyclassify.html">PyClassify Module Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pyclassify.html#module-pyclassify">Functions:</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.Lanczos_PRO"><code class="docutils literal notranslate"><span class="pre">Lanczos_PRO()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.Lanczos_PRO_cp"><code class="docutils literal notranslate"><span class="pre">Lanczos_PRO_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.QR"><code class="docutils literal notranslate"><span class="pre">QR()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.QR_cp"><code class="docutils literal notranslate"><span class="pre">QR_cp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.QR_method"><code class="docutils literal notranslate"><span class="pre">QR_method()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.QR_method_cp"><code class="docutils literal notranslate"><span class="pre">QR_method_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.eigenvalues_cp"><code class="docutils literal notranslate"><span class="pre">eigenvalues_cp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.eigenvalues_np"><code class="docutils literal notranslate"><span class="pre">eigenvalues_np()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.eigenvalues_sp"><code class="docutils literal notranslate"><span class="pre">eigenvalues_sp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.power_method"><code class="docutils literal notranslate"><span class="pre">power_method()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.power_method_cp"><code class="docutils literal notranslate"><span class="pre">power_method_cp()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.power_method_numba"><code class="docutils literal notranslate"><span class="pre">power_method_numba()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="pyclassify.html#module-pyclassify.utils">Submodule: utils</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.utils.check_square_matrix"><code class="docutils literal notranslate"><span class="pre">check_square_matrix()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.utils.check_symm_square"><code class="docutils literal notranslate"><span class="pre">check_symm_square()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.utils.check_A_square_matrix"><code class="docutils literal notranslate"><span class="pre">check_A_square_matrix()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.utils.make_symmetric"><code class="docutils literal notranslate"><span class="pre">make_symmetric()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.utils.power_method_numba_helper"><code class="docutils literal notranslate"><span class="pre">power_method_numba_helper()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyclassify.html#pyclassify.utils.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
@@ -78,11 +71,11 @@ Stay tuned!</p>
 <h1>Module Documentation<a class="headerlink" href="#module-documentation" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
-<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
-equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
-eigenvalues and eigenvectors of large symmetric matrices.</p>
+<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that A ≈ Q * T * Q.T,
+where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+of large symmetric matrices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -90,7 +83,7 @@ eigenvalues and eigenvectors of large symmetric matrices.</p>
 <li><p><strong>q</strong> (<em>np.ndarray</em>) – Initial vector of size n.</p></li>
 <li><p><strong>m</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of eigenvalues to compute. Must be less than or equal to n.
 If None, defaults to the size of A.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
+<li><p><strong>toll</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -115,60 +108,23 @@ If None, defaults to the size of A.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">Lanczos_PRO_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
-<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
-equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
-eigenvalues and eigenvectors of large symmetric matrices.</p>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A_copy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.</p>
+<p>This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
+The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
+of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>cp.ndarray</em><em> or </em><em>cpsp.spmatrix</em>) – A symmetric square matrix of size n x n.</p></li>
-<li><p><strong>q</strong> (<em>cp.ndarray</em>) – Initial vector of size n.</p></li>
-<li><p><strong>m</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of eigenvalues to compute. Must be less than or equal to n.
-If None, defaults to the size of A.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (Q, alpha, beta) where:</dt><dd><ul class="simple">
-<li><p>Q (cp.ndarray): Orthogonal matrix of size n x m.</p></li>
-<li><p>alpha (cp.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.</p></li>
-<li><p>beta (cp.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A is not square or if m is greater than the size of A.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Compute the eigenvalues of a square matrix using the QR algorithm.
-Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
-algorithm to compute the eigenvalues.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>np.ndarray</em>) – A square matrix whose eigenvalues are to be computed.</p></li>
-<li><p><strong>q0</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – An initial vector for the Lanczos process. If None, a random vector is used.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Convergence tolerance for the QR algorithm. Default is 1e-8</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations for the QR algorithm. Deault is 100.</p></li>
+<li><p><strong>A_copy</strong> (<em>np.ndarray</em>) – Atridiagonal matrix whose eigenvalues are to be computed.</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the off-diagonal elements (default is 1e-10).</p></li>
+<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 100).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
-<li><p>eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix.</p></li>
+<li><p>eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix <cite>A_copy</cite>.</p></li>
 <li><p>Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
 </ul>
 </dd>
@@ -179,138 +135,7 @@ algorithm to compute the eigenvalues.</p>
 <dd class="field-odd"><p>tuple</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix is not square.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Compute the eigenvalues of a square matrix using the QR algorithm.
-Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
-algorithm to compute the eigenvalues.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>cp.ndarray</em><em> or </em><em>cpsp.spmatrix</em>) – A square matrix whose eigenvalues are to be computed.</p></li>
-<li><p><strong>q0</strong> (<em>cp.ndarray</em><em>, </em><em>optional</em>) – An initial vector for the Lanczos process. If None, a random vector is used.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Convergence tolerance for the QR algorithm. Default is 1e-8</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations for the QR algorithm. Deault is 100.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
-<li><p>eigenvalues (cp.ndarray): An array containing the eigenvalues of the matrix.</p></li>
-<li><p>Q (cp.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix is not square.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.</p>
-<p>This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
-The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
-of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>diag</strong> (<em>np.ndarray</em>) – Diagonal elements of the tridiagonal matrix.</p></li>
-<li><p><strong>off_diag</strong> (<em>np.ndarray</em>) – Off-diagonal elements of the tridiagonal matrix.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the off-diagonal elements (default is 1e-10).</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 100).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
-<li><p>eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix.</p></li>
-<li><p>Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix is not square.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_method_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.</p>
-<p>This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
-The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
-of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>diag</strong> (<em>cp.ndarray</em>) – Diagonal elements of the tridiagonal matrix.</p></li>
-<li><p><strong>off_diag</strong> (<em>cp.ndarray</em>) – Off-diagonal elements of the tridiagonal matrix.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the off-diagonal elements (default is 1e-10).</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 100).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
-<li><p>eigenvalues (cp.ndarray): An array containing the eigenvalues of the matrix.</p></li>
-<li><p>Q (cp.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix is not square.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Compute the eigenvalues of a sparse matrix using CuPy’s <cite>eigsh</cite> function.</p>
-<p>This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
-CuPy’s sparse linear algebra solvers. It uses <cite>eigsh</cite> for more efficient computation.
-Remark that the eigsh function in this case does not allow to compute <em>all</em> the eigenvalues, but only a number
-m&lt;n, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>cpsp.spmatrix</em>) – A square sparse matrix whose eigenvalues are to be computed.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An array containing the eigenvalues of the sparse matrix <cite>A</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a CuPy sparse symmetric matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A_copy is not square.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -319,7 +144,7 @@ m&lt;n, so here just a reduced portion is computed (starting form the ones which
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Compute the eigenvalues of a square matrix using NumPy’s <cite>eig</cite> or <cite>eigh</cite> function.</p>
-<p>This function checks if the input matrix is square (and is actually a matrix) using ‘check_square_matrix’, and then computes its eigenvalues.
+<p>This function checks if the input matrix is square (and is actually a matrix) using ‘check_A_square_matrix’, and then computes its eigenvalues.
 If the matrix is symmetric, it uses <cite>eigh</cite> (which is more efficient for symmetric matrices).
 Otherwise, it uses <cite>eig</cite>.</p>
 <dl class="field-list simple">
@@ -383,7 +208,7 @@ If False, uses <cite>eigs</cite> for general matrices (default is True).</p></li
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em><em> or </em><em>cpsp.spmatrix</em>) – A square matrix whose dominant eigenvalue is to be computed.</p></li>
+<li><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – A square matrix whose dominant eigenvalue is to be computed.</p></li>
 <li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 500).</p></li>
 <li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between iterations
 (default is 1e-4).</p></li>
@@ -407,36 +232,7 @@ If False, uses <cite>eigs</cite> for general matrices (default is True).</p></li
 
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Compute the dominant eigenvalue of a square matrix using the power method.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>cp.spmatrix</em>) – A square matrix whose dominant eigenvalue is to be computed.</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 500).</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between iterations
-(default is 1e-4).</p></li>
-<li><p><strong>x</strong> (<em>cp.ndarray</em><em>, </em><em>optional</em>) – Initial guess for the eigenvector. If None, a random vector is generated.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The approximated dominant eigenvalue of the matrix <cite>A</cite>, computed as the Rayleigh quotient x &#64; A &#64; x.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Compute the dominant eigenvalue of a matrix using the power method, with Numba optimization.</p>
 <p>This function wraps the <cite>power_method</cite> function and applies Numba’s Just-In-Time (JIT) compilation
 to optimize the performance of the power method for large matrices. The function leverages the
