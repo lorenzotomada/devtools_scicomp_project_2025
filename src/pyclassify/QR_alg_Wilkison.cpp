@@ -174,6 +174,8 @@ void print_matrix(const std::vector<std::vector<double> > & Q){
         std::cout<<"\n";
     }
 
+    std::cout<<"------------------------------------------------" <<"\n";
+
 }
 
 
@@ -320,84 +322,29 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
             for(j=0; j<n;j=j+5){
                 tmp=Q[i][j];
-                Q_posterior[i][j]=tmp*c-Q[i+1][j]*s;
+                Q[i][j]=tmp*c-Q[i+1][j]*s;
                 Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
                 tmp=Q[i][j+1];
-                Q_posterior[i][j+1]=tmp*c-Q[i+1][j+1]*s;
-                Q_posterior[i+1][j+1]=tmp*s+Q[i+1][j+1]*c;
+                Q[i][j+1]=tmp*c-Q[i+1][j+1]*s;
+                Q[i+1][j+1]=tmp*s+Q[i+1][j+1]*c;
                 tmp=Q[i][j+2];
-                Q_posterior[i][j+2]=tmp*c-Q[i+1][j+2]*s;
-                Q_posterior[i+1][j+2]=tmp*s+Q[i+1][j+2]*c;
+                Q[i][j+2]=tmp*c-Q[i+1][j+2]*s;
+                Q[i+1][j+2]=tmp*s+Q[i+1][j+2]*c;
                 tmp=Q[i][j+3];
-                Q_posterior[i][j+3]=tmp*c-Q[i+1][j+3]*s;
-                Q_posterior[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;
+                Q[i][j+3]=tmp*c-Q[i+1][j+3]*s;
+                Q[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;
                 tmp=Q[i][j+4];
-                Q_posterior[i][j+4]=tmp*c-Q[i+1][j+4]*s;
-                Q_posterior[i+1][j+4]=tmp*s+Q[i+1][j+4]*c;
+                Q[i][j+4]=tmp*c-Q[i+1][j+4]*s;
+                Q[i+1][j+4]=tmp*s+Q[i+1][j+4]*c;
             }
             for(; j < n; j++)
             {
                 tmp=Q[i][j];
-                Q_posterior[i][j]=tmp*c-Q[i+1][j]*s;
-                Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
+                Q[i][j]=tmp*c-Q[i+1][j]*s;
+                Q[i+1][j]=tmp*s+Q[i+1][j]*c;
             }
             
         }
-
-        std::swap(Q, Q_posterior); 
-
-    
-    //     for(unsigned int i=0;i<n_processor; i++){
-    //         vector_thread[i] = std::async(std::launch::async, Mat_Mat_mul, std::vector<std::array<double, 2>> (Matrix_trigonometric.begin()+index[i], Matrix_trigonometric.begin() + index[i+1]), Q, Q_posterior, index[i], index[i+1], n);
-    //     }
-    //     std::vector< std::vector<std::vector<double>>> G_i(n_processor);
-
-    //     for(unsigned int i=0;i<n_processor; i++){
-    //         G_i[i] = vector_thread[i].get();;
-    //     }
-
-    //     std::vector<double> last_col;
-
-        
-    //     for(unsigned int i=0; i<index[1]+1; i++){
-    //         R[i]=G_i[0][i];
-    //     }
-
-        
-    //     for(unsigned int i=1; i<n_processor; i++){
-    //         last_col=R[index[i]];
-
-    //         #pragma omp parallel for
-    //         for (unsigned int  j = index[i]; j < index[i+1]+1;j++)
-    //         {
-    //             R[j]=last_col*G_i[i][j-index[i]][0];
-    //             std::copy(G_i[i][j-index[i]].begin()+1, G_i[i][j-index[i]].end(), std::back_inserter(R[j]));
-    //         }
-
-    //     }
-
-
-    //     double prod=0;
-
-    //     #pragma omp parallel for collapse(2) 
-    //     for (unsigned int i = 0; i < n; i=i+4) {
-    //         for (unsigned int j = 0; j < n; j++) {
-    //             double prod0 = 0.0, prod1=0, prod2=0, prod3=0;  // local accumulator for each (i,j) pair
-    //             for (unsigned int k = 0; k < std::min(j + 2, n); k++) {
-    //                 prod0 += Q[i][k] * R[j][k];
-    //                 prod2 += Q[i+1][k] * R[j][k];
-    //                 prod3 += Q[i+2][k] * R[j][k];
-    //                 prod3 += Q[i+3][k] * R[j][k];
-    //             }
-    //             Q_posterior[i][j] = prod0;
-    //             Q_posterior[i+1][j] = prod1;
-    //             Q_posterior[i+2][j] = prod2;
-    //             Q_posterior[i+3][j] = prod3;
-    //         }
-
-    //     }
-        
-    //    std::swap(Q, Q_posterior); 
 
         iter++;
         if ( std::abs(off_diag[m-1]) < toll*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
@@ -412,6 +359,7 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
         std::cout<<t<<"\t";
     }
     std::cout<<"\n";
+
 
     
 
