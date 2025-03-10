@@ -173,6 +173,7 @@ void print_matrix(const std::vector<std::vector<double> > & Q){
         }
         std::cout<<"\n";
     }
+    std::cout<<"--------------------------------------------------------"<<"\n";
 
 }
 
@@ -320,31 +321,40 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
             for(j=0; j<n;j=j+5){
                 tmp=Q[i][j];
-                Q_posterior[i][j]=tmp*c-Q[i+1][j]*s;
-                Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
+                Q[i][j]=tmp*c-Q[i+1][j]*s;
+                Q[i+1][j]=tmp*s+Q[i+1][j]*c;
+                //print_matrix(Q_posterior);
                 tmp=Q[i][j+1];
-                Q_posterior[i][j+1]=tmp*c-Q[i+1][j+1]*s;
-                Q_posterior[i+1][j+1]=tmp*s+Q[i+1][j+1]*c;
+                Q[i][j+1]=tmp*c-Q[i+1][j+1]*s;
+                Q[i+1][j+1]=tmp*s+Q[i+1][j+1]*c;
+                //print_matrix(Q_posterior);
                 tmp=Q[i][j+2];
-                Q_posterior[i][j+2]=tmp*c-Q[i+1][j+2]*s;
-                Q_posterior[i+1][j+2]=tmp*s+Q[i+1][j+2]*c;
+                Q[i][j+2]=tmp*c-Q[i+1][j+2]*s;
+                Q[i+1][j+2]=tmp*s+Q[i+1][j+2]*c;
+                //print_matrix(Q_posterior);
                 tmp=Q[i][j+3];
-                Q_posterior[i][j+3]=tmp*c-Q[i+1][j+3]*s;
-                Q_posterior[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;
+                Q[i][j+3]=tmp*c-Q[i+1][j+3]*s;
+                Q[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;
+                //print_matrix(Q_posterior);
                 tmp=Q[i][j+4];
-                Q_posterior[i][j+4]=tmp*c-Q[i+1][j+4]*s;
-                Q_posterior[i+1][j+4]=tmp*s+Q[i+1][j+4]*c;
+                Q[i][j+4]=tmp*c-Q[i+1][j+4]*s;
+                Q[i+1][j+4]=tmp*s+Q[i+1][j+4]*c;
+                //print_matrix(Q_posterior);
             }
             for(; j < n; j++)
             {
                 tmp=Q[i][j];
-                Q_posterior[i][j]=tmp*c-Q[i+1][j]*s;
-                Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
+                Q[i][j]=tmp*c-Q[i+1][j]*s;
+                Q[i+1][j]=tmp*s+Q[i+1][j]*c;
             }
+            
             
         }
 
-        std::swap(Q, Q_posterior); 
+
+
+        //std::swap(Q, Q_posterior); 
+        //print_matrix(Q);
 
     
     //     for(unsigned int i=0;i<n_processor; i++){
@@ -406,12 +416,16 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
         }
     }
 
-    print_matrix(Q);
+    // print_matrix(Q);
 
-    for(const auto t: diag){
-        std::cout<<t<<"\t";
+    // for(const auto t: diag){
+    //     std::cout<<t<<"\t";
+    // }
+    // std::cout<<"\n";
+    if(iter==max_iter){
+        std::cout<<"Converges failed"<<std::endl;
     }
-    std::cout<<"\n";
+    std::cout<<"Iteration: "<<iter<<std::endl;
 
     
 
@@ -420,13 +434,13 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
 int main(){
 
-    std::vector<double> diag(10, 5), offdiag(9, 20);
+    std::vector<double> diag(5000, 5), offdiag(4999, 20);
 
     QR_algorithm(diag, offdiag);
     
     auto start = std::chrono::high_resolution_clock::now();
 
-    QR_algorithm(diag, offdiag);
+    QR_algorithm(diag, offdiag, 1e-8, 50000);
 
     // Capture the end time
     auto end = std::chrono::high_resolution_clock::now();
