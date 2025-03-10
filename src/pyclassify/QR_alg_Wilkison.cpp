@@ -9,6 +9,7 @@
 #include <future>
 #include <algorithm>
 #include <numeric>
+#include <omp.h>
 
 std::vector<std::vector<double>> 
 GivensProduct(const std::vector<std::array<double, 2>> Matrix_trigonometric,
@@ -35,7 +36,6 @@ GivensProduct(const std::vector<std::array<double, 2>> Matrix_trigonometric,
         double c = Matrix_trigonometric[k][0];
         double s = Matrix_trigonometric[k][1];
 
-        #pragma omp parallel for
         for (unsigned int r = 0; r < k + 2; ++r) {
             double tmp = B[k][r];
             B[k][r]   = c * tmp - s * B[k+1][r];
@@ -46,13 +46,34 @@ GivensProduct(const std::vector<std::array<double, 2>> Matrix_trigonometric,
     return B;
 }
 
-void Matrix_matrix_mult(const std::vector<std::vector<double>> &Q, std::vector<std::vector<double>> & Q_posterior, const std::vector<std::vector<double>> &G_i, const unsigned int start, const unsigned int end){
-    for(unsigned int j=start; j<end+1;j++){
-        for(unsigned int i=start; i<end+1;i++){
-            Q_posterior[i][j]= std::inner_product(Q[i].begin(), Q[i].end(), G_i[j].begin(), 0);
-        }
+// Function that processes a block of columns [i_start, i_end)
+void Mat_Mat_mul(const std::vector<std::array<double, 2>>& local_trig,
+    const std::vector<std::vector<double>>& Q,
+    std::vector<std::vector<double>>& Q_posterior,
+    unsigned int i_start, unsigned int i_end,
+    unsigned int n) {
+    // Note: local_trig.size() should equal (i_end - i_start)
+    for (unsigned int i = i_start, local_i = 0; i < i_end; ++i, ++local_i) {
+        // Extract c and s from the local slice
+        double c = local_trig[local_i][0];
+        double s = local_trig[local_i][1];
+
+        // Process the inner loop in blocks of 4
+        for (unsigned int j = 0; j < n; j += 2) {
+            // Block for Q[j][i] and Q[j][i+1]
+            double tmp = Q[j][i];
+            Q_posterior[j][i]   = tmp * c - Q[j][i+1] * s;
+            Q_posterior[j][i+1] = tmp * s + Q[j][i+1] * c;
+
+            // Next block for Q[j+1][i] and Q[j+1][i+1]
+            tmp = Q[j+1][i];
+            Q_posterior[j+1][i]   = tmp * c - Q[j+1][i+1] * s;
+            Q_posterior[j+1][i+1] = tmp * s + Q[j+1][i+1] * c;
+
+    }
     }
 }
+
 // void operator/=(std::vector<double> & x, const double scale_factor){
 //     std::for_each(x.begin(), x.end(), [scale_factor](double element){return element/scale_factor;});
 // }
@@ -61,10 +82,10 @@ void Matrix_matrix_mult(const std::vector<std::vector<double>> &Q, std::vector<s
 //     std::transform(x.cbegin(), x.cend(), std::front_inserter(z), [scale_factor](double element){return element/scale_factor;});
 //     return z;
 // }
-// std::vector<double> operator*(std::vector<double> & x, const double scale_factor){
-//     std::for_each(x.begin(), x.end(), [scale_factor](double element){return element*scale_factor;});
-//     return x;
-// }
+std::vector<double> operator*(std::vector<double> & x, const double scale_factor){
+    std::for_each(x.begin(), x.end(), [scale_factor](double element){return element*scale_factor;});
+    return x;
+}
 
 // double norm_2(std::vector<double> & x){
 //     double sum=std::accumulate(x.begin(), x.end(), 0, [](double a, double b) { return a + b*b; });
@@ -145,13 +166,23 @@ void Matrix_matrix_mult(const std::vector<std::vector<double>> &Q, std::vector<s
 
 // }
 
+void print_matrix(const std::vector<std::vector<double> > & Q){
+    for(unsigned int i=0; i<Q.size(); i++){
+        for(unsigned j=0; j<Q.size(); j++){
+            std::cout<<std::setw(10)<<Q[j][i];
+        }
+        std::cout<<"\n";
+    }
+
+}
+
 
 //std::pair<std::vector<double>, std::vector<std::vector<double>> > 
 void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double toll=1e-8, const unsigned int max_iter=1000){
 
     const unsigned int n = diag.size();
 
-    std::vector<std::vector<double>> Q(n, std::vector<double>(n, 0)), Q_posterior(n, std::vector<double>(n, 0));
+    std::vector<std::vector<double>> Q(n, std::vector<double>(n, 0)), Q_posterior(n, std::vector<double>(n, 0)), R(n);
 
     for(unsigned int i = 0; i < n; i++){
         Q[i][i] = 1;
@@ -168,23 +199,27 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
     double a_m=0, b_m_1=0;
     double tmp=0;
     double x=0, y=0;
-    int m=n-1;
+    unsigned int m=n-1;
     double toll_equivalence=1e-10;
     double w=0, z=0;
 
 
-    unsigned int n_processor=8, delta_i=n/n_processor;
-    // // std::future<std::vector<std::vector<double>>> future1 = std::async(std::launch::async, GivensProduct, Matrix_trigonometric, 0, 250, 500);
-    // // std::future<std::vector<std::vector<double>>> future2 = std::async(std::launch::async, GivensProduct, Matrix_trigonometric, 250, 500 - 1 ,500);
+    // unsigned int n_processor=8, delta_i=n/n_processor;
+    // // // std::future<std::vector<std::vector<double>>> future1 = std::async(std::launch::async, GivensProduct, Matrix_trigonometric, 0, 250, 500);
+    // // // std::future<std::vector<std::vector<double>>> future2 = std::async(std::launch::async, GivensProduct, Matrix_trigonometric, 250, 500 - 1 ,500);
 
-    std::vector<  std::future<std::vector<std::vector<double>>> > vector_thread(n_processor);
-    std::vector <unsigned int> index;
+    // std::vector<  std::future<std::vector<std::vector<double>>> > vector_thread(n_processor);
+    // std::vector <unsigned int> index;
+
+    // std::vector<  std::future< void > > vec_matrix_mult(n_processor);
     
-    for(unsigned int i=0;i<n_processor;i++){
-        index.push_back(i*delta_i);
-    }
+    // for(unsigned int i=0;i<n_processor;i++){
+    //     index.push_back(i*delta_i);
+    // }
 
-    index.push_back(n-1);
+    // index.push_back(n-1);
+
+    // std::vector<double> line0(n), line1(n), line3(n), line2(n);
 
     while (iter<max_iter && m>0)
     {
@@ -276,26 +311,93 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
 
 
+        unsigned j;
+        //Uncomment to compute the eigenvalue
+        #pragma omp parallel for//collapse(2) 
+        for(unsigned int i=0; i<n-1; i++){
+            c=Matrix_trigonometric[i][0];
+            s=Matrix_trigonometric[i][1];
 
-        // //Uncomment to compute the eigenvalue
-        // for(unsigned int i=0; i<n-1; i++){
-        //     for(unsigned j=0; j<n;j++){
-        //         tmp=Q[j][i];
-        //         Q[j][i]=tmp*Matrix_trigonometric[i][0]-Q[j][i+1]*Matrix_trigonometric[i][1];
-        //         Q[j][i+1]=tmp*Matrix_trigonometric[i][1]+Q[j][i+1]*Matrix_trigonometric[i][0];
-        //     }
-        // }
+            for(j=0; j<n;j=j+5){
+                tmp=Q[i][j];
+                Q_posterior[i][j]=tmp*c-Q[i+1][j]*s;
+                Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
+                tmp=Q[i][j+1];
+                Q_posterior[i][j+1]=tmp*c-Q[i+1][j+1]*s;
+                Q_posterior[i+1][j+1]=tmp*s+Q[i+1][j+1]*c;
+                tmp=Q[i][j+2];
+                Q_posterior[i][j+2]=tmp*c-Q[i+1][j+2]*s;
+                Q_posterior[i+1][j+2]=tmp*s+Q[i+1][j+2]*c;
+                tmp=Q[i][j+3];
+                Q_posterior[i][j+3]=tmp*c-Q[i+1][j+3]*s;
+                Q_posterior[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;
+                tmp=Q[i][j+4];
+                Q_posterior[i][j+4]=tmp*c-Q[i+1][j+4]*s;
+                Q_posterior[i+1][j+4]=tmp*s+Q[i+1][j+4]*c;
+            }
+            for(; j < n; j++)
+            {
+                tmp=Q[i][j];
+                Q_posterior[i][j]=tmp*c-Q[i+1][j]*s;
+                Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
+            }
+            
+        }
+
+        std::swap(Q, Q_posterior); 
+
     
-        for(unsigned int i=0;i<n_processor; i++){
-            vector_thread[i] = std::async(std::launch::async, GivensProduct, std::vector<std::array<double, 2>> (Matrix_trigonometric.begin()+index[i], Matrix_trigonometric.begin() + index[i+1]), index[i], index[i+1], n);
-        }
-        std::vector< std::vector<std::vector<double>>> G_i(n_processor);
+    //     for(unsigned int i=0;i<n_processor; i++){
+    //         vector_thread[i] = std::async(std::launch::async, Mat_Mat_mul, std::vector<std::array<double, 2>> (Matrix_trigonometric.begin()+index[i], Matrix_trigonometric.begin() + index[i+1]), Q, Q_posterior, index[i], index[i+1], n);
+    //     }
+    //     std::vector< std::vector<std::vector<double>>> G_i(n_processor);
 
-        for(unsigned int i=0;i<n_processor; i++){
-            G_i[i] = vector_thread[i].get();;
-        }
+    //     for(unsigned int i=0;i<n_processor; i++){
+    //         G_i[i] = vector_thread[i].get();;
+    //     }
+
+    //     std::vector<double> last_col;
+
+        
+    //     for(unsigned int i=0; i<index[1]+1; i++){
+    //         R[i]=G_i[0][i];
+    //     }
+
+        
+    //     for(unsigned int i=1; i<n_processor; i++){
+    //         last_col=R[index[i]];
+
+    //         #pragma omp parallel for
+    //         for (unsigned int  j = index[i]; j < index[i+1]+1;j++)
+    //         {
+    //             R[j]=last_col*G_i[i][j-index[i]][0];
+    //             std::copy(G_i[i][j-index[i]].begin()+1, G_i[i][j-index[i]].end(), std::back_inserter(R[j]));
+    //         }
+
+    //     }
 
 
+    //     double prod=0;
+
+    //     #pragma omp parallel for collapse(2) 
+    //     for (unsigned int i = 0; i < n; i=i+4) {
+    //         for (unsigned int j = 0; j < n; j++) {
+    //             double prod0 = 0.0, prod1=0, prod2=0, prod3=0;  // local accumulator for each (i,j) pair
+    //             for (unsigned int k = 0; k < std::min(j + 2, n); k++) {
+    //                 prod0 += Q[i][k] * R[j][k];
+    //                 prod2 += Q[i+1][k] * R[j][k];
+    //                 prod3 += Q[i+2][k] * R[j][k];
+    //                 prod3 += Q[i+3][k] * R[j][k];
+    //             }
+    //             Q_posterior[i][j] = prod0;
+    //             Q_posterior[i+1][j] = prod1;
+    //             Q_posterior[i+2][j] = prod2;
+    //             Q_posterior[i+3][j] = prod3;
+    //         }
+
+    //     }
+        
+    //    std::swap(Q, Q_posterior); 
 
         iter++;
         if ( std::abs(off_diag[m-1]) < toll*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
@@ -304,7 +406,12 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
         }
     }
 
+    print_matrix(Q);
 
+    for(const auto t: diag){
+        std::cout<<t<<"\t";
+    }
+    std::cout<<"\n";
 
     
 
@@ -313,7 +420,7 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
 int main(){
 
-    std::vector<double> diag(5000, 5), offdiag(4999, 20);
+    std::vector<double> diag(10, 5), offdiag(9, 20);
 
     QR_algorithm(diag, offdiag);
     
