@@ -7,15 +7,23 @@ from pyclassify import (
     power_method,
     power_method_numba,
     power_method_cp,
+    QR,
+    QR_cp,
 )
 from pyclassify.utils import make_symmetric, read_config
 import numpy as np
 import scipy.sparse as sp
 import random
 import argparse
+import cProfile
+import cupyx.profiler as profiler
+import os
+import csv
 
 
 random.seed(226)
+cp.random.seed(226)
+np.random.seed(226)
 
 
 parser = argparse.ArgumentParser()
@@ -40,23 +48,45 @@ matrix = make_symmetric(matrix)
 cp_symm_matrix = cpsp.csr_matrix(matrix)
 
 
-eigs_np = eigenvalues_np(matrix.toarray(), symmetric=True)
-eigs_sp = eigenvalues_sp(matrix, symmetric=True)
-eigs_cp = eigenvalues_cp(cp_symm_matrix)
+logs = "./logs"
+iteration_factor = 300
 
 
-index_np = np.argmax(np.abs(eigs_np))
-index_sp = np.argmax(np.abs(eigs_sp))
-index_cp = np.argmax(np.abs(eigs_cp))
+cProfile.run(
+    "eigenvalues_np(matrix.toarray(), symmetric=True)",
+    os.path.join(logs, f"eigenvalues_np_{dim}.prof"),
+)
+cProfile.run(
+    "eigenvalues_np(matrix, symmetric=True)",
+    os.path.join(logs, f"eigenvalues_sp_{dim}.prof"),
+)
+cProfile.run("power_method(matrix)", os.path.join(logs, f"power_method_{dim}.prof"))
+cProfile.run(
+    "power_method(matrix.toarray())",
+    os.path.join(logs, f"power_method_numba{dim}.prof"),
+)
+cProfile.run(
+    "QR(matrix.toarray(), max_iter=iteration_factor*d)",
+    os.path.join(logs, f"QR_{dim}.prof"),
+)
 
 
-biggest_eigenvalue_np = eigs_np[index_np]
-biggest_eigenvalue_sp = eigs_sp[index_sp]
-biggest_eigenvalue_cp = eigs_cp[index_cp]
+def profile_function(func_name, func, *args, **kwargs):
+    cupyx.profiler.start()
+    result = func(*args, **kwargs)
+    cupyx.profiler.stop()
 
-biggest_eigenvalue_pm = power_method(matrix)
-# biggest_eigenvalue_pm_numba = power_method_numba(matrix.toarray())
-biggest_eigenvalue_cp = power_method_cp(cp_symm_matrix)
+    profiler_data = cupyx.profiler.get_profiler()
 
-_, __ = QR(A)
-_, __ = QR_cp(A)
+    output_file = os.path.join(logs, f"{func_name}_{dim}.prof")
+    with open(output_file, "w") as f:
+        f.write(str(profiler_data))
+
+    elapsed_time = profiler_data[0]["time"]
+    print(f"{func_name}: {elapsed_time/1000} s")
+    return result
+
+
+profile_function("eigenvalues_cp", eigenvalues_cp, cp_symm_matrix)
+profile_function("power_method_cp", power_method_cp, cp_symm_matrix)
+profile_function("QR_cp", QR_cp, cp_symm_matrix, max_iter=iteration_factor * d)

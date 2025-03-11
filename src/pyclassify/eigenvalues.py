@@ -196,7 +196,7 @@ def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
     return x @ A @ x
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def Lanczos_PRO(A, q=None, m=None, tol=1e-8):
     r"""
     Perform the Lanczos algorithm for symmetric matrices.
@@ -267,8 +267,8 @@ def Lanczos_PRO(A, q=None, m=None, tol=1e-8):
     return Q, np.array(alpha), np.array(beta[:-1])
 
 
-@jit(nopython=True)
-def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
+# @jit(nopython=True)
+def QR_method(diag, off_diag, tol=1e-8, max_iter=1000):
     """
     Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
 
@@ -366,6 +366,8 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
                         x_new = x_0 - np.cos(x_0) * np.cos(x_0) * (
                             np.tan(x_0) + b_2 / d
                         )
+                        if np.isclose(x_new, 0):
+                            break
                         err_rel = np.abs((x_new - x_0) / x_new)
                         x_0 = x_new
                         iter_newton += 1
@@ -394,7 +396,7 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=100):
 
 
 @profile
-def QR(A, q0=None, tol=1e-8, max_iter=100):
+def QR(A, q0=None, tol=1e-8, max_iter=1000):
     """
     Compute the eigenvalues of a square matrix using the QR algorithm.
     Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
@@ -480,12 +482,11 @@ def Lanczos_PRO_cp(A, q=None, m=None, tol=1e-8):
         beta.append(cp.linalg.norm(r))
 
         if cp.abs(beta[j]) < 1e-15:
-
-            return cp.array(alpha), cp.array(beta[:-1])
+            return Q, cp.array(alpha), cp.array(beta[:-1])
     return Q, cp.array(alpha), cp.array(beta[:-1])
 
 
-def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=100):
+def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=1000):
     """
     Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
 
@@ -568,7 +569,7 @@ def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=100):
                         s = -cp.sqrt(2) / 2
                     else:
                         c = s = cp.sqrt(2) / 2
-
+                # if off diagonal ... do nothing
                 else:
                     b_2 = off_diag[0]
                     if off_diag[0] * d > 0:
@@ -582,6 +583,8 @@ def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=100):
                         x_new = x_0 - cp.cos(x_0) * cp.cos(x_0) * (
                             cp.tan(x_0) + b_2 / d
                         )
+                        if cp.isclose(cp.linalg.norm(x_new), 0):
+                            break
                         err_rel = cp.abs((x_new - x_0) / x_new)
                         x_0 = x_new
                         iter_newton += 1
@@ -610,7 +613,7 @@ def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=100):
 
 
 @profile
-def QR_cp(A, q0=None, tol=1e-8, max_iter=100):
+def QR_cp(A, q0=None, tol=1e-8, max_iter=1000):
     """
     Compute the eigenvalues of a square matrix using the QR algorithm.
     Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR

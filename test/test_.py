@@ -158,7 +158,7 @@ def test_QR_method(size):
 
 
 @pytest.mark.parametrize("size", sizes)
-def test_qr(size):
+def test_QR(size):
     eig = np.arange(1, size + 1)
     A = np.diag(eig)
     U = scipy.stats.ortho_group.rvs(size)

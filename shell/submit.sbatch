@@ -31,34 +31,24 @@ conda init
 source ~/.bashrc
 conda activate /scratch/ltomada/miniconda3/envs/dtsc
 
-mkdir -p tmp_data experiments logs
-touch tmp_data/timings.csv
+#touch log/timings.csv
 
-export LINE_PROFILE=0
-
-density=0.1
+density=0.2
 tol=0.0001
 max_iter=1000
 
+echo "function,dim,time">logs/timings.csv
 
-for dim in 100 500 1000 5000; do
+for dim in 100 500 1000; do
     echo "d: $dim" # for readability
     echo "dim: $dim" > experiments/config.yaml    
     echo "density: $density" >> experiments/config.yaml
     echo "tol: $tol" >> experiments/config.yaml
     echo "max_iter: $max_iter" >> experiments/config.yaml
 
-    python -m kernprof -l -o tmp_data/profile.dat scripts/run.py --config=experiments/config
+    python scripts/profiling.py
 
-    if [ ! -f tmp_data/timings.csv ]; then
-        echo "dim,function_name,time" > tmp_data/timings.csv
-    fi
-
-    python -m line_profiler -rmt tmp_data/profile.dat | awk -v dim="$dim" '
-        /Function: / {func_name=$2}
-        /Total time:/ {if (func_name != "") print dim, func_name, $3}' OFS=',' >> tmp_data/timings.csv
-
-    echo "dim: $dim - times saved in tmp_data/timings.csv" 
+    echo "dim: $dim - times saved in logs/timings.csv" 
     echo '--------------------------------------------------'
 done
 
