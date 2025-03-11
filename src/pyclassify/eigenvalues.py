@@ -391,7 +391,6 @@ def QR_method(diag, off_diag, tol=1e-8, max_iter=1000):
         iter += 1
         if abs(off_diag[m - 1]) < tol * (np.abs(diag[m]) + np.abs(diag[m - 1])):
             m -= 1
-
     return diag, Q
 
 

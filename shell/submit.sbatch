@@ -46,7 +46,7 @@ for dim in 100 500 1000; do
     echo "tol: $tol" >> experiments/config.yaml
     echo "max_iter: $max_iter" >> experiments/config.yaml
 
-    python scripts/profiling.py
+    python scripts/run.py
 
     echo "dim: $dim - times saved in logs/timings.csv" 
     echo '--------------------------------------------------'

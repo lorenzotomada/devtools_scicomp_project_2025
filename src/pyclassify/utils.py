@@ -5,10 +5,11 @@ import cupyx.scipy.sparse as cpsp
 import numba
 import os
 import yaml
-from line_profiler import profile
 
-
-# from numba.pycc import CC
+# from line_profiler import profile
+import cProfile
+import cupyx.profiler as profiler
+import csv
 
 
 def check_square_matrix(A):
@@ -136,3 +137,50 @@ def read_config(file: str) -> dict:
     with open(filepath, "r") as stream:
         kwargs = yaml.safe_load(stream)
     return kwargs
+
+
+def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
+    """
+    Function used to profile the code using cProfile.
+    """
+    with open(log_file, "a", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+
+        profile_output = cProfile.Profile()
+        profile_output.enable()
+
+        result = func(*args, **kwargs)
+
+        profile_output.disable()
+
+        stats = profile_output.getstats()
+        total_time = sum(stat.totaltime for stat in stats)
+
+        print(f"{func_name}: {total_time:.6f} s")
+
+        writer.writerow([func_name, dim, total_time])
+
+    return result
+
+
+def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
+    """
+    Function used to profile the code using the CuPy profiler.
+    """
+    with open(log_file, "a", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        start = cp.cuda.Event()
+        end = cp.cuda.Event()
+
+        start.record()
+        result = func(*args, **kwargs)
+        end.record()
+        end.synchronize()
+
+        result = func(*args, **kwargs)
+        elapsed_time = cp.cuda.get_elapsed_time(start, end) / 1000
+        print(f"{func_name}: {elapsed_time:.6f} s")
+
+        writer.writerow([func_name, dim, elapsed_time])
+
+    return result
