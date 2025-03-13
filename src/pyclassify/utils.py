@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 import scipy.sparse as sp
 import cupy as cp
@@ -5,11 +6,9 @@ import cupyx.scipy.sparse as cpsp
 import numba
 import os
 import yaml
-
-# from line_profiler import profile
 import cProfile
 import cupyx.profiler as profiler
-import csv
+from memory_profiler import memory_usage
 
 
 def check_square_matrix(A):
@@ -143,44 +142,77 @@ def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
     """
     Function used to profile the code using cProfile.
     """
-    with open(log_file, "a", newline="") as csvfile:
-        writer = csv.writer(csvfile)
 
-        profile_output = cProfile.Profile()
-        profile_output.enable()
+    def wrapped_func(*args, **kwargs):
+        mem_usage = memory_usage((func, args, kwargs))
+        return func(*args, **kwargs), max(mem_usage)
 
-        result = func(*args, **kwargs)
+    profile_output = cProfile.Profile()
+    profile_output.enable()
 
-        profile_output.disable()
+    result, peak_mem = wrapped_func(*args, **kwargs)
 
-        stats = profile_output.getstats()
-        total_time = sum(stat.totaltime for stat in stats)
+    profile_output.disable()
 
-        print(f"{func_name}: {total_time:.6f} s")
+    stats = profile_output.getstats()
+    total_time = sum(stat.totaltime for stat in stats)
 
-        writer.writerow([func_name, dim, total_time])
+    print(f"{func_name}: {total_time:.6f} s, Peak memory: {peak_mem:.6f} MB")
+
+    new_entry = pd.DataFrame(
+        [[func_name, dim, total_time, peak_mem]],
+        columns=["function", "dim", "time", "peak_memory"],
+    )
+
+    if os.path.exists(log_file):
+        df = pd.read_csv(log_file)
+        df = pd.concat([df, new_entry], ignore_index=True)
+    else:
+        df = new_entry
+    df.to_csv(log_file, index=False)
 
     return result
 
 
 def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
     """
+    WORK IN PROGRESS: still not working as expected.
     Function used to profile the code using the CuPy profiler.
     """
-    with open(log_file, "a", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        start = cp.cuda.Event()
-        end = cp.cuda.Event()
+    mempool = cp.get_default_memory_pool()
 
-        start.record()
-        result = func(*args, **kwargs)
-        end.record()
-        end.synchronize()
+    start_mem = mempool.used_bytes()
 
-        result = func(*args, **kwargs)
-        elapsed_time = cp.cuda.get_elapsed_time(start, end) / 1000
-        print(f"{func_name}: {elapsed_time:.6f} s")
+    start = cp.cuda.Event()
+    end = cp.cuda.Event()
 
-        writer.writerow([func_name, dim, elapsed_time])
+    start.record()
+    result = func(*args, **kwargs)
+    end.record()
+    end.synchronize()
+
+    end_mem = mempool.used_bytes()
+
+    elapsed_time = cp.cuda.get_elapsed_time(start, end) / 1000
+
+    peak_mem_device = (end_mem - start_mem) / (1024**2)
+
+    print(
+        f"{func_name}: {elapsed_time:.6f} s, Peak device memory: {peak_mem_device:.6f} MB"
+    )
+
+    print(peak_mem_device)
+
+    new_entry = pd.DataFrame(
+        [[func_name, dim, elapsed_time, peak_mem_device]],
+        columns=["function", "dim", "time", "peak_device_memory"],
+    )
+
+    if os.path.exists(log_file):
+        df = pd.read_csv(log_file)
+        df = pd.concat([df, new_entry], ignore_index=True)
+    else:
+        df = new_entry
+    df.to_csv(log_file, index=False)
 
     return result

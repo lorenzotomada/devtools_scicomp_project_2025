@@ -4,14 +4,10 @@ on:
   push:
     branches:
       - main
-      - final_project
-      - gpu_branch
 
   pull_request:
     branches:
       - main
-      - final_project
-      - gpu_branch
 
 jobs:
   docs:

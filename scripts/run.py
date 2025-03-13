@@ -76,7 +76,6 @@ profile_with_cprofile(
     log_file, dim, "QR", QR, A.toarray(), max_iter=iteration_factor * dim
 )
 
-
 profile_with_cupy_profiler(log_file, dim, "eigenvalues_cp", eigenvalues_cp, A_cp)
 profile_with_cupy_profiler(log_file, dim, "power_method_cp", power_method_cp, A_cp)
 profile_with_cupy_profiler(

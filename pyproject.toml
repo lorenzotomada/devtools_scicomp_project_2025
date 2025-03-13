@@ -8,7 +8,7 @@ name = "pyclassify"
 version = "0.0.1"
 description = "Project for the Development Tools for Scientific Computing course"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [{ name = "Lorenzo Tomada", email = "lorenzotomada2000@gmail.com" }]
 dynamic = ["dependencies"]
