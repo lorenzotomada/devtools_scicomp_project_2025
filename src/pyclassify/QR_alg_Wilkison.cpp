@@ -173,6 +173,7 @@ void print_matrix(const std::vector<std::vector<double> > & Q){
         }
         std::cout<<"\n";
     }
+    std::cout<<"--------------------------------------------------------"<<"\n";
 
     std::cout<<"------------------------------------------------" <<"\n";
 
@@ -180,11 +181,11 @@ void print_matrix(const std::vector<std::vector<double> > & Q){
 
 
 //std::pair<std::vector<double>, std::vector<std::vector<double>> > 
-void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double toll=1e-8, const unsigned int max_iter=1000){
+void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double toll=1e-8, const unsigned int max_iter=10000){
 
     const unsigned int n = diag.size();
 
-    std::vector<std::vector<double>> Q(n, std::vector<double>(n, 0)), Q_posterior(n, std::vector<double>(n, 0)), R(n);
+    std::vector<std::vector<double>> Q(n, std::vector<double>(n, 0)), R(n);
 
     for(unsigned int i = 0; i < n; i++){
         Q[i][i] = 1;
@@ -315,15 +316,16 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
         unsigned j;
         //Uncomment to compute the eigenvalue
-        #pragma omp parallel for//collapse(2) 
+        //collapse(2) 
         for(unsigned int i=0; i<n-1; i++){
+            //std::vector<std::vector<double>> Q_posterior(Q);
             c=Matrix_trigonometric[i][0];
             s=Matrix_trigonometric[i][1];
-
+            #pragma omp parallel for
             for(j=0; j<n;j=j+5){
                 tmp=Q[i][j];
                 Q[i][j]=tmp*c-Q[i+1][j]*s;
-                Q_posterior[i+1][j]=tmp*s+Q[i+1][j]*c;
+                Q[i+1][j]=tmp*s+Q[i+1][j]*c;
                 tmp=Q[i][j+1];
                 Q[i][j+1]=tmp*c-Q[i+1][j+1]*s;
                 Q[i+1][j+1]=tmp*s+Q[i+1][j+1]*c;
@@ -332,7 +334,7 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
                 Q[i+1][j+2]=tmp*s+Q[i+1][j+2]*c;
                 tmp=Q[i][j+3];
                 Q[i][j+3]=tmp*c-Q[i+1][j+3]*s;
-                Q[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;
+                Q[i+1][j+3]=tmp*s+Q[i+1][j+3]*c;               
                 tmp=Q[i][j+4];
                 Q[i][j+4]=tmp*c-Q[i+1][j+4]*s;
                 Q[i+1][j+4]=tmp*s+Q[i+1][j+4]*c;
@@ -343,6 +345,7 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
                 Q[i][j]=tmp*c-Q[i+1][j]*s;
                 Q[i+1][j]=tmp*s+Q[i+1][j]*c;
             }
+    
             
         }
 
@@ -353,12 +356,10 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
         }
     }
 
-    print_matrix(Q);
-
-    for(const auto t: diag){
-        std::cout<<t<<"\t";
+    if(iter==max_iter){
+        std::cout<<"Converges failed"<<std::endl;
     }
-    std::cout<<"\n";
+    std::cout<<"Iteration: "<<iter<<std::endl;
 
 
     
@@ -368,13 +369,12 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
 int main(){
 
-    std::vector<double> diag(10, 5), offdiag(9, 20);
+    std::vector<double> diag(2000, 5), offdiag(1999, 20);
 
-    QR_algorithm(diag, offdiag);
     
     auto start = std::chrono::high_resolution_clock::now();
 
-    QR_algorithm(diag, offdiag);
+    QR_algorithm(diag, offdiag, 1e-8, 50000);
 
     // Capture the end time
     auto end = std::chrono::high_resolution_clock::now();
