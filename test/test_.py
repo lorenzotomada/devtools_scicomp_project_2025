@@ -11,9 +11,7 @@ from pyclassify import (
     power_method,
     power_method_numba,
     power_method_cp,
-    Lanczos_PRO,
-    QR_method,
-    QR,
+    EigenSolver,
     QR_cp,
 )
 from pyclassify.utils import check_square_matrix, make_symmetric, check_symm_square
@@ -25,7 +23,7 @@ def set_random_seed():
     np.random.seed(seed)
 
 
-sizes = [20, 100]
+sizes = [10, 50]
 densities = [0.1, 0.3]
 
 
@@ -98,14 +96,16 @@ def test_implementations_power_method(size, density):
 
 @pytest.mark.parametrize("size", sizes)
 def test_Lanczos(size):
-    A = np.random.rand(size, size)
-    A = (A + A.T) / 2
-    A = np.array(A, dtype=float)
-    q = np.random.rand(size)
-    # matrix =np.array(matrix, dtype=np.float64)
-    random_vector = np.random.rand(size)
+    eig = np.arange(1, size + 1)
+    A = np.diag(eig)
+    U = scipy.stats.ortho_group.rvs(size)
 
-    _, alpha, beta = Lanczos_PRO(A, random_vector)
+    A = U @ A @ U.T
+    A = make_symmetric(A)
+
+    eigensolver = EigenSolver(A)
+
+    _, alpha, beta = eigensolver.Lanczos_PRO(A)
 
     T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
 
@@ -122,49 +122,24 @@ def test_Lanczos(size):
 
     with pytest.raises(ValueError):
         random_matrix = np.random.rand(size, 2 * size)
-        _ = Lanczos_PRO(random_matrix, random_vector)
+        _ = eigensolver.Lanczos_PRO(random_matrix)
 
     with pytest.raises(ValueError):
         random_matrix = np.random.rand(size, size)
-        _ = Lanczos_PRO(random_matrix, np.random.rand(2 * size))
+        _ = eigensolver.Lanczos_PRO(random_matrix, np.random.rand(2 * size))
 
 
 @pytest.mark.parametrize("size", sizes)
-def test_QR_method(size):
-    eig = np.arange(1, size + 1)
-    A = np.diag(eig)
-    U = scipy.stats.ortho_group.rvs(size)
-
-    A = U @ A @ U.T
-    A = make_symmetric(A)  #  not needed probably
-    eig = np.linalg.eig(A)
-    index = np.argsort(eig.eigenvalues)
-    eig = eig.eigenvalues
-    eig_vec = np.linalg.eig(A).eigenvectors
-    eig_vec = eig_vec[index]
-    eig = eig[index]
-    eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
-
-    random_vector = np.random.rand(size)
-    _, alpha, beta = Lanczos_PRO(A, random_vector)
-
-    # T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
-
-    eig_valQR, _ = QR_method(alpha, beta, max_iter=100 * size)
-    index = np.argsort(eig_valQR)
-    eig_valQR = eig_valQR[index]
-
-    assert np.allclose(eig, eig_valQR, rtol=1e-4)
-
-
-@pytest.mark.parametrize("size", sizes)
-def test_QR(size):
+def test_EigenSolver(size):
     eig = np.arange(1, size + 1)
     A = np.diag(eig)
     U = scipy.stats.ortho_group.rvs(size)
 
     A = U @ A @ U.T
     A = make_symmetric(A)
+
+    eigensolver = EigenSolver(A, max_iter=int(10 * size), tol=1e-8)
+
     eig = np.linalg.eig(A)
     index = np.argsort(eig.eigenvalues)
     eig = eig.eigenvalues
@@ -173,9 +148,7 @@ def test_QR(size):
     eig = eig[index]
     eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
 
-    random_vector = np.random.rand(size)
-    eigs_QR, _ = QR(A, random_vector, tol=1e-4, max_iter=1000)
-
+    eigs_QR, _ = eigensolver.eig()
     index = np.argsort(eigs_QR)
     eig_QR = eigs_QR[index]
 

@@ -3,11 +3,11 @@ import numpy as np
 import scipy.sparse as sp
 import cupy as cp
 import cupyx.scipy.sparse as cpsp
-import numba
 import os
 import yaml
 import cProfile
-import cupyx.profiler as profiler
+
+# nimport cupyx.profiler as profiler
 from memory_profiler import memory_usage
 
 
@@ -75,48 +75,6 @@ def check_symm_square(A):
         raise ValueError("Matrix must be symmetric!")
     elif isinstance(A, cpsp.spmatrix) and not cp.allclose(A.toarray(), A.toarray().T):
         raise ValueError("Matrix must be symmetric!")
-
-
-@numba.njit(nogil=True, parallel=True)
-def power_method_numba_helper(A, max_iter=500, tol=1e-4, x=None):
-    """
-    Approximate the dominant eigenvalue of a square matrix using the power method.
-
-    This helper function applies the power method to a matrix A to estimate its dominant eigenvalue.
-    It returns the Rayleigh quotient, x @ A @ x, which serves as an approximation of the dominant eigenvalue.
-
-    The function is optimized with Numba using the 'njit' decorator with nogil and parallel options.
-
-    Args:
-        A (np.ndarray): A square matrix.
-        max_iter (int, optional): Maximum number of iterations to perform (default is 500).
-        tol (float, optional): Tolerance for convergence based on the relative change between iterations (default is 1e-4).
-        x (np.ndarray, optional): Initial guess for the eigenvector. If None, a random vector is generated.
-
-    Returns:
-        float: The approximated dominant eigenvalue of the matrix A.
-
-    Raises:
-        ValueError: If the input matrix A is not square. The check is not done using 'check_A_square_matrix' because of numba technicalities.
-    """
-    if A.shape[0] != A.shape[1]:
-        raise ValueError("Matrix must be square!")  # explain why re-written
-    if x is None:
-        x = np.random.rand(A.shape[0])
-    x /= np.linalg.norm(x)
-    x_old = x
-
-    iteration = 0
-    update_norm = tol + 1
-
-    while iteration < max_iter and update_norm > tol:
-        x = A @ x
-        x /= np.linalg.norm(x)
-        update_norm = np.linalg.norm(x - x_old) / np.linalg.norm(x_old)
-        x_old = x.copy()
-        iteration += 1
-
-    return x @ A @ x
 
 
 def read_config(file: str) -> dict:
@@ -216,3 +174,8 @@ def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
     df.to_csv(log_file, index=False)
 
     return result
+
+
+def max_iteration_warning():
+    # todo
+    pass

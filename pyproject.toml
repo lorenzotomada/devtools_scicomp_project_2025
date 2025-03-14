@@ -1,5 +1,6 @@
 # Choosing a build backend:
-requires = ["setuptools"]
+[build-system]
+requires = ["setuptools", "cmake", "scikit-build", "ninja", "pybind11"]
 build-backend = "setuptools.build_meta"
 
 
@@ -8,10 +9,17 @@ name = "pyclassify"
 version = "0.0.1"
 description = "Project for the Development Tools for Scientific Computing course"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
-authors = [{ name = "Lorenzo Tomada", email = "lorenzotomada2000@gmail.com" }]
+authors = [
+    { name = "Lorenzo Tomada", email = "ltomada@sissa.it" },
+    { name = "Gaspare Li Causi", email = "glicausi@sissa.it" }
+]
 dynamic = ["dependencies"]
+
+[tool.scikit-build]
+# Optional: specify the build directory
+build-dir = "build"
 
 [tool.setuptools.packages.find]
 where = ["src"]

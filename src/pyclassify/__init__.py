@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("../../build")
+
 __all__ = [
     "eigenvalues_np",
     "eigenvalues_sp",
@@ -5,9 +9,7 @@ __all__ = [
     "power_method",
     "power_method_numba",
     "power_method_cp",
-    "Lanczos_PRO",
-    "QR_method",
-    "QR",
+    "EigenSolver",
     "Lanczos_PRO_cp",
     "QR_method_cp",
     "QR_cp",
@@ -20,9 +22,7 @@ from .eigenvalues import (
     power_method,
     power_method_numba,
     power_method_cp,
-    Lanczos_PRO,
-    QR_method,
-    QR,
+    EigenSolver,
     Lanczos_PRO_cp,
     QR_method_cp,
     QR_cp,
