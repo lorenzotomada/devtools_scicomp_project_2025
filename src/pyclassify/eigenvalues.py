@@ -3,7 +3,7 @@ import scipy.sparse as sp
 from line_profiler import profile
 from numpy.linalg import eig, eigh
 from pyclassify.utils import check_A_square_matrix, power_method_numba_helper
-from numba import jit
+from numba import jit, prange
 
 
 @profile
@@ -122,134 +122,135 @@ def power_method_numba(A):
     return power_method_numba_helper(A)
 
 
-@jit(nopython=True)
-def Lanczos_PRO(A, q, m=None, toll=np.sqrt(np.finfo(float).eps)):
-    """
-    Perform the Lanczos algorithm for symmetric matrices.
+from QR_cpp import QR_algorithm, Eigen_value_calculator
 
-    This function computes an orthogonal matrix Q and tridiagonal matrix T such that A ≈ Q * T * Q.T,
-    where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
-    of large symmetric matrices.
+class EigenSolver:
+    def __init__(self, A: np.ndarray, max_iter=5000, toll=1e-8):
+        if not isinstance(A, (np.ndarray, sp.spmatrix)):
+            raise TypeError("Input matrix must be a NumPy array or a SciPy sparse matrix!")
+        if A.shape[0] != A.shape[1]:
+            raise ValueError("Matrix must be square!")
+        if np.any(A != A.T):
+            raise ValueError("Input matrix A must be symmetric.")
+        
+        self.A=A
+        self.toll=toll
+        self.max_iter=max_iter
+        self.diag=None
+        self.off_diag=None
+        self.Q=None
 
-    Args:
-        A (np.ndarray): A symmetric square matrix of size n x n.
-        q (np.ndarray): Initial vector of size n.
-        m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
-                           If None, defaults to the size of A.
-        toll (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
+        
+    @jit(nopython=True, parallel=True)
+    def Lanczos_PRO(self, q, A=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
+        """
+        Perform the Lanczos algorithm for symmetric matrices.
 
-    Returns:
-        tuple: A tuple (Q, alpha, beta) where:
-            - Q (np.ndarray): Orthogonal matrix of size n x m.
-            - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
-            - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
+        This function computes an orthogonal matrix Q and tridiagonal matrix T such that A ≈ Q * T * Q.T,
+        where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+        of large symmetric matrices.
 
-    Raises:
-        ValueError: If the input matrix A is not square or if m is greater than the size of A.
-    """
-    if m == None:
-        m = A.shape[0]
+        Args:
+            A (np.ndarray): A symmetric square matrix of size n x n.
+            q (np.ndarray): Initial vector of size n.
+            m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
+                            If None, defaults to the size of A.
+            toll (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
 
-    if A.shape[0] != A.shape[1]:
-        raise ValueError("Input matrix A must be square.")
+        Returns:
+            tuple: A tuple (Q, alpha, beta) where:
+                - Q (np.ndarray): Orthogonal matrix of size n x m.
+                - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
+                - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
 
-    if A.shape[0] != q.shape[0]:
-        raise ValueError("Input vector q must have the same size as the matrix A.")
+        Raises:
+            ValueError: If the input matrix A is not square or if m is greater than the size of A.
+        """
 
-    if np.any(A != A.T):
-        raise ValueError("Input matrix A must be symmetric.")
+        if A==None:
+            A=self.A
 
-    q = q / np.linalg.norm(q)
-    # Q=np.array([q])
-    Q = np.zeros((m, A.shape[0]))
-    Q[0] = q
-    r = A @ q
-    alpha = []
-    beta = []
-    alpha.append(q @ r)
-    r = r - alpha[0] * q
-    beta.append(np.linalg.norm(r))
 
-    for j in range(1, m):
-        q = r / beta[j - 1]
-        if np.any(np.abs(q @ Q[: j - 1].T) > toll):
-            for q_bbasis in Q[: j - 1]:
-                q = q - (q @ q_bbasis) * q_bbasis
+        if m == None:
+            m = A.shape[0]
+
+        if A.shape[0] != A.shape[1]:
+            raise ValueError("Input matrix A must be square.")
+
+        if A.shape[0] != q.shape[0]:
+            raise ValueError("Input vector q must have the same size as the matrix A.")
+
+        if np.any(A != A.T):
+            raise ValueError("Input matrix A must be symmetric.")
 
         q = q / np.linalg.norm(q)
-        Q[j] = q
-        r = A @ q - beta[j - 1] * Q[j - 1]
+        # Q=np.array([q])
+        Q = np.zeros((m, A.shape[0]))
+        Q[0] = q
+        r = A @ q
+        alpha = []
+        beta = []
         alpha.append(q @ r)
-        r = r - alpha[j] * q
+        r = r - alpha[0] * q
         beta.append(np.linalg.norm(r))
 
-        if np.abs(beta[j]) < 1e-15:
+        for j in range(1, m):
+            q = r / beta[j - 1]
+            if np.any(np.abs(q @ Q[: j - 1].T) > toll):
+                partial = np.zeros((j, len(q)), dtype=np.float64)
+                for i in prange(j):
+                    h = 0.0
+                    # Compute the dot product: h = q dot Q[i]
+                    
+                    h = q @Q[i]
+                    # Store the contribution: h * Q[i] into the ith row
+                    
+                    partial[i] = h * Q[i]
+            
+                # Reduce the contributions (summing the partial projections)   
+                q=q-np.sum(partial, axis=0)
 
-            return Q, alpha, beta[:-1]
-    return Q, alpha, beta[:-1]
+
+            q = q / np.linalg.norm(q)
+            Q[j] = q
+            r = A @ q - beta[j - 1] * Q[j - 1]
+            alpha.append(q @ r)
+            r = r - alpha[j] * q
+            beta.append(np.linalg.norm(r))
+
+            if np.abs(beta[j]) < 1e-15:
+                self.diag=alpha
+                self.beta=beta[:-1]
+                self.Q=Q
+                return Q, alpha, beta[:-1]
+            
+        self.diag=alpha
+        self.beta=beta[:-1]
+        self.Q=np.array(Q)
+        return Q, alpha, beta[:-1]
+    
+    def compute_eigenval(self, diag=None, off_diag=None):
+        if diag==None and off_diag==None:
+            diag=self.diag
+            off_diag=self.diag
+        else:
+            if len(diag) != (len(off_diag) +1):
+                ValueError("Mismatch  between diagonal and off diagonal size")
+
+        return Eigen_value_calculator(diag, off_diag, self.toll, self.max_iter)
 
 
-@jit(nopython=True)
-def QR_method(A_copy, tol=1e-10, max_iter=100):
-    """
-    Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
 
-    This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
-    The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
-    of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.
-
-    Args:
-        A_copy (np.ndarray): Atridiagonal matrix whose eigenvalues are to be computed.
-        tol (float, optional): Tolerance for convergence based on the off-diagonal elements (default is 1e-10).
-        max_iter (int, optional): Maximum number of iterations to perform (default is 100).
-
-    Returns:
-        tuple: A tuple (eigenvalues, Q) where:
-            - eigenvalues (np.ndarray): An array containing the eigenvalues of the matrix `A_copy`.
-            - Q (np.ndarray): The orthogonal matrix Q from the final QR decomposition.
-
-    Raises:
-        ValueError: If the input matrix A_copy is not square.
-    """
-
-    if A_copy.shape[0] != A_copy.shape[1]:
-        raise ValueError("Input matrix A_copy must be square.")
-
-    if np.any(np.tril(A_copy, -2) != 0) or np.any(np.triu(A_copy, 2) != 0):
-        raise ValueError("Input matrix A_copy must be tridiagonal.")
-
-    A = A_copy.copy()
-    iter = 0
-    Q = np.eye(A.shape[0])
-
-    # Correctly preallocate as a 2D array (n-1, 2)
-    Matrix_trigonometry = np.zeros((A.shape[0] - 1, 2))
-    # d=np.zeros(A.shape[0])
-    while np.linalg.norm((np.diag(A, -1)), np.inf) > tol and iter < max_iter:
-        # while np.linalg.norm((np.diag(A, 0)-d)/np.diag(A, 0), np.inf) > tol and iter < max_iter:
-        # Compute Givens rotation
-        # d=np.diag(A, 0)
-        for i in range(A.shape[0] - 1):
-            c = A[i, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
-            s = -A[i + 1, i] / np.sqrt(A[i, i] ** 2 + A[i + 1, i] ** 2)
-            Matrix_trigonometry[i, :] = [c, s]
-
-            # Apply the Givens rotation to A (modify in place)
-            R = np.array([[c, -s], [s, c]])
-            A[i : i + 2, i:] = R @ A[i : i + 2, i:]
-            A[i + 1, i] = 0
-
-        # Construct full Q matrix from stored Givens rotations
-        Q = np.eye(A.shape[0])
-        for i in range(A.shape[0] - 1):
-            R = np.array(
-                [
-                    [Matrix_trigonometry[i, 0], Matrix_trigonometry[i, 1]],
-                    [-Matrix_trigonometry[i, 1], Matrix_trigonometry[i, 0]],
-                ]
-            )
-            Q[:, i : i + 2] = Q[:, i : i + 2] @ R
-        A = A @ Q  # Update A
-        iter += 1
-
-    return np.diag(A), Q
+    def eig(self, diag=None, off_diag=None):
+        if diag==None and off_diag==None:
+            diag=self.diag
+            off_diag=self.diag
+        else:
+            if len(diag) != (len(off_diag) +1):
+                ValueError("Mismatch  between diagonal and off diagonal size")
+            
+            return QR_algorithm(diag, off_diag, self.toll, self.max_iter)
+        
+        eig, Q_triangular=QR_algorithm(diag, off_diag, self.toll, self.max_iter)
+        Q_triangular=np.array(Q_triangular)
+        return eig, Q_triangular @ self.Q.T
