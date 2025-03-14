@@ -416,7 +416,7 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
         }
     }
 
-    // print_matrix(Q);
+    print_matrix(Q);
 
     // for(const auto t: diag){
     //     std::cout<<t<<"\t";
@@ -434,7 +434,7 @@ void QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, cons
 
 int main(){
 
-    std::vector<double> diag(5000, 5), offdiag(4999, 20);
+    std::vector<double> diag(10, 5), offdiag(9, 20);
 
     QR_algorithm(diag, offdiag);
     
