@@ -4,8 +4,12 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
-	
 
+
+#include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
+namespace py=pybind11;
+	
 
 std::pair<std::vector<double>, std::vector<std::vector<double>> > 
  QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double tol=1e-8, const unsigned int max_iter=5000){
@@ -317,19 +321,13 @@ std::vector<double>
 
 
     return diag;
- 
 
 }
 
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
 
-
-
-namespace py=pybind11;
 
 PYBIND11_MODULE(QR_cpp, m) {
-    m.doc() = "Function that computes the eigenvalue and eigenvector";
+    m.doc() = "Function that computes the eigenvalue and eigenvector"; // Optional module docstring.
 
     m.def("QR_algorithm", &QR_algorithm, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
     m.def("Eigen_value_calculator", &Eigen_value_calculator, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);

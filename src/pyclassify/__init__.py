@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append("../../build")
-
 __all__ = [
     "eigenvalues_np",
     "eigenvalues_sp",
@@ -14,6 +10,8 @@ __all__ = [
     "QR_method_cp",
     "QR_cp",
 ]
+
+from .QR_cpp import QR_algorithm, Eigen_value_calculator
 
 from .eigenvalues import (
     eigenvalues_np,

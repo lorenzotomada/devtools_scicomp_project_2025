@@ -105,7 +105,7 @@ def test_Lanczos(size):
 
     eigensolver = EigenSolver(A)
 
-    _, alpha, beta = eigensolver.Lanczos_PRO(A)
+    _, alpha, beta = eigensolver.Lanczos_PRO(A=A)
 
     T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
 
@@ -122,11 +122,11 @@ def test_Lanczos(size):
 
     with pytest.raises(ValueError):
         random_matrix = np.random.rand(size, 2 * size)
-        _ = eigensolver.Lanczos_PRO(random_matrix)
+        _ = eigensolver.Lanczos_PRO(A=random_matrix)
 
     with pytest.raises(ValueError):
         random_matrix = np.random.rand(size, size)
-        _ = eigensolver.Lanczos_PRO(random_matrix, np.random.rand(2 * size))
+        _ = eigensolver.Lanczos_PRO(A=random_matrix, q=np.random.rand(2 * size))
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -138,7 +138,7 @@ def test_EigenSolver(size):
     A = U @ A @ U.T
     A = make_symmetric(A)
 
-    eigensolver = EigenSolver(A, max_iter=int(10 * size), tol=1e-8)
+    eigensolver = EigenSolver(A, max_iter=int(100 * size), tol=1e-9)
 
     eig = np.linalg.eig(A)
     index = np.argsort(eig.eigenvalues)
@@ -146,13 +146,16 @@ def test_EigenSolver(size):
     eig_vec = np.linalg.eig(A).eigenvectors
     eig_vec = eig_vec[index]
     eig = eig[index]
-    eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
+    # eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
 
-    eigs_QR, _ = eigensolver.eig()
+    eigs_QR = eigensolver.compute_eigenval()
     index = np.argsort(eigs_QR)
     eig_QR = eigs_QR[index]
 
     assert np.allclose(eig, eig_QR, rtol=1e-4)
+
+    with pytest.raises(ValueError):
+        _ = eigensolver.compute_eigenval(np.arange(2), np.arange(49))
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -182,7 +185,7 @@ def test_cupy(size, density):
     )  # ensure cupy native and cupy power method implementations are consistent
 
     random_vector = cp.random.rand(size)
-    eigs_QR, _ = QR_cp(cp_symm_matrix, random_vector, tol=1e-4, max_iter=500 * size)
+    eigs_QR, _ = QR_cp(cp_symm_matrix, random_vector, tol=1e-4, max_iter=20 * size)
     index_cp_QR = cp.argmax(cp.abs(eigs_QR))
     biggest_eigenvalue_QR = eigs_QR[index_cp_QR]
     assert cp.isclose(biggest_eigenvalue_cp, biggest_eigenvalue_QR, rtol=1e-3)

@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - gpu_branch
+      - final_project
 
   pull_request:
     branches:

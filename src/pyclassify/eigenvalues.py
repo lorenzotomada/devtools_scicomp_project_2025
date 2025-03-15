@@ -6,7 +6,7 @@ import cupy as cp
 import cupy.linalg as cpla
 from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
 from numba import jit, prange
-from QR_cpp import QR_algorithm, Eigen_value_calculator
+from .QR_cpp import QR_algorithm, Eigen_value_calculator
 from pyclassify.utils import (
     check_square_matrix,
     check_symm_square,
@@ -187,7 +187,7 @@ class EigenSolver:
         self.off_diag = None
         self.Q = None
 
-    # @jit(nopython=True, parallel=True)
+    # @jit(nopython=True, parallel=True) # removed because is it not compatible with C++ functions!
     def Lanczos_PRO(self, A=None, q=None, m=None, tol=np.sqrt(np.finfo(float).eps)):
         """
         Perform the Lanczos algorithm for symmetric matrices.
@@ -214,16 +214,23 @@ class EigenSolver:
 
         if A is None:
             A = self.A
-        else:
-            check_square_matrix(A)
-
-        if m == None:
-            m = A.shape[0]
 
         if q is None:
             q = np.random.rand(A.shape[0])
             if q[0] == 0:
                 q[0] += 1
+
+        if A.shape[0] != A.shape[1]:
+            raise ValueError("Input matrix A must be square.")
+        if A.shape[0] != q.shape[0]:
+            raise ValueError("Input vector q must have the same size as the matrix A.")
+        if np.any(A != A.T):
+            raise ValueError("Input matrix A must be symmetric.")
+        # else:
+        #    check_square_matrix(A) removed because it is not compatible with numba (due to checks on scipy sparse matrices)
+
+        if m == None:
+            m = A.shape[0]
 
         q = q / np.linalg.norm(q)
         # Q=np.array([q])
@@ -260,31 +267,47 @@ class EigenSolver:
             beta.append(np.linalg.norm(r))
 
             if np.abs(beta[j]) < 1e-15:
+                alpha = np.array(alpha)
+                beta = np.array(beta)
                 self.diag = alpha
                 self.beta = beta[:-1]
                 self.Q = Q
                 return Q, alpha, beta[:-1]
 
+        alpha = np.array(alpha)
+        beta = np.array(beta)
         self.diag = alpha
         self.beta = beta[:-1]
         self.Q = np.array(Q)
         return Q, alpha, beta[:-1]
 
     def compute_eigenval(self, diag=None, off_diag=None):
+        """
+        Docstring to be added.
+        """
         if diag is None and off_diag is None:
+            if self.diag is None:
+                _, alpha, beta = self.Lanczos_PRO(tol=1e-10)
+                self.diag = alpha
+                self.off_diag = beta
             diag = self.diag
             off_diag = self.diag
         else:
             if len(diag) != (len(off_diag) + 1):
                 ValueError("Mismatch  between diagonal and off diagonal size")
 
-        return Eigen_value_calculator(diag, off_diag, self.tol, self.max_iter)
+        return np.array(Eigen_value_calculator(diag, off_diag, self.tol, self.max_iter))
 
     def eig(self, diag=None, off_diag=None):
         """
         throwing an error if diag and off_diag are None
+        Docstring to be added
         """
         if diag is None and off_diag is None:
+            if self.diag is None:
+                _, alpha, beta = self.Lanczos_PRO(tol=1e-10)
+                self.diag = alpha
+                self.off_diag = beta
             diag = self.diag
             off_diag = self.diag
         else:

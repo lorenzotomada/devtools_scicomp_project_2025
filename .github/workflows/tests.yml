@@ -29,6 +29,8 @@ jobs:
 
     - name: Install additional dependencies
       run: |
+        mkdir -p /tmp/pip_cache
+        echo "PIP_CACHE_DIR=/tmp/pip_cache" >> $GITHUB_ENV
         python3 -m venv venv
         source venv/bin/activate
         python -m pip install .

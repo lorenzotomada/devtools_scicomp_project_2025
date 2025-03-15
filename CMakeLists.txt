@@ -27,4 +27,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-O3 -Wall -Werror -Wpedantic)
 
 pybind11_add_module(QR_cpp ${CMAKE_SOURCE_DIR}/src/pyclassify/QR_bindings.cpp)
+set_target_properties(QR_cpp PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+
 target_compile_features(QR_cpp PUBLIC cxx_std_17)
+install(TARGETS QR_cpp LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/pyclassify)
