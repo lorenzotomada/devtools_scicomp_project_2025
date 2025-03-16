@@ -41,100 +41,8 @@
 <section id="functions">
 <h1>Functions:<a class="headerlink" href="#functions" title="Link to this heading"></a></h1>
 </section>
-<section id="module-pyclassify.utils">
-<span id="submodule-utils"></span><h1>Submodule: utils<a class="headerlink" href="#module-pyclassify.utils" title="Link to this heading"></a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.check_A_square_matrix">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_A_square_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_A_square_matrix" title="Link to this definition"></a></dt>
-<dd><p>Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy sparse matrix.
-This is done to ensure that the input matrix <cite>A</cite> is both:
-1. Of type <cite>np.ndarray</cite> (NumPy array) or <cite>scipy.sparse</cite> (SciPy sparse matrix).
-2. A square matrix.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The matrix to be checked.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.make_symmetric">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">make_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.make_symmetric" title="Link to this definition"></a></dt>
-<dd><p>Ensures the input matrix is symmetric by averaging it with its transpose.</p>
-<p>This function first checks if the matrix is square using the <cite>check_A_square_matrix</cite> function.
-Then, it makes the matrix symmetric by averaging it with its transpose.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The input square matrix to be made symmetric.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The symmetric version of the input matrix.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray or sp.spmatrix</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input matrix is not a NumPy array or SciPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If the input matrix is not square.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.power_method_numba_helper">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">power_method_numba_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.power_method_numba_helper" title="Link to this definition"></a></dt>
-<dd><p>Approximate the dominant eigenvalue of a square matrix using the power method.</p>
-<p>This helper function applies the power method to a matrix A to estimate its dominant eigenvalue.
-It returns the Rayleigh quotient, x &#64; A &#64; x, which serves as an approximation of the dominant eigenvalue.</p>
-<p>The function is optimized with Numba using the ‘njit’ decorator with nogil and parallel options.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>np.ndarray</em>) – A square matrix.</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 500).</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between iterations (default is 1e-4).</p></li>
-<li><p><strong>x</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Initial guess for the eigenvector. If None, a random vector is generated.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The approximated dominant eigenvalue of the matrix A.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A is not square. The check is not done using ‘check_A_square_matrix’ because of numba technicalities.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.read_config">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">read_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#pyclassify.utils.read_config" title="Link to this definition"></a></dt>
-<dd><p>Reads a YAML configuration file and returns its contents as a dictionary.</p>
-<p>This function constructs the absolute path to a YAML file (by appending the ‘.yaml’ extension
-to the provided base file name), opens the file, and parses its content using yaml.safe_load.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>str</em>) – The base name of the YAML file (without the ‘.yaml’ extension).</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A dictionary containing the configuration parameters loaded from the YAML file.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="submodule-utils">
+<h1>Submodule: utils<a class="headerlink" href="#submodule-utils" title="Link to this heading"></a></h1>
 </section>
 
 
@@ -167,13 +75,7 @@ to the provided base file name), opens the file, and parses its content using ya
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">PyClassify Module Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#functions">Functions:</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-pyclassify.utils">Submodule: utils</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.check_A_square_matrix"><code class="docutils literal notranslate"><span class="pre">check_A_square_matrix()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.make_symmetric"><code class="docutils literal notranslate"><span class="pre">make_symmetric()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.power_method_numba_helper"><code class="docutils literal notranslate"><span class="pre">power_method_numba_helper()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="#submodule-utils">Submodule: utils</a></li>
 </ul>
 
 <div class="relations">
