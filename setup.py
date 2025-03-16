@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
@@ -20,13 +21,13 @@ class CMakeBuild(build_ext):
         self.spawn(["cmake", ext.sourcedir, "-B", build_temp])
         self.spawn(["cmake", "--build", build_temp, "--target", "QR_cpp"])
 
-        # Ensure the shared library is copied into the package
-        src_lib = os.path.join(
-            build_temp, "../../src/pyclassify/QR_cpp.cpython-312-x86_64-linux-gnu.so"
+        python_version = sys.version_info
+        so_filename = (
+            f"QR_cpp.cpython-{python_version[0]}{python_version[1]}-x86_64-linux-gnu.so"
         )
-        dst_lib = os.path.join(
-            build_lib, "pyclassify/QR_cpp.cpython-312-x86_64-linux-gnu.so"
-        )
+
+        src_lib = os.path.join(build_temp, f"../../src/pyclassify/{so_filename}")
+        dst_lib = os.path.join(build_lib, f"pyclassify/{so_filename}")
 
         if os.path.exists(src_lib):
             os.makedirs(os.path.dirname(dst_lib), exist_ok=True)

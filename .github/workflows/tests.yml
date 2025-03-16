@@ -6,6 +6,7 @@ on:
       - main
       - final_project
       - gpu_branch
+      - workflows
 
   pull_request:
     branches:
@@ -23,17 +24,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Clean previous builds
+      run: rm -rf build dist *.egg-info
+
     - name: Install system dependencies
       run: |
-        apt-get update && apt-get install -y python3-venv python3-pip cmake
+        apt-get update && apt-get install -y python3.10-venv python3-pip cmake
 
     - name: Install additional dependencies
       run: |
-        mkdir -p /tmp/pip_cache
-        echo "PIP_CACHE_DIR=/tmp/pip_cache" >> $GITHUB_ENV
-        python3 -m venv venv
+        python3.10 -m venv venv
         source venv/bin/activate
-        python -m pip install .
+        python3.10 -m pip install --no-cache-dir .
       shell: bash -e {0}
 
     - name: Test with pytest
@@ -44,5 +46,5 @@ jobs:
         cd build
         make
         cd ..
-        python -m pytest
+        python3.10 -m pytest
       shell: bash -e {0}
