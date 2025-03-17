@@ -23,7 +23,7 @@ def set_random_seed():
     np.random.seed(seed)
 
 
-sizes = [10, 50]
+sizes = [20, 100]
 densities = [0.1, 0.3]
 
 
@@ -140,22 +140,17 @@ def test_EigenSolver(size):
 
     eigensolver = EigenSolver(A, max_iter=int(100 * size), tol=1e-9)
 
-    eig = np.linalg.eig(A)
-    index = np.argsort(eig.eigenvalues)
-    eig = eig.eigenvalues
-    eig_vec = np.linalg.eig(A).eigenvectors
-    eig_vec = eig_vec[index]
-    eig = eig[index]
+    eigs_np = np.linalg.eig(A)
+    eigs_np = np.sort(eig)
+    # eig_vec = np.linalg.eig(A).eigenvectors
     # eig_vec = eig_vec / np.linalg.norm(eig_vec, axis=0)
 
-    eigs_QR = eigensolver.compute_eigenval()
-    index = np.argsort(eigs_QR)
-    eig_QR = eigs_QR[index]
-
-    assert np.allclose(eig, eig_QR, rtol=1e-4)
+    eigs_QR, _ = eigensolver.eig()
+    eigs_QR = np.sort(eigs_QR)
+    assert np.allclose(eigs_np, eigs_QR, rtol=1e-4)
 
     with pytest.raises(ValueError):
-        _ = eigensolver.compute_eigenval(np.arange(2), np.arange(49))
+        _ = eigensolver.compute_eigenval(diag=np.arange(2), off_diag=np.arange(49))
 
 
 @pytest.mark.parametrize("size", sizes)

@@ -189,10 +189,11 @@ class EigenSolver:
 
     # @jit(nopython=True, parallel=True) # removed because is it not compatible with C++ functions!
     def Lanczos_PRO(self, A=None, q=None, m=None, tol=np.sqrt(np.finfo(float).eps)):
-        """
+        r"""
         Perform the Lanczos algorithm for symmetric matrices.
 
-        This function computes an orthogonal matrix Q and tridiagonal matrix T such that :math:`A \approx Q T Q^T`,
+        This function computes an orthogonal matrix Q and tridiagonal matrix T such that
+        .. math:: `A \approx Q T Q^T,`
         where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
         of large symmetric matrices.
 
@@ -270,49 +271,46 @@ class EigenSolver:
                 alpha = np.array(alpha)
                 beta = np.array(beta)
                 self.diag = alpha
-                self.beta = beta[:-1]
+                self.off_diag = beta[:-1]
                 self.Q = Q
                 return Q, alpha, beta[:-1]
 
         alpha = np.array(alpha)
         beta = np.array(beta)
         self.diag = alpha
-        self.beta = beta[:-1]
+        self.off_diag = beta[:-1]
         self.Q = np.array(Q)
         return Q, alpha, beta[:-1]
 
     def compute_eigenval(self, diag=None, off_diag=None):
         """
-        Docstring to be added.
+        Docstring to be added
         """
         if diag is None and off_diag is None:
             if self.diag is None:
-                _, alpha, beta = self.Lanczos_PRO(tol=1e-10)
-                self.diag = alpha
-                self.off_diag = beta
+                _, __, ___ = self.Lanczos_PRO(
+                    tol=1e-10
+                )  # this already sets self.diag = alpha, self.off_diag = beta
             diag = self.diag
-            off_diag = self.diag
-        else:
-            if len(diag) != (len(off_diag) + 1):
-                ValueError("Mismatch  between diagonal and off diagonal size")
+            off_diag = self.off_diag
+        if len(diag) != (len(off_diag) + 1):
+            raise ValueError("Mismatch  between diagonal and off diagonal size")
 
         return np.array(Eigen_value_calculator(diag, off_diag, self.tol, self.max_iter))
 
     def eig(self, diag=None, off_diag=None):
         """
-        throwing an error if diag and off_diag are None
         Docstring to be added
         """
         if diag is None and off_diag is None:
             if self.diag is None:
-                _, alpha, beta = self.Lanczos_PRO(tol=1e-10)
-                self.diag = alpha
-                self.off_diag = beta
+                _, __, ___ = self.Lanczos_PRO(
+                    tol=1e-10
+                )  # this already sets self.diag = alpha, self.off_diag = beta
             diag = self.diag
-            off_diag = self.diag
-        else:
-            if len(diag) != (len(off_diag) + 1):
-                raise ValueError("Mismatch  between diagonal and off diagonal size")
+            off_diag = self.off_diag
+        if len(diag) != (len(off_diag) + 1):
+            raise ValueError("Mismatch  between diagonal and off diagonal size")
 
             return QR_algorithm(diag, off_diag, self.tol, self.max_iter)
 
