@@ -6,8 +6,6 @@ import cupyx.scipy.sparse as cpsp
 import os
 import yaml
 import cProfile
-
-# nimport cupyx.profiler as profiler
 from memory_profiler import memory_usage
 
 
@@ -59,7 +57,7 @@ def check_symm_square(A):
     """
     Checks if the input matrix is a square symmetric matrix of type SciPy/CuPy sparse matrix.
     This is done to ensure that the input matrix `A` is all of the following:
-    1. A scipy sparse matrix or CuPy sparse matrix.
+    1. A numpy array or a scipy sparse matrix or CuPy sparse matrix.
     2. A square matrix.
     3. Symmetric.
 
@@ -67,11 +65,13 @@ def check_symm_square(A):
         A (sp.spmatrix or cpsp.spmatrix): The matrix to be checked.
 
     Raises:
-        TypeError: If the input is not a SciPy or CuPy sparse matrix.
+        TypeError: If the input is not a NumPy array or SciPy or CuPy sparse matrix.
         ValueError: If number of rows != number of columns or the matrix is not symmetric.
     """
     check_square_matrix(A)
-    if isinstance(A, sp.spmatrix) and not np.allclose(A.toarray(), A.toarray().T):
+    if isinstance(A, np.ndarray) and not np.allclose(A, A.T):
+        raise ValueError("Matrix must be symmetric!")
+    elif isinstance(A, sp.spmatrix) and not np.allclose(A.toarray(), A.toarray().T):
         raise ValueError("Matrix must be symmetric!")
     elif isinstance(A, cpsp.spmatrix) and not cp.allclose(A.toarray(), A.toarray().T):
         raise ValueError("Matrix must be symmetric!")
@@ -177,5 +177,13 @@ def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
 
 
 def max_iteration_warning():
-    # todo
-    pass
+    """
+    Function to warn the user that the maximum number of iteration has been reached,
+    hence suggesting that the method did not converge.
+    """
+    print(
+        "---------- Warning: the max number of iteration has been reached. ----------"
+    )
+    print(
+        "It is likely that either the tolerance is too low or some other issue occured."
+    )

@@ -10,6 +10,7 @@ from .QR_cpp import QR_algorithm, Eigen_value_calculator
 from pyclassify.utils import (
     check_square_matrix,
     check_symm_square,
+    max_iteration_warning,
 )
 
 
@@ -17,7 +18,9 @@ def eigenvalues_np(A, symmetric=True):
     """
     Compute the eigenvalues of a square matrix using NumPy's `eig` or `eigh` function.
 
-    This function checks if the input matrix is square (and is actually a matrix) using 'check_square_matrix', and then computes its eigenvalues.
+    This function checks if the input matrix is square (and is actually a matrix) using
+    'check_square_matrix', and then computes its eigenvalues.
+
     If the matrix is symmetric, it uses `eigh` (which is more efficient for symmetric matrices).
     Otherwise, it uses `eig`.
 
@@ -31,7 +34,7 @@ def eigenvalues_np(A, symmetric=True):
         np.ndarray: An array containing the eigenvalues of the matrix `A`.
 
     Raises:
-        TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
+        TypeError: If the input is not a NumPy array or a SciPy/CuPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
     check_square_matrix(A)
@@ -56,7 +59,7 @@ def eigenvalues_sp(A, symmetric=True):
         np.ndarray: An array containing the eigenvalues of the sparse matrix `A`.
 
     Raises:
-        TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
+        TypeError: If the input is not a NumPy array or a SciPy/CuPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
     check_square_matrix(A)
@@ -74,6 +77,7 @@ def eigenvalues_cp(A):
 
     This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
     CuPy's sparse linear algebra solvers. It uses `eigsh` for more efficient computation.
+
     Remark that the eigsh function in this case does not allow to compute *all* the eigenvalues, but only a number
     m<n, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
 
@@ -84,7 +88,7 @@ def eigenvalues_cp(A):
         np.ndarray: An array containing the eigenvalues of the sparse matrix `A`.
 
     Raises:
-        TypeError: If the input is not a CuPy sparse symmetric matrix.
+        TypeError: If the input is not a NumPy array or Scipy/CuPy sparse symmetric matrix.
         ValueError: If number of rows != number of columns.
     """
     check_symm_square(A)
@@ -108,7 +112,7 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
         float: The approximated dominant eigenvalue of the matrix `A`, computed as the Rayleigh quotient x @ A @ x.
 
     Raises:
-        TypeError: If the input is not a NumPy array or a SciPy sparse matrix.
+        TypeError: If the input is not a NumPy array or a SciPy/CuPy sparse matrix.
         ValueError: If number of rows != number of columns.
     """
     check_square_matrix(A)
@@ -126,7 +130,8 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
         update_norm = spla.norm(x - x_old) / spla.norm(x_old)
         x_old = x.copy()
         iteration += 1
-
+        if iteration >= max_iter:
+            max_iteration_warning()
     return x @ A @ x
 
 
@@ -135,22 +140,25 @@ def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
     """
     Compute the dominant eigenvalue of a matrix using the power method, with Numba optimization.
 
-    This function and applies Numba's Just-In-Time (JIT) compilation to optimize the performance of the power method
-    for large matrices.
+    This function and applies Numba's Just-In-Time (JIT) compilation to optimize the performance of the
+    power method for large matrices.
+
     Remark that numba does not support scipy sparse matrices, so the input matrix must be a NumPy array.
     he function is optimized with Numba using the 'njit' decorator with nogil and parallel options.
 
     Args:
         A (np.ndarray): A square matrix.
         max_iter (int, optional): Maximum number of iterations to perform (default is 500).
-        tol (float, optional): Tolerance for convergence based on the relative change between iterations (default is 1e-4).
+        tol (float, optional): Tolerance for convergence based on the relative change between
+                               iterations (default is 1e-4).
         x (np.ndarray, optional): Initial guess for the eigenvector. If None, a random vector is generated.
 
     Returns:
         float: The approximated dominant eigenvalue of the matrix A.
 
     Raises:
-        ValueError: If the input matrix A is not square. The check is not done using 'check_square_matrix' because of numba technicalities.
+        ValueError: If the input matrix A is not square. The check is not done using 'check_square_matrix'
+                    because of numba technicalities.
     """
     if A.shape[0] != A.shape[1]:
         raise ValueError("Matrix must be square!")  # explain why re-written
@@ -168,17 +176,39 @@ def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
         update_norm = np.linalg.norm(x - x_old) / np.linalg.norm(x_old)
         x_old = x.copy()
         iteration += 1
-
+        # if iteration >= max_iter:
+        #    max_iteration_warning()
     return x @ A @ x
 
 
 class EigenSolver:
     """
-    Docstring to be added.
+    Class solving the eigenvalue problem for a given symmetric matrix.
+
+    Two different building blocks are present: Lanczos_PRO (used to transform the matrix to
+    a tridiagonal one), and another function written in C++. The latter can be either
+    Eigen_value_calculator (if the user is only interested in the computation of the eigenvalues)
+    or QR_algorithm, if eigenvectors are needed as well.
+
+    We refer the interested reader to their implementation in C++ for further details.
     """
 
     def __init__(self, A: np.ndarray, max_iter=5000, tol=1e-8):
-        check_square_matrix(A)
+        """
+        Class constructor. Takes as input a matrix A (supposed to be symmetric), the number
+        of iterations that are allowed and a tolerance.
+
+        Args:
+            A (np.ndarray): A square matrix whose eigenvalues and (possibly) eigenvectors are to
+            be computed
+            max_iter (int, optional): Maximum number of iterations to perform (default is 5000)
+            tol (float, optional): Tolerance for convergence (default is 1e-8).
+
+        Raises:
+        TypeError: If the input is not a NumPy array or SciPy/CuPy sparse matrix.
+        ValueError: If number of rows != number of columns or the matrix is not symmetric.
+        """
+        check_symm_square(A)
 
         self.A = A
         self.tol = tol
@@ -209,8 +239,11 @@ class EigenSolver:
                 - Q (np.ndarray): Orthogonal matrix of size n x m.
                 - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
                 - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
+
         Raises:
-            ValueError: If the input matrix A is not square or if m is greater than the size of A.
+            TypeError: If the input is not a NumPy array or SciPy/CuPy sparse matrix.
+            ValueError: If number of rows != number of columns or the matrix is not symmetric or it m is
+                        greater than the size of A.
         """
 
         if A is None:
@@ -221,20 +254,16 @@ class EigenSolver:
             if q[0] == 0:
                 q[0] += 1
 
-        if A.shape[0] != A.shape[1]:
-            raise ValueError("Input matrix A must be square.")
-        if A.shape[0] != q.shape[0]:
-            raise ValueError("Input vector q must have the same size as the matrix A.")
-        if np.any(A != A.T):
-            raise ValueError("Input matrix A must be symmetric.")
-        # else:
-        #    check_square_matrix(A) removed because it is not compatible with numba (due to checks on scipy sparse matrices)
+        else:
+            check_square_matrix(A)
 
         if m == None:
             m = A.shape[0]
 
+        if m > A.shape[0]:
+            raise ValueError("The value of m cannot be greater than the size of A!")
+
         q = q / np.linalg.norm(q)
-        # Q=np.array([q])
         Q = np.zeros((m, A.shape[0]))
         Q[0] = q
         r = A @ q
@@ -284,35 +313,65 @@ class EigenSolver:
 
     def compute_eigenval(self, diag=None, off_diag=None):
         """
-        Docstring to be added
+        Compute (only) the eigenvalues of a symmetric triangular matrix, passed as argument in the form of diagonal and
+        off-diagonal.
+
+        This function relies on the Eigen_value_calculator function, written in C++.
+        Args:
+            diag (np.ndarray, optional): Diagonal of the matrix. Default value is None. If no value is passed, the one used
+                                        is the one resulting from the Lanczos decomposition of the matrix passed to the
+                                        constructor.
+            off_diag (np.ndarray, optional): Off-iagonal of the matrix. Default value is None. If no value is passed, the one
+                                        used is the one resulting from the Lanczos decomposition of the matrix passed to the
+                                        constructor.
+
+        Returns:
+            np.array: an np.array containing the eigenvalues of the matrix.
+
+        Raises:
+            ValueError: If there is a mismatch between the diagonal and off diagonal size.
         """
         if diag is None and off_diag is None:
             if self.diag is None:
                 _, __, ___ = self.Lanczos_PRO(
-                    tol=1e-10
+                    tol=self.tol
                 )  # this already sets self.diag = alpha, self.off_diag = beta
             diag = self.diag
             off_diag = self.off_diag
         if len(diag) != (len(off_diag) + 1):
-            raise ValueError("Mismatch  between diagonal and off diagonal size")
+            raise ValueError("Mismatch between diagonal and off diagonal size")
 
         return np.array(Eigen_value_calculator(diag, off_diag, self.tol, self.max_iter))
 
     def eig(self, diag=None, off_diag=None):
         """
-        Docstring to be added
+        Compute the eigenvalues and eigenvectors of a symmetric triangular matrix, passed as argument in the form of
+        diagonal and off-diagonal.
+
+        This function relies on the QR_algorithm function, written in C++.
+        Args:
+            diag (np.ndarray, optional): Diagonal of the matrix. Default value is None. If no value is passed, the one used
+                                        is the one resulting from the Lanczos decomposition of the matrix passed to the
+                                        constructor.
+            off_diag (np.ndarray, optional): Off-iagonal of the matrix. Default value is None. If no value is passed, the one
+                                        used is the one resulting from the Lanczos decomposition of the matrix passed to the
+                                        constructor.
+
+        Returns:
+            tuple: a tuple containing two arrays, the eigenvalues and the eigenvectors.
+
+        Raises:
+            ValueError: If there is a mismatch between the diagonal and off diagonal size.
         """
         if diag is None and off_diag is None:
             if self.diag is None:
                 _, __, ___ = self.Lanczos_PRO(
-                    tol=1e-10
+                    tol=self.tol
                 )  # this already sets self.diag = alpha, self.off_diag = beta
             diag = self.diag
             off_diag = self.off_diag
         if len(diag) != (len(off_diag) + 1):
             raise ValueError("Mismatch  between diagonal and off diagonal size")
-
-            return QR_algorithm(diag, off_diag, self.tol, self.max_iter)
 
         eig, Q_triangular = QR_algorithm(diag, off_diag, self.tol, self.max_iter)
         Q_triangular = np.array(Q_triangular)
@@ -322,6 +381,7 @@ class EigenSolver:
 def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
     """
     Compute the dominant eigenvalue of a square matrix using the power method.
+    Implemented using cupy.
 
     Args:
         A (cp.spmatrix): A square matrix whose dominant eigenvalue is to be computed.
@@ -352,6 +412,8 @@ def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
         update_norm = cpla.norm(x - x_old) / cpla.norm(x_old)
         x_old = x.copy()
         iteration += 1
+        if iteration >= max_iter:
+            max_iteration_warning()
 
     return x @ A @ x
 
@@ -363,6 +425,7 @@ def Lanczos_PRO_cp(A, q=None, m=None, tol=1e-8):
     This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
     equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
     eigenvalues and eigenvectors of large symmetric matrices.
+    Implemented using cupy.
 
     Args:
         A (cp.ndarray or cpsp.spmatrix): A symmetric square matrix of size n x n.
@@ -429,6 +492,7 @@ def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=1000):
     This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
     The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
     of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.
+    Implemented using cupy.
 
     Args:
         diag (cp.ndarray): Diagonal elements of the tridiagonal matrix.
@@ -542,9 +606,10 @@ def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=1000):
         # Q[:, :m] = Q[:, :m] @ Matrix_trigonometric[:m, :]
 
         iter += 1
+        if iteration >= max_iter:
+            max_iteration_warning()
         if abs(off_diag[m - 1]) < tol * (cp.abs(diag[m]) + cp.abs(diag[m - 1])):
             m -= 1
-
     return diag, Q
 
 
@@ -553,6 +618,7 @@ def QR_cp(A, q0=None, tol=1e-8, max_iter=1000):
     Compute the eigenvalues of a square matrix using the QR algorithm.
     Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
     algorithm to compute the eigenvalues.
+    The implementation is done using cupy.
 
     Args:
         A (cp.ndarray or cpsp.spmatrix): A square matrix whose eigenvalues are to be computed.

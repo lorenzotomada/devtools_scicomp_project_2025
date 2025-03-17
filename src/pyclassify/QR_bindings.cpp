@@ -5,7 +5,6 @@
 #include <cmath>
 #include <stdexcept>
 
-
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 namespace py=pybind11;
@@ -169,6 +168,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
         }
 
         iter++;
+        if (iter >= max_iter) {std::cout << "Max iteration has been reached. Maybe tol was too low?" << std::endl;}
         if ( std::abs(off_diag[m-1]) < tol*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
         {
             --m;
@@ -309,6 +309,7 @@ std::vector<double>
 
 
         iter++;
+        if (iter >= max_iter) {std::cout << "Max iteration has been reached. Maybe tol was too low?" << std::endl;}
         if ( std::abs(off_diag[m-1]) < tol*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
         {
             --m;
