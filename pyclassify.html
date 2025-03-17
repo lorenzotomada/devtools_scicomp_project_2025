@@ -14,7 +14,6 @@
     <script src="_static/documentation_options.js?v=d45e8c67"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="final_project documentation" href="index.html" />
@@ -50,7 +49,8 @@
 <dt class="sig sig-object py" id="pyclassify.EigenSolver.Lanczos_PRO">
 <span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.Lanczos_PRO" title="Link to this definition"></a></dt>
 <dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
-<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that <span class="math notranslate nohighlight">\(A pprox Q T Q^T\)</span>,
+<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that
+.. math:: <cite>A approx Q T Q^T,</cite>
 where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
 of large symmetric matrices.</p>
 <dl class="field-list simple">
@@ -86,14 +86,13 @@ If None, defaults to the size of A.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="pyclassify.EigenSolver.compute_eigenval">
 <span class="sig-name descname"><span class="pre">compute_eigenval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.compute_eigenval" title="Link to this definition"></a></dt>
-<dd><p>Docstring to be added.</p>
+<dd><p>Docstring to be added</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pyclassify.EigenSolver.eig">
 <span class="sig-name descname"><span class="pre">eig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.eig" title="Link to this definition"></a></dt>
-<dd><p>throwing an error if diag and off_diag are None
-Docstring to be added</p>
+<dd><p>Docstring to be added</p>
 </dd></dl>
 
 </dd></dl>
