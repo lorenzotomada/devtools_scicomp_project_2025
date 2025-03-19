@@ -311,56 +311,10 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
 }
 
 int main(){
+    std::vector<double> diag(2000, 5), offdiag(1999, 20);
 
-    // std::vector<double> diag(400, 5), offdiag(399, 20);
 
     
-    // auto start = std::chrono::high_resolution_clock::now();
-
-    // QR_algorithm(diag, offdiag, 1e-8, 50000);
-
-    // // Capture the end time
-    // auto end = std::chrono::high_resolution_clock::now();
-
-    // // Compute the elapsed time as a duration
-    // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-    // std::cout << "Elapsed time: " << elapsed.count() << " milliseconds" << std::endl;
-
-    std::vector<std::vector<double>> matrix_test = {
-        {1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-        {2, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-        {3, 12, 20, 21, 22, 23, 24, 25, 26, 27},
-        {4, 13, 21, 28, 29, 30, 31, 32, 33, 34},
-        {5, 14, 22, 29, 35, 36, 37, 38, 39, 40},
-        {6, 15, 23, 30, 36, 41, 42, 43, 44, 45},
-        {7, 16, 24, 31, 37, 42, 46, 47, 48, 49},
-        {8, 17, 25, 32, 38, 43, 47, 50, 51, 52},
-        {9, 18, 26, 33, 39, 44, 48, 51, 53, 54},
-        {10, 19, 27, 34, 40, 45, 49, 52, 54, 55}
-    };
-    Lanczos_PRO(matrix_test, std::vector<double> (10, 1), 10);
-    const int n = 3000;
-    // Create a 2D vector (matrix) initialized to 0.0
-    std::vector<std::vector<double>> matrix(n, std::vector<double>(n, 0.0));
-
-    // Initialize random number generator with a random seed
-    std::mt19937 rng(std::random_device{}());
-    // Define a uniform distribution for random values (adjust range as needed)
-    std::uniform_real_distribution<double> dist(0.0, 1.0);
-
-    // Fill the matrix ensuring symmetry
-    for (int i = 0; i < n; ++i) {
-        for (int j = i; j < n; ++j) {
-            double value = dist(rng);
-            matrix[i][j] = value;
-            matrix[j][i] = value;  // mirror the value to maintain symmetry
-        }
-    }
-
-
-    std::vector<double> initial_guess(n, 1);
-
     auto start = std::chrono::high_resolution_clock::now();
     Lanczos_PRO(matrix, initial_guess, n);
     auto end = std::chrono::high_resolution_clock::now();
