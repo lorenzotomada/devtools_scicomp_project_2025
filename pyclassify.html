@@ -38,367 +38,21 @@
 <h1>PyClassify Module Documentation<a class="headerlink" href="#pyclassify-module-documentation" title="Link to this heading"></a></h1>
 <p>This module contains all the functions for the PyClassify package.</p>
 </section>
-<section id="module-pyclassify">
-<span id="functions"></span><h1>Functions:<a class="headerlink" href="#module-pyclassify" title="Link to this heading"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="pyclassify.EigenSolver">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">EigenSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class solving the eigenvalue problem for a given symmetric matrix.</p>
-<p>Two different building blocks are present: Lanczos_PRO (used to transform the matrix to
-a tridiagonal one), and another function written in C++. The latter can be either
-Eigen_value_calculator (if the user is only interested in the computation of the eigenvalues)
-or QR_algorithm, if eigenvectors are needed as well.</p>
-<p>We refer the interested reader to their implementation in C++ for further details.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pyclassify.EigenSolver.Lanczos_PRO">
-<span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.Lanczos_PRO" title="Link to this definition"></a></dt>
-<dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
-<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that
-.. math:: <cite>A approx Q T Q^T,</cite>
-where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
-of large symmetric matrices.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>np.ndarray</em>) – A symmetric square matrix of size n x n.</p></li>
-<li><p><strong>q</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Initial vector of size n. Default value is None (a random one is created).</p></li>
-<li><p><strong>m</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of eigenvalues to compute. Must be less than or equal to n.
-If None, defaults to the size of A.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (Q, alpha, beta) where:</dt><dd><ul class="simple">
-<li><p>Q (np.ndarray): Orthogonal matrix of size n x m.</p></li>
-<li><p>alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.</p></li>
-<li><p>beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or SciPy/CuPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns or the matrix is not symmetric or it m is
-    greater than the size of A.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyclassify.EigenSolver.compute_eigenval">
-<span class="sig-name descname"><span class="pre">compute_eigenval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.compute_eigenval" title="Link to this definition"></a></dt>
-<dd><p>Compute (only) the eigenvalues of a symmetric triangular matrix, passed as argument in the form of diagonal and
-off-diagonal.</p>
-<p>This function relies on the Eigen_value_calculator function, written in C++.
-:param diag: Diagonal of the matrix. Default value is None. If no value is passed, the one used</p>
-<blockquote>
-<div><p>is the one resulting from the Lanczos decomposition of the matrix passed to the
-constructor.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>off_diag</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Off-iagonal of the matrix. Default value is None. If no value is passed, the one
-used is the one resulting from the Lanczos decomposition of the matrix passed to the
-constructor.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>an np.array containing the eigenvalues of the matrix.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.array</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If there is a mismatch between the diagonal and off diagonal size.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pyclassify.EigenSolver.eig">
-<span class="sig-name descname"><span class="pre">eig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.eig" title="Link to this definition"></a></dt>
-<dd><p>Compute the eigenvalues and eigenvectors of a symmetric triangular matrix, passed as argument in the form of
-diagonal and off-diagonal.</p>
-<p>This function relies on the QR_algorithm function, written in C++.
-:param diag: Diagonal of the matrix. Default value is None. If no value is passed, the one used</p>
-<blockquote>
-<div><p>is the one resulting from the Lanczos decomposition of the matrix passed to the
-constructor.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>off_diag</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Off-iagonal of the matrix. Default value is None. If no value is passed, the one
-used is the one resulting from the Lanczos decomposition of the matrix passed to the
-constructor.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>a tuple containing two arrays, the eigenvalues and the eigenvectors.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If there is a mismatch between the diagonal and off diagonal size.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<section id="functions">
+<h1>Functions:<a class="headerlink" href="#functions" title="Link to this heading"></a></h1>
+</section>
+<section id="module-pyclassify.utils">
+<span id="submodule-utils"></span><h1>Submodule: utils<a class="headerlink" href="#module-pyclassify.utils" title="Link to this heading"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.Lanczos_PRO_cp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">Lanczos_PRO_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.Lanczos_PRO_cp" title="Link to this definition"></a></dt>
-<dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
-<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that A is approximately
-equal to Q * T * Q.T, where A is a symmetric matrix. The algorithm is useful for finding a few
-eigenvalues and eigenvectors of large symmetric matrices.
-Implemented using cupy.</p>
+<dt class="sig sig-object py" id="pyclassify.utils.check_A_square_matrix">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_A_square_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_A_square_matrix" title="Link to this definition"></a></dt>
+<dd><p>Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy sparse matrix.
+This is done to ensure that the input matrix <cite>A</cite> is both:
+1. Of type <cite>np.ndarray</cite> (NumPy array) or <cite>scipy.sparse</cite> (SciPy sparse matrix).
+2. A square matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>cp.ndarray</em><em> or </em><em>cpsp.spmatrix</em>) – A symmetric square matrix of size n x n.</p></li>
-<li><p><strong>q</strong> (<em>cp.ndarray</em>) – Initial vector of size n.</p></li>
-<li><p><strong>m</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of eigenvalues to compute. Must be less than or equal to n.
-If None, defaults to the size of A.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (Q, alpha, beta) where:</dt><dd><ul class="simple">
-<li><p>Q (cp.ndarray): Orthogonal matrix of size n x m.</p></li>
-<li><p>alpha (cp.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.</p></li>
-<li><p>beta (cp.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A is not square or if m is greater than the size of A.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.QR_cp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.QR_cp" title="Link to this definition"></a></dt>
-<dd><p>Compute the eigenvalues of a square matrix using the QR algorithm.
-Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR
-algorithm to compute the eigenvalues.
-The implementation is done using cupy.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>cp.ndarray</em><em> or </em><em>cpsp.spmatrix</em>) – A square matrix whose eigenvalues are to be computed.</p></li>
-<li><p><strong>q0</strong> (<em>cp.ndarray</em><em>, </em><em>optional</em>) – An initial vector for the Lanczos process. If None, a random vector is used.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Convergence tolerance for the QR algorithm. Default is 1e-8</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations for the QR algorithm. Deault is 100.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
-<li><p>eigenvalues (cp.ndarray): An array containing the eigenvalues of the matrix.</p></li>
-<li><p>Q (cp.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix is not square.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.QR_method_cp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">QR_method_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.QR_method_cp" title="Link to this definition"></a></dt>
-<dd><p>Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.</p>
-<p>This function uses the QR decomposition method to iteratively compute the eigenvalues of a given tridiagonal matrix.
-The QR algorithm is an iterative method that computes the eigenvalues of a matrix by decomposing it into a product
-of an orthogonal matrix Q and an upper triangular matrix R, and then updating the matrix as the product of R and Q.
-Implemented using cupy.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>diag</strong> (<em>cp.ndarray</em>) – Diagonal elements of the tridiagonal matrix.</p></li>
-<li><p><strong>off_diag</strong> (<em>cp.ndarray</em>) – Off-diagonal elements of the tridiagonal matrix.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the off-diagonal elements (default is 1e-10).</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 100).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>A tuple (eigenvalues, Q) where:</dt><dd><ul class="simple">
-<li><p>eigenvalues (cp.ndarray): An array containing the eigenvalues of the matrix.</p></li>
-<li><p>Q (cp.ndarray): The orthogonal matrix Q from the final QR decomposition.</p></li>
-</ul>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix is not square.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.eigenvalues_cp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_cp" title="Link to this definition"></a></dt>
-<dd><p>Compute the eigenvalues of a sparse matrix using CuPy’s <cite>eigsh</cite> function.</p>
-<p>This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
-CuPy’s sparse linear algebra solvers. It uses <cite>eigsh</cite> for more efficient computation.</p>
-<p>Remark that the eigsh function in this case does not allow to compute <em>all</em> the eigenvalues, but only a number
-m&lt;n, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>cpsp.spmatrix</em>) – A square sparse matrix whose eigenvalues are to be computed.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An array containing the eigenvalues of the sparse matrix <cite>A</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or Scipy/CuPy sparse symmetric matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.eigenvalues_np">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_np</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_np" title="Link to this definition"></a></dt>
-<dd><p>Compute the eigenvalues of a square matrix using NumPy’s <cite>eig</cite> or <cite>eigh</cite> function.</p>
-<p>This function checks if the input matrix is square (and is actually a matrix) using
-‘check_square_matrix’, and then computes its eigenvalues.</p>
-<p>If the matrix is symmetric, it uses <cite>eigh</cite> (which is more efficient for symmetric matrices).
-Otherwise, it uses <cite>eig</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>np.ndarray</em>) – A square matrix whose eigenvalues are to be computed.</p></li>
-<li><p><strong>symmetric</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, assumes the matrix is symmetric and uses <cite>eigh</cite> for
-faster computation. If False, uses <cite>eig</cite> for general matrices
-(default is True).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An array containing the eigenvalues of the matrix <cite>A</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy/CuPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.eigenvalues_sp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">eigenvalues_sp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.eigenvalues_sp" title="Link to this definition"></a></dt>
-<dd><p>Compute the eigenvalues of a sparse matrix using SciPy’s <cite>eigsh</cite> or <cite>eigs</cite> function.</p>
-<p>This function checks if the input matrix is square, then computes its eigenvalues using
-SciPy’s sparse linear algebra solvers. For symmetric matrices, it uses <cite>eigsh</cite> for
-more efficient computation. For non-symmetric matrices, it uses <cite>eigs</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>sp.spmatrix</em>) – A square sparse matrix whose eigenvalues are to be computed.</p></li>
-<li><p><strong>symmetric</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, assumes the matrix is symmetric and uses <cite>eigsh</cite>.
-If False, uses <cite>eigs</cite> for general matrices (default is True).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An array containing the eigenvalues of the sparse matrix <cite>A</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy/CuPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.power_method">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method" title="Link to this definition"></a></dt>
-<dd><p>Compute the dominant eigenvalue of a square matrix using the power method.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em><em> or </em><em>cpsp.spmatrix</em>) – A square matrix whose dominant eigenvalue is to be computed.</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 500).</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between iterations
-(default is 1e-4).</p></li>
-<li><p><strong>x</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Initial guess for the eigenvector. If None, a random vector is generated.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The approximated dominant eigenvalue of the matrix <cite>A</cite>, computed as the Rayleigh quotient x &#64; A &#64; x.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy/CuPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.power_method_cp">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_cp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method_cp" title="Link to this definition"></a></dt>
-<dd><p>Compute the dominant eigenvalue of a square matrix using the power method.
-Implemented using cupy.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>cp.spmatrix</em>) – A square matrix whose dominant eigenvalue is to be computed.</p></li>
-<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 500).</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between iterations
-(default is 1e-4).</p></li>
-<li><p><strong>x</strong> (<em>cp.ndarray</em><em>, </em><em>optional</em>) – Initial guess for the eigenvector. If None, a random vector is generated.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The approximated dominant eigenvalue of the matrix <cite>A</cite>, computed as the Rayleigh quotient x &#64; A &#64; x.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float</p>
+<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The matrix to be checked.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
@@ -410,20 +64,43 @@ Implemented using cupy.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.power_method_numba">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.</span></span><span class="sig-name descname"><span class="pre">power_method_numba</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.power_method_numba" title="Link to this definition"></a></dt>
-<dd><p>Compute the dominant eigenvalue of a matrix using the power method, with Numba optimization.</p>
-<p>This function and applies Numba’s Just-In-Time (JIT) compilation to optimize the performance of the
-power method for large matrices.</p>
-<p>Remark that numba does not support scipy sparse matrices, so the input matrix must be a NumPy array.
-he function is optimized with Numba using the ‘njit’ decorator with nogil and parallel options.</p>
+<dt class="sig sig-object py" id="pyclassify.utils.make_symmetric">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">make_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.make_symmetric" title="Link to this definition"></a></dt>
+<dd><p>Ensures the input matrix is symmetric by averaging it with its transpose.</p>
+<p>This function first checks if the matrix is square using the <cite>check_A_square_matrix</cite> function.
+Then, it makes the matrix symmetric by averaging it with its transpose.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The input square matrix to be made symmetric.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The symmetric version of the input matrix.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or sp.spmatrix</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If the input matrix is not a NumPy array or SciPy sparse matrix.</p></li>
+<li><p><strong>ValueError</strong> – If the input matrix is not square.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.utils.power_method_numba_helper">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">power_method_numba_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.power_method_numba_helper" title="Link to this definition"></a></dt>
+<dd><p>Approximate the dominant eigenvalue of a square matrix using the power method.</p>
+<p>This helper function applies the power method to a matrix A to estimate its dominant eigenvalue.
+It returns the Rayleigh quotient, x &#64; A &#64; x, which serves as an approximation of the dominant eigenvalue.</p>
+<p>The function is optimized with Numba using the ‘njit’ decorator with nogil and parallel options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>A</strong> (<em>np.ndarray</em>) – A square matrix.</p></li>
 <li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of iterations to perform (default is 500).</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between
-iterations (default is 1e-4).</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for convergence based on the relative change between iterations (default is 1e-4).</p></li>
 <li><p><strong>x</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Initial guess for the eigenvector. If None, a random vector is generated.</p></li>
 </ul>
 </dd>
@@ -434,99 +111,9 @@ iterations (default is 1e-4).</p></li>
 <dd class="field-odd"><p>float</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A is not square. The check is not done using ‘check_square_matrix’
-    because of numba technicalities.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If the input matrix A is not square. The check is not done using ‘check_A_square_matrix’ because of numba technicalities.</p>
 </dd>
 </dl>
-</dd></dl>
-
-</section>
-<section id="module-pyclassify.utils">
-<span id="submodule-utils"></span><h1>Submodule: utils<a class="headerlink" href="#module-pyclassify.utils" title="Link to this heading"></a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.check_square_matrix">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_square_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_square_matrix" title="Link to this definition"></a></dt>
-<dd><p>Checks if the input matrix is a square matrix of type NumPy ndarray or SciPy or CuPy sparse matrix.
-This is done to ensure that the input matrix <cite>A</cite> is both:
-1. Of type <cite>np.ndarray</cite> (NumPy array) or <cite>scipy.sparse.spmatrix</cite> (SciPy sparse matrix) or ‘cupyx.scipy.sparse.spmatrix’ (CuPy sparse matrix).
-2. A square matrix.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em><em> or </em><em>cpsp.spmatrix</em>) – The matrix to be checked.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.check_symm_square">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_symm_square</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_symm_square" title="Link to this definition"></a></dt>
-<dd><p>Checks if the input matrix is a square symmetric matrix of type SciPy/CuPy sparse matrix.
-This is done to ensure that the input matrix <cite>A</cite> is all of the following:
-1. A numpy array or a scipy sparse matrix or CuPy sparse matrix.
-2. A square matrix.
-3. Symmetric.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>sp.spmatrix</em><em> or </em><em>cpsp.spmatrix</em>) – The matrix to be checked.</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or SciPy or CuPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns or the matrix is not symmetric.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.make_symmetric">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">make_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.make_symmetric" title="Link to this definition"></a></dt>
-<dd><p>Ensures the input matrix is symmetric by averaging it with its transpose.</p>
-<p>This function first checks if the matrix is square using the <cite>check_square_matrix</cite> function.
-Then, it makes the matrix symmetric by averaging it with its transpose.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em><em> or </em><em>cpsp.spmatrix</em>) – The input square matrix to be made symmetric.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The symmetric version of the input matrix.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray or sp.spmatrix or cpsp.spmatrix</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input matrix is not a NumPy array or SciPy or CuPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If the input matrix is not square.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.max_iteration_warning">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">max_iteration_warning</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.max_iteration_warning" title="Link to this definition"></a></dt>
-<dd><p>Function to warn the user that the maximum number of iteration has been reached,
-hence suggesting that the method did not converge.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.profile_with_cprofile">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">profile_with_cprofile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.profile_with_cprofile" title="Link to this definition"></a></dt>
-<dd><p>Function used to profile the code using cProfile.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.profile_with_cupy_profiler">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">profile_with_cupy_profiler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.profile_with_cupy_profiler" title="Link to this definition"></a></dt>
-<dd><p>WORK IN PROGRESS: still not working as expected.
-Function used to profile the code using the CuPy profiler.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -579,26 +166,11 @@ to the provided base file name), opens the file, and parses its content using ya
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">PyClassify Module Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-pyclassify">Functions:</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.EigenSolver"><code class="docutils literal notranslate"><span class="pre">EigenSolver</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.Lanczos_PRO_cp"><code class="docutils literal notranslate"><span class="pre">Lanczos_PRO_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.QR_cp"><code class="docutils literal notranslate"><span class="pre">QR_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.QR_method_cp"><code class="docutils literal notranslate"><span class="pre">QR_method_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.eigenvalues_cp"><code class="docutils literal notranslate"><span class="pre">eigenvalues_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.eigenvalues_np"><code class="docutils literal notranslate"><span class="pre">eigenvalues_np()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.eigenvalues_sp"><code class="docutils literal notranslate"><span class="pre">eigenvalues_sp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.power_method"><code class="docutils literal notranslate"><span class="pre">power_method()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.power_method_cp"><code class="docutils literal notranslate"><span class="pre">power_method_cp()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.power_method_numba"><code class="docutils literal notranslate"><span class="pre">power_method_numba()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="#functions">Functions:</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-pyclassify.utils">Submodule: utils</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.check_square_matrix"><code class="docutils literal notranslate"><span class="pre">check_square_matrix()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.check_symm_square"><code class="docutils literal notranslate"><span class="pre">check_symm_square()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.check_A_square_matrix"><code class="docutils literal notranslate"><span class="pre">check_A_square_matrix()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.make_symmetric"><code class="docutils literal notranslate"><span class="pre">make_symmetric()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.max_iteration_warning"><code class="docutils literal notranslate"><span class="pre">max_iteration_warning()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.profile_with_cprofile"><code class="docutils literal notranslate"><span class="pre">profile_with_cprofile()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.profile_with_cupy_profiler"><code class="docutils literal notranslate"><span class="pre">profile_with_cupy_profiler()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.power_method_numba_helper"><code class="docutils literal notranslate"><span class="pre">power_method_numba_helper()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 </ul>
 </li>
