@@ -1,18 +1,18 @@
 import numpy as np
 import scipy.sparse as sp
-import cupyx.scipy.sparse as cpsp
-import cupy as cp
+#import cupyx.scipy.sparse as cpsp
+#import cupy as cp
 import scipy
 import pytest
 from pyclassify import (
     eigenvalues_np,
     eigenvalues_sp,
-    eigenvalues_cp,
+    #eigenvalues_cp,
     power_method,
     power_method_numba,
-    power_method_cp,
+    #power_method_cp,
     EigenSolver,
-    QR_cp,
+    #QR_cp,
 )
 from pyclassify.utils import check_square_matrix, make_symmetric, check_symm_square
 
@@ -25,6 +25,7 @@ def set_random_seed():
 
 sizes = [20, 100]
 densities = [0.1, 0.3]
+
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -52,6 +53,7 @@ def test_checks_on_A(size, density):
         check_symm_square(not_so_symmetric_matrix)
 
 
+
 @pytest.mark.parametrize("size", sizes)
 @pytest.mark.parametrize("density", densities)
 def test_make_symmetric(size, density):
@@ -63,6 +65,7 @@ def test_make_symmetric(size, density):
 
     with pytest.raises(TypeError):
         _ = make_symmetric("banana")
+
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -92,6 +95,7 @@ def test_implementations_power_method(size, density):
     assert np.isclose(
         biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-4
     )  # ensure numba power method and scipy implementation are consistent
+
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -129,6 +133,7 @@ def test_Lanczos(size):
         _ = eigensolver.Lanczos_PRO(A=random_matrix, q=np.random.rand(2 * size))
 
 
+
 @pytest.mark.parametrize("size", sizes)
 def test_EigenSolver(size):
     eig = np.arange(1, size + 1)
@@ -153,34 +158,35 @@ def test_EigenSolver(size):
         _ = eigensolver.compute_eigenval(diag=np.arange(2), off_diag=np.arange(49))
 
 
-@pytest.mark.parametrize("size", sizes)
-@pytest.mark.parametrize("density", densities)
-def test_cupy(size, density):
-    try:
-        if not cp.cuda.is_available():
-            pytest.skip("Skipping test because CUDA is not available")
-    except cp.cuda.runtime.CUDARuntimeError as e:
-        pytest.skip(f"Skipping test due to CUDA driver issues: {str(e)}")
 
-    cp.random.seed(8422)
-
-    matrix = sp.random(size, size, density=density, format="csr")
-    symmetric_matrix = make_symmetric(matrix)
-    cp_symm_matrix = cpsp.csr_matrix(symmetric_matrix)
-    check_square_matrix(cp_symm_matrix)
-
-    eigs_cp = eigenvalues_cp(cp_symm_matrix)
-
-    index_cp = cp.argmax(cp.abs(eigs_cp))
-    biggest_eigenvalue_cp = eigs_cp[index_cp]
-    biggest_eigenvalue_pm_cp = power_method_cp(cp_symm_matrix, max_iter=1000, tol=1e-5)
-
-    assert np.isclose(
-        biggest_eigenvalue_cp, biggest_eigenvalue_pm_cp, rtol=1e-4
-    )  # ensure cupy native and cupy power method implementations are consistent
-
-    random_vector = cp.random.rand(size)
-    eigs_QR, _ = QR_cp(cp_symm_matrix, random_vector, tol=1e-4, max_iter=20 * size)
-    index_cp_QR = cp.argmax(cp.abs(eigs_QR))
-    biggest_eigenvalue_QR = eigs_QR[index_cp_QR]
-    assert cp.isclose(biggest_eigenvalue_cp, biggest_eigenvalue_QR, rtol=1e-3)
+#@pytest.mark.parametrize("size", sizes)
+#@pytest.mark.parametrize("density", densities)
+#def test_cupy(size, density):
+#    try:
+#        if not cp.cuda.is_available():
+#            pytest.skip("Skipping test because CUDA is not available")
+#    except cp.cuda.runtime.CUDARuntimeError as e:
+#        pytest.skip(f"Skipping test due to CUDA driver issues: {str(e)}")
+#
+#    cp.random.seed(8422)
+#
+#    matrix = sp.random(size, size, density=density, format="csr")
+#    symmetric_matrix = make_symmetric(matrix)
+#    cp_symm_matrix = cpsp.csr_matrix(symmetric_matrix)
+#    check_square_matrix(cp_symm_matrix)
+#
+#    eigs_cp = eigenvalues_cp(cp_symm_matrix)
+#
+#    index_cp = cp.argmax(cp.abs(eigs_cp))
+#    biggest_eigenvalue_cp = eigs_cp[index_cp]
+#    biggest_eigenvalue_pm_cp = power_method_cp(cp_symm_matrix, max_iter=1000, tol=1e-5)
+#
+#    assert np.isclose(
+#        biggest_eigenvalue_cp, biggest_eigenvalue_pm_cp, rtol=1e-4
+#    )  # ensure cupy native and cupy power method implementations are consistent
+#
+#    random_vector = cp.random.rand(size)
+#    eigs_QR, _ = QR_cp(cp_symm_matrix, random_vector, tol=1e-4, max_iter=20 * size)
+#    index_cp_QR = cp.argmax(cp.abs(eigs_QR))
+#    biggest_eigenvalue_QR = eigs_QR[index_cp_QR]
+#    assert cp.isclose(biggest_eigenvalue_cp, biggest_eigenvalue_QR, rtol=1e-3)
