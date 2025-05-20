@@ -378,6 +378,147 @@ to the provided base file name), opens the file, and parses its content using ya
 </section>
 <section id="submodule-helpers-secular">
 <h1>Submodule: helpers_secular<a class="headerlink" href="#submodule-helpers-secular" title="Link to this heading"></a></h1>
+<dl class="py function" id="module-pyclassify.helpers_secular">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.bisection">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">bisection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.bisection" title="Link to this definition"></a></dt>
+<dd><p>Standard bisection method to find a root of the function f in the interval [a, b].</p>
+<p>This implementation is used in <cite>compute_outer_zero</cite> to locate the outer eigenvalue.</p>
+<p>Parameters:
+f (callable): A continuous function for which f(a) * f(b) &lt; 0.
+a (float): Left endpoint of the interval.
+b (float): Right endpoint of the interval.
+tol (float): Tolerance for convergence. The method stops when the interval is smaller than tol or when f(c) is sufficiently small.
+max_iter (int): Maximum number of iterations before stopping.</p>
+<p>Returns:
+float: Approximation of the root within the specified tolerance.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.check_is_root">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">check_is_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-07</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.check_is_root" title="Link to this definition"></a></dt>
+<dd><p>Determines whether x is a root of the function f within a given numerical tolerance.
+Written because np.isclose is too restrictive even in cases in which we are indeed close to an eigenvalue.</p>
+<p>Parameters:
+f (callable): Function to evaluate.
+x (float): Point to test as a root.
+tol (float): Absolute tolerance for considering f(x) close to zero.</p>
+<p>Returns:
+bool: True if <a href="#id1"><span class="problematic" id="id2">|f(x)|</span></a> &lt; tol, indicating x is a root within the specified tolerance.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.compute_eigenvalues">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">compute_eigenvalues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.compute_eigenvalues" title="Link to this definition"></a></dt>
+<dd><p>Computes all eigenvalues of a rank-one modified diagonal matrix D + rho * v v^T
+using the secular equation method.</p>
+<p>Parameters:
+rho (float): Rank-one update scalar.
+d (np.ndarray or scipy.sparse.spmatrix): 1D array of sorted diagonal entries of D.
+v (np.ndarray or scipy.sparse.spmatrix): Update vector v in the rank-one perturbation.</p>
+<p>Returns:
+np.ndarray: Sorted array of all eigenvalues of the perturbed matrix.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.compute_inner_zero">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">compute_inner_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.compute_inner_zero" title="Link to this definition"></a></dt>
+<dd><p>Computes the i-th eigenvalue that lies in the interval (d[i], d[i+1]) for a
+rank-one modified diagonal matrix using the secular equation.</p>
+<p>Parameters:
+rho (float): Rank-one update scalar.
+d (np.ndarray or scipy.sparse.spmatrix): 1D array of diagonal entries, sorted in ascending order.
+v (np.ndarray or scipy.sparse.spmatrix): 1D update vector.
+i (int): Index indicating the interval (d[i], d[i+1]) to find the zero in.
+tol (float, optional): Tolerance for root-finding. Default is 1e-12.
+max_iter (int, optional): Maximum iterations for bisection. Default is 1000.</p>
+<p>Returns:
+float: The computed inner eigenvalue in the interval (d[i], d[i+1]).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.compute_outer_zero">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">compute_outer_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval_end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.compute_outer_zero" title="Link to this definition"></a></dt>
+<dd><p>Computes the outer eigenvalue (lambda[0] if rho &lt; 0, lambda[n-1] if rho &gt; 0) of a rank-one modified diagonal matrix.</p>
+<dl class="simple">
+<dt>The secular function  behaves such that:</dt><dd><ul class="simple">
+<li><p>If rho &gt; 0, the outer eigenvalue lies in (d[n-1], infty), and f is increasing in this interval.</p></li>
+<li><p>If rho &lt; 0, the outer eigenvalue lies in (-infty, d[0]), and f is decreasing in this interval.</p></li>
+</ul>
+</dd>
+</dl>
+<p>This function:
+1. Determines the direction to search based on the sign of rho.
+2. Finds an upper bound (or lower bound for rho &lt; 0) where the secular function changes sign.
+3. Uses the bisection method to find the root in the determined interval.</p>
+<p>Parameters:
+f (callable): The secular function to find a root of.
+rho (float): Scalar rank-one update parameter.
+interval_end (float): Either d[0] or d[n-1], depending on the sign of rho.
+v (np.ndarray or scipy.sparse.spmatrix): Vector from the rank-one update; used to scale the search step size.
+tol (float, optional): Convergence tolerance. Default is 1e-12.
+max_iter (int, optional): Maximum number of bisection iterations. Default is 2000.</p>
+<p>Returns:
+float: Approximation of the outer eigenvalue.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.compute_psi_s">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">compute_psi_s</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_guess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_squared</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.compute_psi_s" title="Link to this definition"></a></dt>
+<dd><p>Computes partial sums (psi1, psi2) and their derivatives for the secular function
+in the i-th interval (d[i], d[i+1]).</p>
+<p>Parameters:
+lambda_guess (float): Evaluation point for the secular function.
+rho (float): Scalar rank-one update parameter.
+d (np.ndarray or scipy.sparse.spmatrix): 1D array of diagonal entries.
+v_squared (np.ndarray or scipy.sparse.spmatrix): Precomputed elementwise square of the update vector v.
+i (int): Index defining the interval (d[i], d[i+1]).</p>
+<p>Returns:
+tuple: (psi1, psi1’, psi2, psi2’) — the partial secular sums and their derivatives.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.inner_outer_eigs">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">inner_outer_eigs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.inner_outer_eigs" title="Link to this definition"></a></dt>
+<dd><p>Splits the eigenvalues into inner eigenvalues and the outer eigenvalue based on the sign of rho.</p>
+<p>Parameters:
+eigs (np.ndarray or scipy.sparse.spmatrix): Array of eigenvalues, assumed to be sorted.
+rho (float): Scalar parameter appearing in the secular function (please refer to the documentation for more detailed info).</p>
+<p>Returns:
+tuple: A tuple (inner_eigs, outer_eig) where inner_eigs is an array of eigenvalues and outer_eig is a scalar.</p>
+<blockquote>
+<div><p>If rho &gt; 0, the last eigenvalue is considered outer due to the interlacing property; otherwise, the first is.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.return_secular_f">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">return_secular_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.return_secular_f" title="Link to this definition"></a></dt>
+<dd><p>Constructs the secular function for a rank-one update to a diagonal matrix.</p>
+<p>Parameters:
+rho (float): Scalar from the rank-one matrix update.
+d (np.ndarray or scipy.sparse.spmatrix): 1D array or sparse vector of diagonal entries.
+v (np.ndarray or scipy.sparse.spmatrix): 1D array or sparse vector used in the rank-one update.</p>
+<p>Returns:
+callable:</p>
+<blockquote>
+<div><p>f(<a href="#id3"><span class="problematic" id="id4">lambda_</span></a>: float) -&gt; float: The secular function evaluated at <a href="#id5"><span class="problematic" id="id6">lambda_</span></a>.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.helpers_secular.secular_function">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.helpers_secular.</span></span><span class="sig-name descname"><span class="pre">secular_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.helpers_secular.secular_function" title="Link to this definition"></a></dt>
+<dd><p>Evaluates the secular function at a given point in the i-th subinterval.</p>
+<p>Parameters:
+mu (float): Point at which to evaluate the secular function.
+rho (float): Scalar from the rank-one matrix update.
+d (np.ndarray or scipy.sparse.spmatrix): 1D array or sparse vector of diagonal entries.
+v2 (np.ndarray or scipy.sparse.spmatrix): Elementwise square of the update vector v (i.e., v ** 2).
+i (int): Index of the subinterval in which mu lies.</p>
+<p>Returns:
+float: The value of the secular function at mu.</p>
+</dd></dl>
+
 </section>
 
 
@@ -426,7 +567,18 @@ to the provided base file name), opens the file, and parses its content using ya
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#submodule-helpers-secular">Submodule: helpers_secular</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#submodule-helpers-secular">Submodule: helpers_secular</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.bisection"><code class="docutils literal notranslate"><span class="pre">bisection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.check_is_root"><code class="docutils literal notranslate"><span class="pre">check_is_root()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.compute_eigenvalues"><code class="docutils literal notranslate"><span class="pre">compute_eigenvalues()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.compute_inner_zero"><code class="docutils literal notranslate"><span class="pre">compute_inner_zero()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.compute_outer_zero"><code class="docutils literal notranslate"><span class="pre">compute_outer_zero()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.compute_psi_s"><code class="docutils literal notranslate"><span class="pre">compute_psi_s()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.inner_outer_eigs"><code class="docutils literal notranslate"><span class="pre">inner_outer_eigs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.return_secular_f"><code class="docutils literal notranslate"><span class="pre">return_secular_f()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.helpers_secular.secular_function"><code class="docutils literal notranslate"><span class="pre">secular_function()</span></code></a></li>
+</ul>
+</li>
 </ul>
 
 <div class="relations">

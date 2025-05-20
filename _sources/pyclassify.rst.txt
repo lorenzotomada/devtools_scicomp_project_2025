@@ -23,7 +23,7 @@ Submodule: helpers_secular
 ================
 
 .. automodule:: pyclassify.helpers_secular
-      :members:
+   :members:
    :undoc-members:
    :show-inheritance:
 
