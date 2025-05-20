@@ -7,11 +7,10 @@ final_project documentation
 ===========================
 
 Welcome to the documentation for the final project of the course in Development Tools for Scientific Computing.
-We are currently working on the project and on the documentation.
-Stay tuned!
+Our goal is to compute an efficient solver for eigenvalue problems.
 
-Recall that the documentation is written following
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
+For theoretical details, please check the file docs/Documentation.ipynb
+To install the package, please read the README.md file.
 
 
 Table of Contents
