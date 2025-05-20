@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import scipy.sparse as sp
-#import cupy as cp
-#import cupyx.scipy.sparse as cpsp
+
+# import cupy as cp
+# import cupyx.scipy.sparse as cpsp
 import os
 import yaml
 import cProfile
@@ -24,9 +25,7 @@ def check_square_matrix(A):
         ValueError: If number of rows != number of columns.
     """
     if not isinstance(A, (np.ndarray, sp.spmatrix)):
-        raise TypeError(
-            "Input matrix must be a NumPy array or a SciPy sparse matrix!"
-        )
+        raise TypeError("Input matrix must be a NumPy array or a SciPy sparse matrix!")
     if A.shape[0] != A.shape[1]:
         raise ValueError("Matrix must be square!")
 
@@ -130,7 +129,7 @@ def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
     return result
 
 
-#def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
+# def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
 #    """
 #    Function used to profile the code using the CuPy profiler.
 #    """

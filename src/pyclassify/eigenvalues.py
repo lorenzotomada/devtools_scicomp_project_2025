@@ -2,9 +2,10 @@ import numpy as np
 import scipy.sparse as sp
 import scipy.linalg as spla
 from numpy.linalg import eig, eigh
-#import cupy as cp
-#import cupy.linalg as cpla
-#from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
+
+# import cupy as cp
+# import cupy.linalg as cpla
+# from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
 from numba import jit, prange
 from .QR_cpp import QR_algorithm, Eigen_value_calculator
 from pyclassify.utils import (
@@ -12,7 +13,6 @@ from pyclassify.utils import (
     check_symm_square,
     max_iteration_warning,
 )
-
 
 
 def eigenvalues_np(A, symmetric=True):
@@ -41,7 +41,6 @@ def eigenvalues_np(A, symmetric=True):
     check_square_matrix(A)
     eigenvalues, _ = eigh(A) if symmetric else eig(A)
     return eigenvalues
-
 
 
 def eigenvalues_sp(A, symmetric=True):
@@ -73,8 +72,7 @@ def eigenvalues_sp(A, symmetric=True):
     return eigenvalues
 
 
-
-#def eigenvalues_cp(A):
+# def eigenvalues_cp(A):
 #    """
 #    Compute the eigenvalues of a sparse matrix using CuPy's `eigsh` function.
 #
@@ -98,7 +96,6 @@ def eigenvalues_sp(A, symmetric=True):
 #    k = 5 if A.shape[0] > 5 else A.shape[0] - 2
 #    eigenvalues, _ = eigsh_cp(A, k=k)
 #    return eigenvalues
-
 
 
 def power_method(A, max_iter=500, tol=1e-4, x=None):
@@ -139,7 +136,6 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
     return x @ A @ x
 
 
-
 @jit(nopython=True, nogil=True, parallel=True)
 def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
     """
@@ -166,7 +162,9 @@ def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
                     because of numba technicalities.
     """
     if A.shape[0] != A.shape[1]:
-        raise ValueError("Matrix must be square!")  # not possible to use the helper function due to the fact that we are using JIT-compilation
+        raise ValueError(
+            "Matrix must be square!"
+        )  # not possible to use the helper function due to the fact that we are using JIT-compilation
     if x is None:
         x = np.random.rand(A.shape[0])
     x /= np.linalg.norm(x)
@@ -184,7 +182,6 @@ def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
         # if iteration >= max_iter:
         #    max_iteration_warning()
     return x @ A @ x
-
 
 
 class EigenSolver:
@@ -384,8 +381,7 @@ class EigenSolver:
         return np.array(eig), Q_triangular @ self.Q.T
 
 
-
-#def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
+# def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
 #    """
 #    Compute the dominant eigenvalue of a square matrix using the power method.
 #    Implemented using cupy.
@@ -425,7 +421,7 @@ class EigenSolver:
 #    return x @ A @ x
 #
 #
-#def Lanczos_PRO_cp(A, q=None, m=None, tol=1e-8):
+# def Lanczos_PRO_cp(A, q=None, m=None, tol=1e-8):
 #    r"""
 #    Perform the Lanczos algorithm for symmetric matrices.
 #
@@ -492,7 +488,7 @@ class EigenSolver:
 #    return Q, cp.array(alpha), cp.array(beta[:-1])
 #
 #
-#def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=1000):
+# def QR_method_cp(diag, off_diag, tol=1e-8, max_iter=1000):
 #    """
 #    Compute the eigenvalues of a tridiagonal matrix using the QR algorithm.
 #
@@ -620,7 +616,7 @@ class EigenSolver:
 #    return diag, Q
 #
 #
-#def QR_cp(A, q0=None, tol=1e-8, max_iter=1000):
+# def QR_cp(A, q0=None, tol=1e-8, max_iter=1000):
 #    """
 #    Compute the eigenvalues of a square matrix using the QR algorithm.
 #    Done using the Lanczos algorithm to compute the tridiagonal matrix and then the QR

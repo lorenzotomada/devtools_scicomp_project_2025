@@ -41,8 +41,8 @@ class CMakeBuild(build_ext):
 setup(
     name="pyclassify",
     version="0.0.1",
-    author="Lorenzo, Gaspare",
-    author_email="mail.it",
+    author="Lorenzo Tomada, Gaspare Li Causi",
+    author_email="ltomada@sissa.it, glicausi@sissa.it",
     description="Final project",
     long_description="Eigenvalue computation",
     ext_modules=[CMakeExtension("pyclassify.QR_cpp")],

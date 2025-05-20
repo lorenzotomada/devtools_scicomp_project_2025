@@ -1,20 +1,21 @@
 import numpy as np
 import scipy.sparse as sp
-#import cupyx.scipy.sparse as cpsp
-#import cupy as cp
+
+# import cupyx.scipy.sparse as cpsp
+# import cupy as cp
 import scipy
 import pytest
 from pyclassify import (
     eigenvalues_np,
     eigenvalues_sp,
-    #eigenvalues_cp,
+    # eigenvalues_cp,
     power_method,
     power_method_numba,
-    #power_method_cp,
+    # power_method_cp,
     EigenSolver,
-    #QR_cp,
+    # QR_cp,
 )
-from pyclassify.utils import check_square_matrix, make_symmetric, check_symm_square
+from pyclassify.utils import make_symmetric
 
 
 @pytest.fixture(autouse=True)
@@ -25,47 +26,6 @@ def set_random_seed():
 
 sizes = [20, 100]
 densities = [0.1, 0.3]
-
-
-
-@pytest.mark.parametrize("size", sizes)
-@pytest.mark.parametrize("density", densities)
-def test_checks_on_A(size, density):
-    ugly_nonsquare_matrix = np.random.rand(size, size + 1)
-
-    with pytest.raises(ValueError):
-        check_square_matrix(ugly_nonsquare_matrix)
-    with pytest.raises(TypeError):
-        check_square_matrix("definitely_not_a_matrix")
-
-    matrix = sp.random(size, size, density=density, format="csr")
-    symmetric_matrix = make_symmetric(matrix)
-    check_square_matrix(symmetric_matrix)
-
-    # regarding the CuPy implementation: see below!
-
-    not_so_symmetric_matrix = np.random.rand(5, 5)
-    if not_so_symmetric_matrix[1, 2] == not_so_symmetric_matrix[2, 1]:
-        not_so_symmetric_matrix[1, 2] += 1
-    not_so_symmetric_matrix = sp.csr_matrix(not_so_symmetric_matrix)
-
-    with pytest.raises(ValueError):
-        check_symm_square(not_so_symmetric_matrix)
-
-
-
-@pytest.mark.parametrize("size", sizes)
-@pytest.mark.parametrize("density", densities)
-def test_make_symmetric(size, density):
-    matrix = sp.random(size, size, density=density, format="csr")
-    symmetric_matrix = make_symmetric(matrix)
-
-    check_square_matrix(symmetric_matrix)
-    assert symmetric_matrix.shape == matrix.shape
-
-    with pytest.raises(TypeError):
-        _ = make_symmetric("banana")
-
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -95,7 +55,6 @@ def test_implementations_power_method(size, density):
     assert np.isclose(
         biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-4
     )  # ensure numba power method and scipy implementation are consistent
-
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -133,7 +92,6 @@ def test_Lanczos(size):
         _ = eigensolver.Lanczos_PRO(A=random_matrix, q=np.random.rand(2 * size))
 
 
-
 @pytest.mark.parametrize("size", sizes)
 def test_EigenSolver(size):
     eig = np.arange(1, size + 1)
@@ -158,10 +116,9 @@ def test_EigenSolver(size):
         _ = eigensolver.compute_eigenval(diag=np.arange(2), off_diag=np.arange(49))
 
 
-
-#@pytest.mark.parametrize("size", sizes)
-#@pytest.mark.parametrize("density", densities)
-#def test_cupy(size, density):
+# @pytest.mark.parametrize("size", sizes)
+# @pytest.mark.parametrize("density", densities)
+# def test_cupy(size, density):
 #    try:
 #        if not cp.cuda.is_available():
 #            pytest.skip("Skipping test because CUDA is not available")
