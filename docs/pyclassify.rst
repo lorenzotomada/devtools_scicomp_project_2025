@@ -18,3 +18,12 @@ Submodule: utils
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodule: helpers_secular
+================
+
+.. automodule:: pyclassify.helpers_secular
+   :members:
+   :undoc-members:
+   :show-inheritance:
+

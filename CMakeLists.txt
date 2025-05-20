@@ -17,7 +17,16 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 set(CMAKE_PREFIX_PATH ${PYBIND11_CMAKE_DIR})
-find_package(pybind11 REQUIRED)
+
+
+execute_process(
+  COMMAND "${PYTHON_EXECUTABLE}" -m pybind11 --cmakedir
+  OUTPUT_VARIABLE PYBIND11_CMAKE_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_CMAKE_DIR}")
+find_package(pybind11 REQUIRED CONFIG)
 
 # Needed for compilation (again, Ulysses... :/ )
 set(CMAKE_CXX_STANDARD 17)

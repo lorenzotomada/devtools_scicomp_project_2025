@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import glob
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
@@ -21,21 +22,18 @@ class CMakeBuild(build_ext):
         self.spawn(["cmake", ext.sourcedir, "-B", build_temp])
         self.spawn(["cmake", "--build", build_temp, "--target", "QR_cpp"])
 
-        python_version = sys.version_info
-        so_filename = (
-            f"QR_cpp.cpython-{python_version[0]}{python_version[1]}-x86_64-linux-gnu.so"
-        )
-
-        src_lib = os.path.join(build_temp, f"../../src/pyclassify/{so_filename}")
-        dst_lib = os.path.join(build_lib, f"pyclassify/{so_filename}")
-
-        if os.path.exists(src_lib):
-            os.makedirs(os.path.dirname(dst_lib), exist_ok=True)
-            shutil.copy(src_lib, dst_lib)
-        else:
+        # Dynamically find the compiled shared library
+        matches = glob.glob(os.path.join(build_temp, "../../src/pyclassify/QR_cpp*.so"))
+        if not matches:
             raise RuntimeError(
-                f"Could not find compiled QR_cpp shared library at {src_lib}!"
+                "Could not find compiled QR_cpp shared library in expected location."
             )
+
+        src_lib = os.path.abspath(matches[0])
+        dst_lib = os.path.join(build_lib, "pyclassify", os.path.basename(src_lib))
+
+        os.makedirs(os.path.dirname(dst_lib), exist_ok=True)
+        shutil.copy(src_lib, dst_lib)
 
 
 setup(
@@ -48,7 +46,7 @@ setup(
     ext_modules=[CMakeExtension("pyclassify.QR_cpp")],
     packages=find_packages(where="src/"),
     package_dir={"": "src/"},
-    package_data={"pyclassify": ["QR_cpp.cpython-312-x86_64-linux-gnu.so"]},
+    package_data={"pyclassify": ["QR_cpp*.so"]},
     include_package_data=True,
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,

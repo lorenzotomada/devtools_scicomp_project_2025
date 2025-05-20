@@ -12,3 +12,5 @@ TO DO:
 4) Accuracy vs efficiency
 5) Script to run on Ulysses
 6) Add missing tests
+7) Possibly delete eigenvalues\_np and so on, which I inserted because I thought it was not going to be necessary to compute the eigenvectors, making these wrappers useless
+8) Write missing documentation

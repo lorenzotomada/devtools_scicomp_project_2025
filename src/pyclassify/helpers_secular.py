@@ -3,6 +3,17 @@ from functools import partial
 
 
 def inner_outer_eigs(eigs, rho):
+    """
+    Splits the eigenvalues into inner eigenvalues and the outer eigenvalue based on the sign of rho.
+
+    Parameters:
+    eigs (np.ndarray or scipy.sparse.spmatrix): Array of eigenvalues, assumed to be sorted.
+    rho (float): Scalar parameter appearing in the secular function (please refer to the documentation for more detailed info).
+
+    Returns:
+    tuple: A tuple (inner_eigs, outer_eig) where inner_eigs is an array of eigenvalues and outer_eig is a scalar.
+           If rho > 0, the last eigenvalue is considered outer due to the interlacing property; otherwise, the first is.
+    """
     inner_eigs = eigs[:-1] if rho > 0 else eigs[1:]
     outer_eig = eigs[-1] if rho > 0 else eigs[0]
     return inner_eigs, outer_eig
@@ -10,8 +21,16 @@ def inner_outer_eigs(eigs, rho):
 
 def return_secular_f(rho, d, v):
     """
-    This returns f as a callable object (function of lambda). f is built using rho, d, v.
-    This function passes the tests in test.py and is likely implemented correctly.
+    Constructs the secular function for a rank-one update to a diagonal matrix.
+
+    Parameters:
+    rho (float): Scalar from the rank-one matrix update.
+    d (np.ndarray or scipy.sparse.spmatrix): 1D array or sparse vector of diagonal entries.
+    v (np.ndarray or scipy.sparse.spmatrix): 1D array or sparse vector used in the rank-one update.
+
+    Returns:
+    callable:
+        f(lambda_: float) -> float: The secular function evaluated at lambda_.
     """
 
     def f(lambda_):
@@ -25,7 +44,17 @@ def return_secular_f(rho, d, v):
 
 def secular_function(mu, rho, d, v2, i):
     """
-    Needed to compute the zeros of the secular function in the i-th subinterval;
+    Evaluates the secular function at a given point in the i-th subinterval.
+
+    Parameters:
+    mu (float): Point at which to evaluate the secular function.
+    rho (float): Scalar from the rank-one matrix update.
+    d (np.ndarray or scipy.sparse.spmatrix): 1D array or sparse vector of diagonal entries.
+    v2 (np.ndarray or scipy.sparse.spmatrix): Elementwise square of the update vector v (i.e., v ** 2).
+    i (int): Index of the subinterval in which mu lies.
+
+    Returns:
+    float: The value of the secular function at mu.
     """
     psi1, _, psi2, _ = compute_psi_s(mu, rho, d, v2, i)
     return 1 + psi1 + psi2
@@ -33,19 +62,35 @@ def secular_function(mu, rho, d, v2, i):
 
 def check_is_root(f, x, tol=1e-7):
     """
-    Usually the values of f(found_eigenvalue) are around 1e-10, so we cannot be *too* restrictive with the threshold.
-    For instance, using np.isclose, sometimes the checks are not passed, even though f(found_eig) is very small in
-    absolute value and we are indeed very close to one.
-    That is the reason for defining a helper function.
+    Determines whether x is a root of the function f within a given numerical tolerance.
+    Written because np.isclose is too restrictive even in cases in which we are indeed close to an eigenvalue.
+
+    Parameters:
+    f (callable): Function to evaluate.
+    x (float): Point to test as a root.
+    tol (float): Absolute tolerance for considering f(x) close to zero.
+
+    Returns:
+    bool: True if |f(x)| < tol, indicating x is a root within the specified tolerance.
     """
     return np.abs(f(x)) < tol
 
 
 def bisection(f, a, b, tol, max_iter):
     """
-    In the main method, we used a slightly tweaked form of bisection for the eig. in the outer interval (i.e. lambda_0 if rho < 0,
-    else lambda_{n-1}.
-    This helper function implements standard bisection and it is used in the function compute_outer_zero.
+    Standard bisection method to find a root of the function f in the interval [a, b].
+
+    This implementation is used in `compute_outer_zero` to locate the outer eigenvalue.
+
+    Parameters:
+    f (callable): A continuous function for which f(a) * f(b) < 0.
+    a (float): Left endpoint of the interval.
+    b (float): Right endpoint of the interval.
+    tol (float): Tolerance for convergence. The method stops when the interval is smaller than tol or when f(c) is sufficiently small.
+    max_iter (int): Maximum number of iterations before stopping.
+
+    Returns:
+    float: Approximation of the root within the specified tolerance.
     """
     iter_count = 0
 
@@ -65,17 +110,27 @@ def bisection(f, a, b, tol, max_iter):
 
 def compute_outer_zero(f, rho, interval_end, v, tol=1e-12, max_iter=2000):
     """
-    Function to compute the outer eigenvalue (lambda[0] if rho < 0, else lambda[n-1]).
-    What it does is the following:
-    1) depending on rho, understand whether we should look for it in (d[n-1],+ \infty) or (-\infty, d[0])
-    2) use bisection as follows:
-      2a) Fix the bisection interval. Notice that (assuming rho > 0, else it is equivalent but specular)
-          f(d[n-1]+\epsilon)\approx -\infty, in particular f(d[n-1]+\epsilon)<0.
-          So we just need to find r\in\mathbb{R} such that f(d[n-1]+r)>0, and we can regularly use bisection.
-      2b) To find that value of r, we just add arbitrary values to d[n-1] until the condition is satisfied.
-      2c) Bisection is then used
+    Computes the outer eigenvalue (lambda[0] if rho < 0, lambda[n-1] if rho > 0) of a rank-one modified diagonal matrix.
 
-    Notice that this function passes all the tests, and I assume it is implemented correctly.
+    The secular function  behaves such that:
+      - If rho > 0, the outer eigenvalue lies in (d[n-1], infty), and f is increasing in this interval.
+      - If rho < 0, the outer eigenvalue lies in (-infty, d[0]), and f is decreasing in this interval.
+
+    This function:
+    1. Determines the direction to search based on the sign of rho.
+    2. Finds an upper bound (or lower bound for rho < 0) where the secular function changes sign.
+    3. Uses the bisection method to find the root in the determined interval.
+
+    Parameters:
+    f (callable): The secular function to find a root of.
+    rho (float): Scalar rank-one update parameter.
+    interval_end (float): Either d[0] or d[n-1], depending on the sign of rho.
+    v (np.ndarray or scipy.sparse.spmatrix): Vector from the rank-one update; used to scale the search step size.
+    tol (float, optional): Convergence tolerance. Default is 1e-12.
+    max_iter (int, optional): Maximum number of bisection iterations. Default is 2000.
+
+    Returns:
+    float: Approximation of the outer eigenvalue.
     """
     threshold = 1e-11
     update = np.linalg.norm(v)
@@ -97,10 +152,18 @@ def compute_outer_zero(f, rho, interval_end, v, tol=1e-12, max_iter=2000):
 
 def compute_psi_s(lambda_guess, rho, d, v_squared, i):
     """
-    This function computes psi1, psi2 and their derivatives.
-    Corresponding to the interval (d[i], d[i+1]).
-    Unless I made some mistake, in case rho!=0, it should be sufficient to multiply all the sums by rho, which is what
-    is done here and seems to work in case rho > 0.
+    Computes partial sums (psi1, psi2) and their derivatives for the secular function
+    in the i-th interval (d[i], d[i+1]).
+
+    Parameters:
+    lambda_guess (float): Evaluation point for the secular function.
+    rho (float): Scalar rank-one update parameter.
+    d (np.ndarray or scipy.sparse.spmatrix): 1D array of diagonal entries.
+    v_squared (np.ndarray or scipy.sparse.spmatrix): Precomputed elementwise square of the update vector v.
+    i (int): Index defining the interval (d[i], d[i+1]).
+
+    Returns:
+    tuple: (psi1, psi1', psi2, psi2') — the partial secular sums and their derivatives.
     """
     denom1 = d[: i + 1] - lambda_guess
     denom2 = d[i + 1 :] - lambda_guess
@@ -113,7 +176,19 @@ def compute_psi_s(lambda_guess, rho, d, v_squared, i):
 
 def compute_inner_zero(rho, d, v, i, tol=1e-12, max_iter=1000):
     """
-    This function (or some of its dependencies) surely contains a bug.
+    Computes the i-th eigenvalue that lies in the interval (d[i], d[i+1]) for a
+    rank-one modified diagonal matrix using the secular equation.
+
+    Parameters:
+    rho (float): Rank-one update scalar.
+    d (np.ndarray or scipy.sparse.spmatrix): 1D array of diagonal entries, sorted in ascending order.
+    v (np.ndarray or scipy.sparse.spmatrix): 1D update vector.
+    i (int): Index indicating the interval (d[i], d[i+1]) to find the zero in.
+    tol (float, optional): Tolerance for root-finding. Default is 1e-12.
+    max_iter (int, optional): Maximum iterations for bisection. Default is 1000.
+
+    Returns:
+    float: The computed inner eigenvalue in the interval (d[i], d[i+1]).
     """
 
     # fix the correct interval
@@ -152,6 +227,18 @@ def compute_inner_zero(rho, d, v, i, tol=1e-12, max_iter=1000):
 
 
 def compute_eigenvalues(rho, d, v):
+    """
+    Computes all eigenvalues of a rank-one modified diagonal matrix D + rho * v v^T
+    using the secular equation method.
+
+    Parameters:
+    rho (float): Rank-one update scalar.
+    d (np.ndarray or scipy.sparse.spmatrix): 1D array of sorted diagonal entries of D.
+    v (np.ndarray or scipy.sparse.spmatrix): Update vector v in the rank-one perturbation.
+
+    Returns:
+    np.ndarray: Sorted array of all eigenvalues of the perturbed matrix.
+    """
     f = return_secular_f(rho, d, v)
     eigenvalues = []
     iter_range = range(len(d) - 1)

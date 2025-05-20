@@ -4,21 +4,17 @@ on:
   push:
     branches:
       - main
-      - gpu_branch
       - final_project
 
   pull_request:
     branches:
       - main
       - final_project
-      - gpu_branch
 
 jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
-    container:
-      image: cupy/cupy:v13.4.0
 
     steps:
     - uses: actions/checkout@v3
@@ -26,18 +22,17 @@ jobs:
     - name: Clean previous builds
       run: rm -rf build dist *.egg-info
 
-    - name: Set up git
-      run: apt-get update && apt-get install git -y
-
     - name: Install system dependencies
       run: |
-        apt-get update && apt-get install -y python3-venv python3-pip
+        sudo apt-get update
+        sudo apt-get install -y python3.12 python3.12-venv python3-pip git
 
-    - name: Install additional dependencies
+    - name: Create virtual environment and install package
       run: |
-        python3.10 -m venv venv
+        python3.12 -m venv venv
         source venv/bin/activate
-        python3.10 -m pip install --no-cache-dir .
+        python3.12 -m pip install --upgrade pip
+        python3.12 -m pip install --no-cache-dir .
       shell: bash -e {0}
 
     - name: Generate documentation
@@ -46,7 +41,7 @@ jobs:
         cd docs
         make html
       shell: bash -e {0}
-    
+
     - name: Deploy
       if: success()
       uses: peaceiris/actions-gh-pages@v3
