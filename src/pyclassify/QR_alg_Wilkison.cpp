@@ -311,12 +311,13 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
 }
 
 int main(){
-    std::vector<double> diag(2000, 5), offdiag(1999, 20);
+    std::vector<double> diag(20, 5), offdiag(19, 20);
 
 
     
     auto start = std::chrono::high_resolution_clock::now();
-    Lanczos_PRO(matrix, initial_guess, n);
+    //Lanczos_PRO(matrix, initial_guess, n);
+    QR_algorithm(diag, offdiag);
     auto end = std::chrono::high_resolution_clock::now();
 
     // Compute the elapsed time as a duration

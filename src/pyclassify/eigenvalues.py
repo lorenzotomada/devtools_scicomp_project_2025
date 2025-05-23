@@ -124,23 +124,25 @@ def power_method_numba(A):
 
 from QR_cpp import QR_algorithm, Eigen_value_calculator
 
+
 class EigenSolver:
     def __init__(self, A: np.ndarray, max_iter=5000, toll=1e-8):
         if not isinstance(A, (np.ndarray, sp.spmatrix)):
-            raise TypeError("Input matrix must be a NumPy array or a SciPy sparse matrix!")
+            raise TypeError(
+                "Input matrix must be a NumPy array or a SciPy sparse matrix!"
+            )
         if A.shape[0] != A.shape[1]:
             raise ValueError("Matrix must be square!")
         if np.any(A != A.T):
             raise ValueError("Input matrix A must be symmetric.")
-        
-        self.A=A
-        self.toll=toll
-        self.max_iter=max_iter
-        self.diag=None
-        self.off_diag=None
-        self.Q=None
 
-        
+        self.A = A
+        self.toll = toll
+        self.max_iter = max_iter
+        self.diag = None
+        self.off_diag = None
+        self.Q = None
+
     @jit(nopython=True, parallel=True)
     def Lanczos_PRO(self, q, A=None, m=None, toll=np.sqrt(np.finfo(float).eps)):
         """
@@ -167,9 +169,9 @@ class EigenSolver:
             ValueError: If the input matrix A is not square or if m is greater than the size of A.
         """
 
-        if A==None:
-            A=self.A
 
+        if A == None:
+            A = self.A
 
         if m == None:
             m = A.shape[0]
@@ -201,15 +203,14 @@ class EigenSolver:
                 for i in prange(j):
                     h = 0.0
                     # Compute the dot product: h = q dot Q[i]
-                    
-                    h = q @Q[i]
-                    # Store the contribution: h * Q[i] into the ith row
-                    
-                    partial[i] = h * Q[i]
-            
-                # Reduce the contributions (summing the partial projections)   
-                q=q-np.sum(partial, axis=0)
 
+                    h = q @ Q[i]
+                    # Store the contribution: h * Q[i] into the ith row
+
+                    partial[i] = h * Q[i]
+
+                # Reduce the contributions (summing the partial projections)
+                q = q - np.sum(partial, axis=0)
 
             q = q / np.linalg.norm(q)
             Q[j] = q
@@ -219,38 +220,36 @@ class EigenSolver:
             beta.append(np.linalg.norm(r))
 
             if np.abs(beta[j]) < 1e-15:
-                self.diag=alpha
-                self.beta=beta[:-1]
-                self.Q=Q
+                self.diag = alpha
+                self.beta = beta[:-1]
+                self.Q = Q
                 return Q, alpha, beta[:-1]
-            
-        self.diag=alpha
-        self.beta=beta[:-1]
-        self.Q=np.array(Q)
+
+        self.diag = alpha
+        self.beta = beta[:-1]
+        self.Q = np.array(Q)
         return Q, alpha, beta[:-1]
-    
+
     def compute_eigenval(self, diag=None, off_diag=None):
-        if diag==None and off_diag==None:
-            diag=self.diag
-            off_diag=self.diag
+        if diag == None and off_diag == None:
+            diag = self.diag
+            off_diag = self.diag
         else:
-            if len(diag) != (len(off_diag) +1):
+            if len(diag) != (len(off_diag) + 1):
                 ValueError("Mismatch  between diagonal and off diagonal size")
 
         return Eigen_value_calculator(diag, off_diag, self.toll, self.max_iter)
 
-
-
     def eig(self, diag=None, off_diag=None):
-        if diag==None and off_diag==None:
-            diag=self.diag
-            off_diag=self.diag
+        if diag == None and off_diag == None:
+            diag = self.diag
+            off_diag = self.diag
         else:
-            if len(diag) != (len(off_diag) +1):
+            if len(diag) != (len(off_diag) + 1):
                 ValueError("Mismatch  between diagonal and off diagonal size")
-            
+
             return QR_algorithm(diag, off_diag, self.toll, self.max_iter)
-        
-        eig, Q_triangular=QR_algorithm(diag, off_diag, self.toll, self.max_iter)
-        Q_triangular=np.array(Q_triangular)
+
+        eig, Q_triangular = QR_algorithm(diag, off_diag, self.toll, self.max_iter)
+        Q_triangular = np.array(Q_triangular)
         return eig, Q_triangular @ self.Q.T
