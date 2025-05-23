@@ -1,5 +1,5 @@
-# import cupyx.scipy.sparse as cpsp
-# import cupy as cp
+import cupyx.scipy.sparse as cpsp
+import cupy as cp
 from pyclassify import (
     eigenvalues_np,
     eigenvalues_sp,
@@ -21,10 +21,6 @@ import scipy.sparse as sp
 import scipy
 import random
 import argparse
-
-
-# cp.cuda.Device(0).use()
-# cp.get_default_memory_pool().free_all_blocks()
 
 
 seed = 8422
@@ -75,6 +71,7 @@ profile_with_cprofile(
 profile_with_cprofile(
     log_file, dim, "QR", QR, A.toarray(), max_iter=iteration_factor * dim
 )
+
 
 # profile_with_cupy_profiler(log_file, dim, "eigenvalues_cp", eigenvalues_cp, A_cp)
 # profile_with_cupy_profiler(log_file, dim, "power_method_cp", power_method_cp, A_cp)

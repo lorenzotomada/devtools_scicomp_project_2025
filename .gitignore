@@ -180,5 +180,8 @@ tmp_data/*
 # for documentation
 docs/_*
 
-# Ignore VS Code workspace settings
-.vscode/
+#vscode files
+.vscode/*
+
+#skbuild folder
+skbuild/*
