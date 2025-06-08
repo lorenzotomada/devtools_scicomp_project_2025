@@ -4,14 +4,11 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
-
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
-namespace py=pybind11;
 	
 
+
 std::pair<std::vector<double>, std::vector<std::vector<double>> > 
- QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double tol=1e-8, const unsigned int max_iter=5000){
+ QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double toll=1e-8, const unsigned int max_iter=5000){
 
     if(diag.size() != (off_diag.size()+1)){
         std::invalid_argument("The dimension of the diagonal and off-diagonal vector are not compatible");
@@ -38,7 +35,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
     double tmp=0;
     double x=0, y=0;
     unsigned int m=n-1;
-    double tol_equivalence=1e-10;
+    double toll_equivalence=1e-10;
     double w=0, z=0;
 
     
@@ -50,7 +47,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
         b_m_1=off_diag[m-1];
         d=(diag[m-1]-a_m)*0.5;
         
-        if(std::abs(d)<tol_equivalence){
+        if(std::abs(d)<toll_equivalence){
             mu=diag[m]-std::abs(b_m_1);
         } else{
             mu= a_m - b_m_1*b_m_1/( d*( 1+sqrt(d*d+b_m_1*b_m_1)/std::abs(d)  ) );
@@ -86,7 +83,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
                 }
     
             }else{
-                if(std::abs(d)<tol_equivalence){
+                if(std::abs(d)<toll_equivalence){
                     if (off_diag[0]*d>0)
                     {
                         c=std::sqrt(2)/2;
@@ -134,11 +131,11 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
 
 
         unsigned j, k;
-        for(unsigned int i=0; i<n-1; i++){
+        for(unsigned int i=0; i<m; i++){
             c=Matrix_trigonometric[i][0];
             s=Matrix_trigonometric[i][1];
             
-            for(j=0; j<n;j=j+5){
+            for(j=0; (j+5)<n;j=j+5){
                 k=n*i+j;
                 tmp=Q[k];
                 Q[k]=tmp*c-Q[k+n]*s;
@@ -168,8 +165,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
         }
 
         iter++;
-        if (iter >= max_iter) {std::cout << "Max iteration has been reached. Maybe tol was too low?" << std::endl;}
-        if ( std::abs(off_diag[m-1]) < tol*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
+        if ( std::abs(off_diag[m-1]) < toll*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
         {
             --m;
         }
@@ -181,8 +177,9 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
 
     std::vector<std::vector<double>> eig_vec(n,std::vector<double> (n, 0));
     //std::cout<<"Iteration: "<<iter<<std::endl;
-    for(unsigned int i=0; i<n; i++){
-        for(unsigned j=0; j<n; j++){
+    
+    for(unsigned j=0; j<n; j++){
+        for(unsigned int i=0; i<n; i++){
             eig_vec[i][j]=Q[i+j*n];
         }
     }
@@ -193,7 +190,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>> >
 }
 
 std::vector<double>
- Eigen_value_calculator(std::vector<double>  diag, std::vector<double>  off_diag, const double tol=1e-8, const unsigned int max_iter=5000){
+ Eigen_value_calculator(std::vector<double>  diag, std::vector<double>  off_diag, const double toll=1e-8, const unsigned int max_iter=5000){
 
     if(diag.size() != (off_diag.size()+1)){
         std::invalid_argument("The dimension of the diagonal and off-diagonal vector are not compatible");
@@ -214,7 +211,7 @@ std::vector<double>
     double a_m=0, b_m_1=0;
     double x=0, y=0;
     unsigned int m=n-1;
-    double tol_equivalence=1e-10;
+    double toll_equivalence=1e-10;
     double w=0, z=0;
 
     
@@ -226,7 +223,7 @@ std::vector<double>
         b_m_1=off_diag[m-1];
         d=(diag[m-1]-a_m)*0.5;
         
-        if(std::abs(d)<tol_equivalence){
+        if(std::abs(d)<toll_equivalence){
             mu=diag[m]-std::abs(b_m_1);
         } else{
             mu= a_m - b_m_1*b_m_1/( d*( 1+sqrt(d*d+b_m_1*b_m_1)/std::abs(d)  ) );
@@ -262,7 +259,7 @@ std::vector<double>
                 }
     
             }else{
-                if(std::abs(d)<tol_equivalence){
+                if(std::abs(d)<toll_equivalence){
                     if (off_diag[0]*d>0)
                     {
                         c=std::sqrt(2)/2;
@@ -309,8 +306,7 @@ std::vector<double>
 
 
         iter++;
-        if (iter >= max_iter) {std::cout << "Max iteration has been reached. Maybe tol was too low?" << std::endl;}
-        if ( std::abs(off_diag[m-1]) < tol*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
+        if ( std::abs(off_diag[m-1]) < toll*( std::abs(diag[m]) + std::abs(diag[m-1]) )  )
         {
             --m;
         }
@@ -322,14 +318,20 @@ std::vector<double>
 
 
     return diag;
+ 
 
 }
 
+#include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 
+
+
+namespace py=pybind11;
 
 PYBIND11_MODULE(QR_cpp, m) {
     m.doc() = "Function that computes the eigenvalue and eigenvector"; // Optional module docstring.
 
-    m.def("QR_algorithm", &QR_algorithm, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
-    m.def("Eigen_value_calculator", &Eigen_value_calculator, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
+    m.def("QR_algorithm", &QR_algorithm, py::arg("diag"), py::arg("off_diag"), py::arg("toll")=1e-8, py::arg("max_iter")=5000);
+    m.def("Eigen_value_calculator", &Eigen_value_calculator, py::arg("diag"), py::arg("off_diag"), py::arg("toll")=1e-8, py::arg("max_iter")=5000);
 }
