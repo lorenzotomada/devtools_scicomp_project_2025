@@ -23,7 +23,9 @@ class CMakeBuild(build_ext):
         self.spawn(["cmake", "--build", build_temp, "--target", "QR_cpp"])
 
         # Dynamically find the compiled shared library
-        matches = glob.glob(os.path.join(ext.sourcedir, "src", "pyclassify", "QR_cpp*.so"))
+        matches = glob.glob(
+            os.path.join(ext.sourcedir, "src", "pyclassify", "QR_cpp*.so")
+        )
         if not matches:
             raise RuntimeError(
                 "Could not find compiled QR_cpp shared library in expected location."

@@ -17,6 +17,7 @@ from pyclassify import (
 )
 from pyclassify.utils import make_symmetric
 
+
 @pytest.fixture(autouse=True)
 def set_random_seed():
     seed = 1422
@@ -113,8 +114,6 @@ def test_EigenSolver(size):
 
     with pytest.raises(ValueError):
         _ = eigensolver.compute_eigenval(diag=np.arange(2), off_diag=np.arange(49))
-
-
 
 
 # @pytest.mark.parametrize("size", sizes)

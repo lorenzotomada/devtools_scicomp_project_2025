@@ -38,7 +38,6 @@ def test_psi_s(rho, d, v, i):
     assert psi2(lambda_guess) * rho >= 0, "Error. Inconsistent with the theory."
 
 
-
 @pytest.mark.parametrize("d", d_s)
 @pytest.mark.parametrize("rho", rho_s)
 @pytest.mark.parametrize("v", v_s)
@@ -61,6 +60,7 @@ def test_compute_eigenvalues(rho, d, v):
             np.abs(computed_eigs[i] - exact_eigs[i]) < 1e-8
         ), "Error. The eigenvalues were not computed correctly."
 
+
 @pytest.mark.parametrize("d", d_s)
 @pytest.mark.parametrize("rho", rho_s)
 @pytest.mark.parametrize("v", v_s)
@@ -82,4 +82,3 @@ def test_compute_eigenvalues(rho, d, v):
         assert (
             np.abs(computed_eigs[i] - exact_eigs[i]) < 1e-8
         ), "Error. The eigenvalues were not computed correctly."
-

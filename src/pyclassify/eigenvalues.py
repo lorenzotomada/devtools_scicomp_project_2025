@@ -14,7 +14,8 @@ from pyclassify.utils import (
     max_iteration_warning,
 )
 
-#from parallel_tridiag_eigen import parallel_eigen
+# from parallel_tridiag_eigen import parallel_eigen
+
 
 def eigenvalues_np(A, symmetric=True):
     """
@@ -221,7 +222,7 @@ class EigenSolver:
         self.diag = None
         self.off_diag = None
         self.Q = None
-        self.tol_deflation=tol_deflation
+        self.tol_deflation = tol_deflation
 
     # @jit(nopython=True, parallel=True) # removed because is it not compatible with C++ functions!
     def Lanczos_PRO(self, A=None, q=None, m=None, tol=np.sqrt(np.finfo(float).eps)):
@@ -383,7 +384,6 @@ class EigenSolver:
         Q_triangular = np.array(Q_triangular)
         return np.array(eig), Q_triangular @ self.Q.T
 
-
     # def parallel_tridiagMatrix_eig_solver(self, diag=None, off_diag=None):
     #     if diag is None and off_diag is None:
     #         if self.diag is None:
@@ -394,8 +394,9 @@ class EigenSolver:
     #         off_diag = self.off_diag
     #     if len(diag) != (len(off_diag) + 1):
     #         raise ValueError("Mismatch  between diagonal and off diagonal size")
-        
+
     #     return(parallel_eigen(self.diag, self.off_diag, self.tol_QR, self.max_iterQR, self.tol_deflation))
+
 
 # def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
 #    """
