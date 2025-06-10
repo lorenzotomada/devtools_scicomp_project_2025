@@ -26,14 +26,4 @@ from .eigenvalues import (
     # QR_cp,
 )
 
-from .helpers_secular import (
-    inner_outer_eigs,
-    return_secular_f,
-    secular_function,
-    check_is_root,
-    bisection,
-    compute_outer_zero,
-    compute_psi_s,
-    compute_inner_zero,
-    compute_eigenvalues,
-)
+from .zero_founder import compute_Psi, secular_solver
