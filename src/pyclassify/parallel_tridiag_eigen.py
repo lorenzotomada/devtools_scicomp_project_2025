@@ -129,7 +129,7 @@ def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
 
 
 @profile
-def parallel_tridiag_eigen(diag, off, comm=None, tol_factor=1e-16, min_size=1,  depth=0, profiler=None):
+def parallel_tridiag_eigen(diag, off, comm=None, tol_factor=1e-16, min_size=1,  depth=0, profiler=None, tol_QR=1e-8, max_iterQR=5000):
     """
     Computes eigenvalues and eigenvectors of a symmetric tridiagonal matrix.
         Input:
@@ -172,7 +172,7 @@ def parallel_tridiag_eigen(diag, off, comm=None, tol_factor=1e-16, min_size=1,  
     #     is_top = False
 
     if n <= min_size or size == 1:
-        eigvals, eigvecs = QR_algorithm(diag, off)
+        eigvals, eigvecs = QR_algorithm(diag, off, tol_QR, max_iterQR)
         eigvecs=np.array(eigvecs)
         eigvals=np.array(eigvals)
 
@@ -367,6 +367,16 @@ def parallel_tridiag_eigen(diag, off, comm=None, tol_factor=1e-16, min_size=1,  
     #     profiler[depth].print_stats(stream=f)
     return final_eigvals, final_eigvecs
 
+
+def parallel_eigen(main_diag, off_diag, tol_QR, max_iterQR, tol_deflation):
+    comm = MPI.COMM_WORLD
+    main_diag = comm.bcast(main_diag, root=0)
+    off_diag = comm.bcast(off_diag, root=0)
+    eigvals, eigvecs = parallel_tridiag_eigen(main_diag, off_diag, comm=comm, min_size=1, tol_factor=tol_deflation,  tol_QR=tol_QR, max_iterQR=max_iterQR)
+    return eigvals, eigvecs
+    
+
+
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -434,7 +444,7 @@ if __name__ == "__main__":
 
         # # If you want row/column coordinates instead of the flattened index:
         # row, col = np.unravel_index(flat_idx, diff.shape)   # → (1, 2)
-        # print(np.max(np.abs(diff), axis=0))
+        # print(np.max(np.abs(diff),LaEig_vec axis=0))
         # print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
         # print("Norm difference eigenvec", np.linalg.norm(eig_vec_numpy-eigvecs, np.inf))
 
