@@ -185,3 +185,5 @@ docs/_*
 
 #skbuild folder
 skbuild/*
+data/*
+*.swp
