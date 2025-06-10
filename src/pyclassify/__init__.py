@@ -26,4 +26,4 @@ from .eigenvalues import (
     # QR_cp,
 )
 
-from .zero_founder import compute_Psi, secular_solver
+from .zero_finder import compute_Psi, secular_solver

@@ -1,39 +1,39 @@
-name: black formatter
+name: Format with Black
 
 on:
   push:
     branches:
       - main
       - final_project
-
-  pull_request:
-    branches:
-      - main
-      - final_project
+  workflow_dispatch:  # this allows manual trigger from GitHub UI, even though it should not be necessary
 
 jobs:
-  linter:
-    name: Testing using black formatter
+  format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10.16
-      
-      - name: Set up Python environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
+          python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Install Black
+        run: pip install black
+
+      - name: Run Black
+        run: black .
+
+      - name: Commit changes
         run: |
-          source venv/bin/activate
-          python -m pip install black
-        
-      - name: Check using Black
-        run: |
-          source venv/bin/activate
-          python -m black --check .
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Apply Black code formatting"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

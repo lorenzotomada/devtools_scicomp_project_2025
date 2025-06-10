@@ -4,7 +4,7 @@ from time import time
 from QR_cpp import QR_algorithm
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
-from zero_founder import secular_solver
+from zero_finder import secular_solver
 from line_profiler import LineProfiler
 
 profile = LineProfiler()
