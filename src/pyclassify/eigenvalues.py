@@ -18,6 +18,7 @@ from pyclassify.utils import (
 
 def eigenvalues_np(A, symmetric=True):
     """
+    Wrapper for the np eigenvalue solver. This function is only used in tests for better readability.
     Compute the eigenvalues of a square matrix using NumPy's `eig` or `eigh` function.
 
     This function checks if the input matrix is square (and is actually a matrix) using
