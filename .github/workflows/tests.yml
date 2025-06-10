@@ -5,15 +5,12 @@ on:
     branches:
       - main
       - final_project
-      - gpu_branch
       - workflows
 
   pull_request:
     branches:
       - main
       - final_project
-      - gpu_branch
-
 jobs:
   test:
     name: Testing using pytest
@@ -30,6 +27,9 @@ jobs:
     - name: Install system dependencies
       run: |
         apt-get update && apt-get install -y python3.10-venv python3-pip cmake
+
+    - name: Install MPI (OpenMPI)
+      run: sudo apt-get update && sudo apt-get install -y libopenmpi-dev openmpi-bin
 
     - name: Install additional dependencies
       run: |
