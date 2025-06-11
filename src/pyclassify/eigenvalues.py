@@ -9,8 +9,8 @@ from pyclassify.utils import (
     check_symm_square,
     max_iteration_warning,
 )
-# from parallel_tridiag_eigen import parallel_eigen
 
+# from parallel_tridiag_eigen import parallel_eigen
 
 
 def eigenvalues_np(A, symmetric=True):
@@ -283,7 +283,7 @@ class EigenSolver:
         if q[0] == 0:
             q[0] += 1
         return q
-        
+
     def compute_eigenval(self, diag=None, off_diag=None):
         """
         Compute (only) the eigenvalues of a symmetric triangular matrix, passed as argument in the form of diagonal and
@@ -306,7 +306,9 @@ class EigenSolver:
         """
         if diag is None and off_diag is None:
             if self.diag is None:
-                self.Q, self.diag, self.off_diag = Lanczos_PRO(A=self.A, q=self.initial_guess,tol=self.tol)
+                self.Q, self.diag, self.off_diag = Lanczos_PRO(
+                    A=self.A, q=self.initial_guess, tol=self.tol
+                )
             diag = self.diag
             off_diag = self.off_diag
         if len(diag) != (len(off_diag) + 1):
@@ -336,7 +338,9 @@ class EigenSolver:
         """
         if diag is None and off_diag is None:
             if self.diag is None:
-                self.Q, self.diag, self.off_diag = Lanczos_PRO(A=self.A, q=self.initial_guess, tol=self.tol) 
+                self.Q, self.diag, self.off_diag = Lanczos_PRO(
+                    A=self.A, q=self.initial_guess, tol=self.tol
+                )
             diag = self.diag
             off_diag = self.off_diag
         if len(diag) != (len(off_diag) + 1):
@@ -358,9 +362,6 @@ class EigenSolver:
     #         raise ValueError("Mismatch  between diagonal and off diagonal size")
 
     #     return(parallel_eigen(self.diag, self.off_diag, self.tol_QR, self.max_iterQR, self.tol_deflation))
-
-
-
 
 
 # import cupy as cp

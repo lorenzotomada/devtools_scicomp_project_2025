@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy.sparse as sp
+
 # import cupy as cp
 # import cupyx.scipy.sparse as cpsp
 import os
@@ -111,11 +112,11 @@ def poisson_2d(n):
     """
     I = eye(n)
     e = np.ones(n)
-    T = diags([e, -2*e, e], [-1, 0, 1], shape=(n, n))
+    T = diags([e, -2 * e, e], [-1, 0, 1], shape=(n, n))
     return kron(I, T) + kron(T, I)
 
 
-#def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
+# def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
 #    """
 #    Function used to profile the code using cProfile.
 #    """
