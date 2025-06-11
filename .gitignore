@@ -174,16 +174,22 @@ cython_debug/
 *.dat
 *.data
 
+# other data files and logs
+data/*
+logs/*
+
 # temporary folders used for profiling
 tmp_data/*
+*tmp*
 
 # for documentation
 docs/_*
 
-#vscode files
+# vscode files
 .vscode/*
 
-#skbuild folder
+# skbuild folder
 skbuild/*
-data/*
+
+# temporary files for vim users
 *.swp

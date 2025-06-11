@@ -1,19 +1,15 @@
 import numpy as np
 import scipy.sparse as sp
 
-# import cupyx.scipy.sparse as cpsp
-# import cupy as cp
 import scipy
 import pytest
 from pyclassify import (
     eigenvalues_np,
     eigenvalues_sp,
-    # eigenvalues_cp,
     power_method,
     power_method_numba,
-    # power_method_cp,
+    Lanczos_PRO,
     EigenSolver,
-    # QR_cp,
 )
 from pyclassify.utils import make_symmetric
 
@@ -24,8 +20,8 @@ def set_random_seed():
     np.random.seed(seed)
 
 
-sizes = [20, 100]
-densities = [0.1, 0.3]
+sizes = [20, 50, 100]
+densities = [0.05, 0.1, 0.2]
 
 
 @pytest.mark.parametrize("size", sizes)
@@ -47,13 +43,13 @@ def test_implementations_power_method(size, density):
     biggest_eigenvalue_pm_numba = power_method_numba(matrix.toarray())
 
     assert np.isclose(
-        biggest_eigenvalue_np, biggest_eigenvalue_sp, rtol=1e-4
+        biggest_eigenvalue_np, biggest_eigenvalue_sp, rtol=1e-5
     )  # ensure numpy and scipy implementations are consistent
     assert np.isclose(
-        biggest_eigenvalue_pm, biggest_eigenvalue_sp, rtol=1e-4
+        biggest_eigenvalue_pm, biggest_eigenvalue_sp, rtol=1e-5
     )  # ensure power method and scipy implementation are consistent
     assert np.isclose(
-        biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-4
+        biggest_eigenvalue_pm_numba, biggest_eigenvalue_sp, rtol=1e-5
     )  # ensure numba power method and scipy implementation are consistent
 
 
@@ -66,9 +62,10 @@ def test_Lanczos(size):
     A = U @ A @ U.T
     A = make_symmetric(A)
 
-    eigensolver = EigenSolver(A)
-
-    _, alpha, beta = eigensolver.Lanczos_PRO(A=A)
+    initial_guess = np.random.rand(A.shape[0])
+    if initial_guess[0] == 0:
+        initial_guess[0] += 1
+    Q, alpha, beta = Lanczos_PRO(A=A, q=initial_guess)
 
     T = np.diag(alpha) + np.diag(beta, 1) + np.diag(beta, -1)
 
@@ -85,11 +82,11 @@ def test_Lanczos(size):
 
     with pytest.raises(ValueError):
         random_matrix = np.random.rand(size, 2 * size)
-        _ = eigensolver.Lanczos_PRO(A=random_matrix)
+        _ = Lanczos_PRO(A=random_matrix, q=initial_guess)
 
     with pytest.raises(ValueError):
         random_matrix = np.random.rand(size, size)
-        _ = eigensolver.Lanczos_PRO(A=random_matrix, q=np.random.rand(2 * size))
+        _ = Lanczos_PRO(A=random_matrix, q=np.random.rand(2 * size))
 
 
 @pytest.mark.parametrize("size", sizes)

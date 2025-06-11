@@ -1,4 +1,0 @@
-dim: 1000
-density: 0.1
-tol: 0.001
-max_iter: 100
