@@ -13,9 +13,9 @@ from scipy.sparse.linalg import eigsh
 from numpy.linalg import eigh
 
 # Seed for reproducibility
-#seed = 8422
-#random.seed(seed)
-#np.random.seed(seed)
+# seed = 8422
+# random.seed(seed)
+# np.random.seed(seed)
 
 # Some MPI info
 comm = MPI.COMM_WORLD
@@ -55,10 +55,13 @@ A = comm.bcast(A, root=0)
 
 # Now we start profiling. Notice that the only function that requires MPI is the one that is not profiled within a 'if rank==0' statement.
 
+
 @mpi_profiled
 def profiled_divide_et_impera(A, comm):
     from pyclassify import compute_eigs_parallel  # avoid circular import
+
     return compute_eigs_parallel(A, comm)
+
 
 results = {}
 
