@@ -9,12 +9,13 @@ import os
 import time
 import pandas as pd
 from mpi4py import MPI
-
+from scipy.sparse.linalg import eigsh
+from numpy.linalg import eigh
 
 # Seed for reproducibility
-seed = 8422
-random.seed(seed)
-np.random.seed(seed)
+#seed = 8422
+#random.seed(seed)
+#np.random.seed(seed)
 
 # Some MPI info
 comm = MPI.COMM_WORLD
@@ -54,10 +55,10 @@ A = comm.bcast(A, root=0)
 
 # Now we start profiling. Notice that the only function that requires MPI is the one that is not profiled within a 'if rank==0' statement.
 
-# @mpi_profiled
-# def profiled_divide_et_impera(A):
-#    from pyclassify import divide_et_impera  # avoid circular import
-#    return divide_et_impera(A)
+@mpi_profiled
+def profiled_divide_et_impera(A, comm):
+    from pyclassify import compute_eigs_parallel  # avoid circular import
+    return compute_eigs_parallel(A, comm)
 
 results = {}
 
@@ -66,14 +67,13 @@ if rank == 0:
     _ = profile_serial(power_method_numba, A.toarray())
     results["power_method"] = profile_serial(power_method, A)
     results["power_method_numba"] = profile_serial(power_method_numba, A.toarray())
-    # results["QR"] = profile_serial(QR, A)
+    results["eigh"] = profile_serial(eigh, A.toarray())
+    results["eigsh"] = profile_serial(eigsh, A)
 
-# mpi_result_QR = profiled_QR(A)
-# mpi_result_divide = profiled_divide_et_impera(A)
+mpi_result_divide = profiled_divide_et_impera(A.toarray(), comm)
 
-# if rank == 0:
-#    results["QR"] = mpi_result_QR
-#    results["divide_et_impera"] = mpi_result_divide
+if rank == 0:
+    results["divide_et_impera"] = mpi_result_divide
 
 
 # Now we just save to CSV.
