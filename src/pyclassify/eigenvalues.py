@@ -2,10 +2,6 @@ import numpy as np
 import scipy.sparse as sp
 import scipy.linalg as spla
 from numpy.linalg import eig, eigh
-
-# import cupy as cp
-# import cupy.linalg as cpla
-# from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
 from numba import jit, prange
 from .QR_cpp import QR_algorithm, Eigen_value_calculator
 from pyclassify.utils import (
@@ -75,33 +71,7 @@ def eigenvalues_sp(A, symmetric=True):
     return eigenvalues
 
 
-# def eigenvalues_cp(A):
-#    """
-#    Compute the eigenvalues of a sparse matrix using CuPy's `eigsh` function.
-#
-#    This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
-#    CuPy's sparse linear algebra solvers. It uses `eigsh` for more efficient computation.
-#
-#    Remark that the eigsh function in this case does not allow to compute *all* the eigenvalues, but only a number
-#    m<n, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
-#
-#    Args:
-#        A (cpsp.spmatrix): A square sparse matrix whose eigenvalues are to be computed.
-#
-#    Returns:
-#        np.ndarray: An array containing the eigenvalues of the sparse matrix `A`.
-#
-#    Raises:
-#        TypeError: If the input is not a NumPy array or Scipy/CuPy sparse symmetric matrix.
-#        ValueError: If number of rows != number of columns.
-#    """
-#    check_symm_square(A)
-#    k = 5 if A.shape[0] > 5 else A.shape[0] - 2
-#    eigenvalues, _ = eigsh_cp(A, k=k)
-#    return eigenvalues
-
-
-def power_method(A, max_iter=500, tol=1e-4, x=None):
+def power_method(A, max_iter=500, tol=1e-7, x=None):
     """
     Compute the dominant eigenvalue of a square matrix using the power method.
 
@@ -140,7 +110,7 @@ def power_method(A, max_iter=500, tol=1e-4, x=None):
 
 
 @jit(nopython=True, nogil=True, parallel=True)
-def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
+def power_method_numba(A, max_iter=500, tol=1e-7, x=None):
     """
     Compute the dominant eigenvalue of a matrix using the power method, with Numba optimization.
 
@@ -149,6 +119,7 @@ def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
 
     Remark that numba does not support scipy sparse matrices, so the input matrix must be a NumPy array.
     he function is optimized with Numba using the 'njit' decorator with nogil and parallel options.
+    We have re-written the code due to the fact that using numba we cannot use the helper function check_square_matrix.
 
     Args:
         A (np.ndarray): A square matrix.
@@ -185,6 +156,88 @@ def power_method_numba(A, max_iter=500, tol=1e-4, x=None):
         # if iteration >= max_iter:
         #    max_iteration_warning()
     return x @ A @ x
+
+
+@jit(nopython=True)
+def Lanczos_PRO(A, q, m=None, tol=np.sqrt(np.finfo(float).eps)):
+    r"""
+    Perform the Lanczos algorithm for symmetric matrices.
+
+    This function computes an orthogonal matrix Q and tridiagonal matrix T such that
+    .. math:: `A \approx Q T Q^T,`
+    where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+    of large symmetric matrices.
+
+    Args:
+        A (np.ndarray): A symmetric square matrix of size n x n.
+        q (np.ndarray, optional): Initial vector of size n. Default value is None (a random one is created).
+        m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
+                If None, defaults to the size of A.
+        tol (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
+
+    Returns:
+        tuple: A tuple (Q, alpha, beta) where:
+            - Q (np.ndarray): Orthogonal matrix of size n x m.
+            - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
+            - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
+
+    Raises:
+        TypeError: If the input is not a NumPy array or SciPy/CuPy sparse matrix.
+        ValueError: If number of rows != number of columns or the matrix is not symmetric or it m is
+                    greater than the size of A.
+    """
+    if A.shape[0] != A.shape[1]:
+        raise ValueError(
+            "Matrix must be square!"
+        )  # not possible to use the helper function due to the fact that we are using JIT-compilation
+
+    if m == None:
+        m = A.shape[0]
+
+    if m > A.shape[0]:
+        raise ValueError("The value of m cannot be greater than the size of A!")
+
+    q = q / np.linalg.norm(q)
+    Q = np.zeros((m, A.shape[0]))
+    Q[0] = q
+    r = A @ q
+    alpha = []
+    beta = []
+    alpha.append(q @ r)
+    r = r - alpha[0] * q
+    beta.append(np.linalg.norm(r))
+
+    for j in range(1, m):
+        q = r / beta[j - 1]
+        if np.any(np.abs(q @ Q[: j - 1].T) > tol):
+            partial = np.zeros((j, len(q)), dtype=np.float64)
+            for i in prange(j):
+                h = 0.0
+                # Compute the dot product: h = q dot Q[i]
+
+                h = q @ Q[i]
+                # Store the contribution: h * Q[i] into the ith row
+
+                partial[i] = h * Q[i]
+
+            # Reduce the contributions (summing the partial projections)
+            q = q - np.sum(partial, axis=0)
+
+        q = q / np.linalg.norm(q)
+        Q[j] = q
+        r = A @ q - beta[j - 1] * Q[j - 1]
+        alpha.append(q @ r)
+        r = r - alpha[j] * q
+        beta.append(np.linalg.norm(r))
+
+        if np.abs(beta[j]) < 1e-15:
+            alpha = np.array(alpha)
+            beta = np.array(beta)
+            return Q, alpha, beta[:-1]
+
+    alpha = np.array(alpha)
+    beta = np.array(beta)
+    return Q, alpha, beta[:-1]
 
 
 class EigenSolver:
@@ -224,99 +277,12 @@ class EigenSolver:
         self.Q = None
         self.tol_deflation = tol_deflation
 
-    # @jit(nopython=True, parallel=True) # removed because is it not compatible with C++ functions!
-    def Lanczos_PRO(self, A=None, q=None, m=None, tol=np.sqrt(np.finfo(float).eps)):
-        r"""
-        Perform the Lanczos algorithm for symmetric matrices.
-
-        This function computes an orthogonal matrix Q and tridiagonal matrix T such that
-        .. math:: `A \approx Q T Q^T,`
-        where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
-        of large symmetric matrices.
-
-        Args:
-            A (np.ndarray): A symmetric square matrix of size n x n.
-            q (np.ndarray, optional): Initial vector of size n. Default value is None (a random one is created).
-            m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
-                    If None, defaults to the size of A.
-            tol (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
-
-        Returns:
-            tuple: A tuple (Q, alpha, beta) where:
-                - Q (np.ndarray): Orthogonal matrix of size n x m.
-                - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
-                - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
-
-        Raises:
-            TypeError: If the input is not a NumPy array or SciPy/CuPy sparse matrix.
-            ValueError: If number of rows != number of columns or the matrix is not symmetric or it m is
-                        greater than the size of A.
-        """
-
-        if A is None:
-            A = self.A
-
-        if q is None:
-            q = np.random.rand(A.shape[0])
-            if q[0] == 0:
-                q[0] += 1
-
-        else:
-            check_square_matrix(A)
-
-        if m == None:
-            m = A.shape[0]
-
-        if m > A.shape[0]:
-            raise ValueError("The value of m cannot be greater than the size of A!")
-
-        q = q / np.linalg.norm(q)
-        Q = np.zeros((m, A.shape[0]))
-        Q[0] = q
-        r = A @ q
-        alpha = []
-        beta = []
-        alpha.append(q @ r)
-        r = r - alpha[0] * q
-        beta.append(np.linalg.norm(r))
-
-        for j in range(1, m):
-            q = r / beta[j - 1]
-            if np.any(np.abs(q @ Q[: j - 1].T) > tol):
-                partial = np.zeros((j, len(q)), dtype=np.float64)
-                for i in prange(j):
-                    h = 0.0
-                    # Compute the dot product: h = q dot Q[i]
-
-                    h = q @ Q[i]
-                    # Store the contribution: h * Q[i] into the ith row
-
-                    partial[i] = h * Q[i]
-
-                # Reduce the contributions (summing the partial projections)
-                q = q - np.sum(partial, axis=0)
-
-            q = q / np.linalg.norm(q)
-            Q[j] = q
-            r = A @ q - beta[j - 1] * Q[j - 1]
-            alpha.append(q @ r)
-            r = r - alpha[j] * q
-            beta.append(np.linalg.norm(r))
-
-            if np.abs(beta[j]) < 1e-15:
-                alpha = np.array(alpha)
-                beta = np.array(beta)
-                self.diag = alpha
-                self.off_diag = beta[:-1]
-                self.Q = Q
-                return Q, alpha, beta[:-1]
-
-        alpha = np.array(alpha)
-        beta = np.array(beta)
-        self.diag = alpha
-        self.off_diag = beta[:-1]
-        self.Q = np.array(Q)
-        return Q, alpha, beta[:-1]
+    @property
+    def initial_guess(self):
+        q = np.random.rand(self.A.shape[0])
+        if q[0] == 0:
+            q[0] += 1
+        return q
 
     def compute_eigenval(self, diag=None, off_diag=None):
         """
@@ -340,9 +306,9 @@ class EigenSolver:
         """
         if diag is None and off_diag is None:
             if self.diag is None:
-                _, __, ___ = self.Lanczos_PRO(
-                    tol=self.tol
-                )  # this already sets self.diag = alpha, self.off_diag = beta
+                self.Q, self.diag, self.off_diag = Lanczos_PRO(
+                    A=self.A, q=self.initial_guess, tol=self.tol
+                )
             diag = self.diag
             off_diag = self.off_diag
         if len(diag) != (len(off_diag) + 1):
@@ -372,9 +338,9 @@ class EigenSolver:
         """
         if diag is None and off_diag is None:
             if self.diag is None:
-                _, __, ___ = self.Lanczos_PRO(
-                    tol=self.tol
-                )  # this already sets self.diag = alpha, self.off_diag = beta
+                self.Q, self.diag, self.off_diag = Lanczos_PRO(
+                    A=self.A, q=self.initial_guess, tol=self.tol
+                )
             diag = self.diag
             off_diag = self.off_diag
         if len(diag) != (len(off_diag) + 1):
@@ -398,6 +364,37 @@ class EigenSolver:
     #     return(parallel_eigen(self.diag, self.off_diag, self.tol_QR, self.max_iterQR, self.tol_deflation))
 
 
+# import cupy as cp
+# import cupy.linalg as cpla
+# from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
+#
+#
+#
+# def eigenvalues_cp(A):
+#    """
+#    Compute the eigenvalues of a sparse matrix using CuPy's `eigsh` function.
+#
+#    This function checks if the input matrix is square and symmetric, then computes its eigenvalues using
+#    CuPy's sparse linear algebra solvers. It uses `eigsh` for more efficient computation.
+#
+#    Remark that the eigsh function in this case does not allow to compute *all* the eigenvalues, but only a number
+#    m<n, so here just a reduced portion is computed (starting form the ones which are greater in magnitude).
+#
+#    Args:
+#        A (cpsp.spmatrix): A square sparse matrix whose eigenvalues are to be computed.
+#
+#    Returns:
+#        np.ndarray: An array containing the eigenvalues of the sparse matrix `A`.
+#
+#    Raises:
+#        TypeError: If the input is not a NumPy array or Scipy/CuPy sparse symmetric matrix.
+#        ValueError: If number of rows != number of columns.
+#    """
+#    check_symm_square(A)
+#    k = 5 if A.shape[0] > 5 else A.shape[0] - 2
+#    eigenvalues, _ = eigsh_cp(A, k=k)
+#    return eigenvalues
+#
 # def power_method_cp(A, max_iter=500, tol=1e-4, x=None):
 #    """
 #    Compute the dominant eigenvalue of a square matrix using the power method.

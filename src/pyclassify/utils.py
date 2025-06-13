@@ -93,42 +93,65 @@ def read_config(file: str) -> dict:
     return kwargs
 
 
-def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
+def max_iteration_warning():
     """
-    Function used to profile the code using cProfile.
+    Function to warn the user that the maximum number of iteration has been reached,
+    hence suggesting that the method did not converge.
     """
-
-    def wrapped_func(*args, **kwargs):
-        mem_usage = memory_usage((func, args, kwargs))
-        return func(*args, **kwargs), max(mem_usage)
-
-    profile_output = cProfile.Profile()
-    profile_output.enable()
-
-    result, peak_mem = wrapped_func(*args, **kwargs)
-
-    profile_output.disable()
-
-    stats = profile_output.getstats()
-    total_time = sum(stat.totaltime for stat in stats)
-
-    print(f"{func_name}: {total_time:.6f} s, Peak memory: {peak_mem:.6f} MB")
-
-    new_entry = pd.DataFrame(
-        [[func_name, dim, total_time, peak_mem]],
-        columns=["function", "dim", "time", "peak_memory"],
+    print(
+        "---------- Warning: the max number of iteration has been reached. ----------"
+    )
+    print(
+        "It is likely that either the tolerance is too low or some other issue occured."
     )
 
-    if os.path.exists(log_file):
-        df = pd.read_csv(log_file)
-        df = pd.concat([df, new_entry], ignore_index=True)
-    else:
-        df = new_entry
-    df.to_csv(log_file, index=False)
 
-    return result
+def poisson_2d(n):
+    """
+    Helper function to return an nxn scipy sparse matrix, in particular the one resulting from the discretization of the Laplacian on a 2D grid.
+    """
+    I = eye(n)
+    e = np.ones(n)
+    T = diags([e, -2 * e, e], [-1, 0, 1], shape=(n, n))
+    return kron(I, T) + kron(T, I)
 
 
+# def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
+#    """
+#    Function used to profile the code using cProfile.
+#    """
+#
+#    def wrapped_func(*args, **kwargs):
+#        mem_usage = memory_usage((func, args, kwargs))
+#        return func(*args, **kwargs), max(mem_usage)
+#
+#    profile_output = cProfile.Profile()
+#    profile_output.enable()
+#
+#    result, peak_mem = wrapped_func(*args, **kwargs)
+#
+#    profile_output.disable()
+#
+#    stats = profile_output.getstats()
+#    total_time = sum(stat.totaltime for stat in stats)
+#
+#    print(f"{func_name}: {total_time:.6f} s, Peak memory: {peak_mem:.6f} MB")
+#
+#    new_entry = pd.DataFrame(
+#        [[func_name, dim, total_time, peak_mem]],
+#        columns=["function", "dim", "time", "peak_memory"],
+#    )
+#
+#    if os.path.exists(log_file):
+#        df = pd.read_csv(log_file)
+#        df = pd.concat([df, new_entry], ignore_index=True)
+#    else:
+#        df = new_entry
+#    df.to_csv(log_file, index=False)
+#
+#    return result
+#
+#
 # def profile_with_cupy_profiler(log_file, dim, func_name, func, *args, **kwargs):
 #    """
 #    Function used to profile the code using the CuPy profiler.
@@ -170,16 +193,3 @@ def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
 #    df.to_csv(log_file, index=False)
 #
 #    return result
-
-
-def max_iteration_warning():
-    """
-    Function to warn the user that the maximum number of iteration has been reached,
-    hence suggesting that the method did not converge.
-    """
-    print(
-        "---------- Warning: the max number of iteration has been reached. ----------"
-    )
-    print(
-        "It is likely that either the tolerance is too low or some other issue occured."
-    )
