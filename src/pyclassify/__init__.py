@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from .QR_cpp import QR_algorithm, Eigen_value_calculator
+from .parallel_tridiag_eigen import parallel_eigen
 
 from .eigenvalues import (
     eigenvalues_np,

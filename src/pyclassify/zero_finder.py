@@ -25,7 +25,7 @@ def compute_Psi(i, v, d, rho):
     return Psi_1, Psi_2, dPsi_1, dPsi_2
 
 
-def find_root(i, left_center, v, d, rho, lam_0, tol=1e-12, maxiter=100):
+def find_root(i, left_center, v, d, rho, lam_0, tol=1e-15, maxiter=100):
     """
     Find the roots of the secular equation contained inside the interval min(d)=d[0] and max(d)=d[-1].
     Inputs:
@@ -72,12 +72,12 @@ def find_root(i, left_center, v, d, rho, lam_0, tol=1e-12, maxiter=100):
 
         eta = (a - rho / np.abs(rho) * np.sqrt(discr)) / (2 * c)
         lam_0 += eta
-        if abs(eta) < tol * max(1e-6, abs(lam_0)):
+        if abs(eta) < tol * max(1e-8, abs(lam_0)):
             break
     return shift + lam_0, lam_0
 
 
-def out_range(v, d, rho, lam_0, tol=1e-12, maxiter=100):
+def out_range(v, d, rho, lam_0, tol=1e-15, maxiter=100):
     """
     Computes the root of the secular equation outside the range [min(d)=d[0], max(d)=d[-1]].
     Inputs:
@@ -114,7 +114,7 @@ def out_range(v, d, rho, lam_0, tol=1e-12, maxiter=100):
         c_1 = dPsi_2(lam_0) * (d_i - lam_0) ** 2
         c_3 = Psi_2(lam_0) - dPsi_2(lam_0) * (d_i - lam_0) + 1
         lam = d_i + c_1 / c_3
-        if abs(lam_0 - lam) < tol * max(1.0, abs(lam)):
+        if abs(lam_0 - lam) < tol * max(1e-6, abs(lam)):
             break
         lam_0 = lam
     return shift + lam_0
@@ -149,7 +149,7 @@ def secular_solver(rho, d, v):
             Eig, Delta = find_root(i, left_center, v, d, rho, lam_0)
             eig_val.append(Eig)
             delta.append(Delta)
-        lam_0 = d[-1] + 5 * (d[-1] - d[-2])
+        lam_0 = d[-1] + 10 * (d[-1] - d[-2])
         Eig = out_range(v, d, rho, lam_0)
         eig_val.append(Eig)
         index.append(len(d) - 1)
