@@ -12,17 +12,18 @@ from pyclassify.utils import make_symmetric
 
 profile = LineProfiler()
 
+
 def check_column_directions(A, B):
     n = A.shape[1]
     for i in range(n):
         # Normalize the vectors
-        a = A[:, i] 
-        b = B[:, i] 
+        a = A[:, i]
+        b = B[:, i]
         dot = np.dot(a, b)
         # Should be close to 1 or -1
-        if dot<0:
-            B[:, i] = -B[:, i] 
-        
+        if dot < 0:
+            B[:, i] = -B[:, i]
+
 
 @profile
 def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
@@ -55,15 +56,15 @@ def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
 
     # Zero component deflation
     e_vec = np.zeros(len(D))
-    j=0
+    j = 0
     for i in range(len(D)):
         if abs(v[i]) < tol:
-            deflated_eigvals[j]=D[i]
+            deflated_eigvals[j] = D[i]
             e_vec[i] = 1.0  # Standard basis vector
             deflated_eigvecs.append(e_vec.copy())
             deflated_indices.append(i)
             e_vec[i] = 0.0
-            j+=1
+            j += 1
         else:
             keep_indices.append(i)
 
@@ -116,8 +117,8 @@ def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
 
                 # Store transformation
                 rotation_matrix.append((i, idx_duplicate, c, s))
-                deflated_eigvals[j]=D_keep[i]
-                j+=1
+                deflated_eigvals[j] = D_keep[i]
+                j += 1
 
                 # Efficient eigenvector computation
                 eig_vec_local = np.zeros(n)
@@ -133,7 +134,7 @@ def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
         (list(to_check), vec_idx_list)
     )  # Efficient concatenation
     new_order = new_order.astype(int)
-    deflated_eigvals=deflated_eigvals[:j]
+    deflated_eigvals = deflated_eigvals[:j]
 
     # Apply Givens rotations
     for i, j, c, s in rotation_matrix:
@@ -152,7 +153,6 @@ def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
     reduced_dimension = len(to_check)
     D_keep = D_keep[to_check]
     v_keep = v_keep[to_check]
-    
 
     return deflated_eigvals, np.array(deflated_eigvecs), D_keep, v_keep, P_3 @ P_2 @ P
 
@@ -199,17 +199,15 @@ def parallel_tridiag_eigen(
     #     # Compute eigenvalues and eigenvectors with numpy
     #     np_eigvals, np_eigvecs = np.linalg.eigh(T)
 
-
     if n <= min_size or size == 1:
         eigvals, eigvecs = QR_algorithm(diag, off, 1e-16, max_iterQR)
         eigvecs = np.array(eigvecs)
         eigvals = np.array(eigvals)
 
-        index_sort=np.argsort(eigvals)
-        eigvecs=eigvecs[:, index_sort]
-        eigvals=eigvals[index_sort]
+        index_sort = np.argsort(eigvals)
+        eigvecs = eigvecs[:, index_sort]
+        eigvals = eigvals[index_sort]
         return eigvals, eigvecs
-
 
     k = n // 2
     diag1, diag2 = diag[:k].copy(), diag[k:].copy()
@@ -246,7 +244,6 @@ def parallel_tridiag_eigen(
             profiler=profiler,
         )
 
-
     if rank == 0:
         eigvals_right = comm.recv(source=left_size, tag=77)
         eigvecs_right = comm.recv(source=left_size, tag=78)
@@ -259,9 +256,11 @@ def parallel_tridiag_eigen(
         # Merge Step
         n1 = len(eigvals_left)
         D = np.concatenate((eigvals_left, eigvals_right))
-        v_vec = np.concatenate((eigvecs_left[-1, :],eigvecs_right[0, :]))
-        deflated_eigvals, deflated_eigvecs, D_keep, v_keep,P = deflate_eigenpairs(D, v_vec, tol_factor)
-        reduced_dim=len(D_keep)
+        v_vec = np.concatenate((eigvecs_left[-1, :], eigvecs_right[0, :]))
+        deflated_eigvals, deflated_eigvecs, D_keep, v_keep, P = deflate_eigenpairs(
+            D, v_vec, tol_factor
+        )
+        reduced_dim = len(D_keep)
         if D_keep.size > 0:
             # M = np.diag(D_keep) + beta * np.outer(v_keep, v_keep)
             # lam , _= np.linalg.eigh(M)
@@ -274,19 +273,17 @@ def parallel_tridiag_eigen(
             lam = np.array(lam)
             # #diff=lam_s-lam
         else:
-            lam= np.array([])
-         # #compute v_keep again
+            lam = np.array([])
+        # #compute v_keep again
 
-        #v_new=np.zeros(len(v_keep))
+        # v_new=np.zeros(len(v_keep))
         for k in range(lam.size):
-            numerator=lam-D_keep[k]
-            denominator= np.concatenate((D_keep[:k], D_keep[k+1:]))-D_keep[k]
-            numerator[:-1] =numerator[:-1] / denominator
-            v_keep[k]= np.sqrt(np.abs(np.prod(numerator)/beta))* np.sign(v_keep[k])
-            
+            numerator = lam - D_keep[k]
+            denominator = np.concatenate((D_keep[:k], D_keep[k + 1 :])) - D_keep[k]
+            numerator[:-1] = numerator[:-1] / denominator
+            v_keep[k] = np.sqrt(np.abs(np.prod(numerator) / beta)) * np.sign(v_keep[k])
 
         eigenpairs = []
-
 
         for j in range(lam.size):
             y = np.zeros(D.size)
@@ -300,14 +297,14 @@ def parallel_tridiag_eigen(
             if y_norm > 1e-15:
                 y /= y_norm
 
-            y=P.T@y
-            vec=np.concatenate((eigvecs_left@y[:n1], eigvecs_right@y[n1:]))
+            y = P.T @ y
+            vec = np.concatenate((eigvecs_left @ y[:n1], eigvecs_right @ y[n1:]))
             vec /= np.linalg.norm(vec)
             eigenpairs.append((lam[j], vec))
 
         for eigval, vec in zip(deflated_eigvals, deflated_eigvecs):
-            #vec = Q_block @ vec
-            vec=np.concatenate((eigvecs_left@vec[:n1], eigvecs_right@vec[n1:]))
+            # vec = Q_block @ vec
+            vec = np.concatenate((eigvecs_left @ vec[:n1], eigvecs_right @ vec[n1:]))
             eigenpairs.append((eigval, vec))
         eigenpairs.sort(key=lambda x: x[0])
         final_eigvals = np.array([ev for ev, _ in eigenpairs])
@@ -319,7 +316,6 @@ def parallel_tridiag_eigen(
     final_eigvecs = comm.bcast(final_eigvecs, root=0)
 
     return final_eigvals, final_eigvecs
-
 
     # if rank == 0:
     #     # Merge Step
@@ -370,8 +366,6 @@ def parallel_tridiag_eigen(
     #             y /= y_norm
 
     #         Y_full[:reduced_dim, j] = y[:reduced_dim]
-
-
 
     # if rank == 0:
     #     n_yfull_rows, n_yfull_cols = Y_full.shape  # (n, m)
@@ -462,15 +456,15 @@ def parallel_tridiag_eigen(
     # final_eigvals = comm.bcast(final_eigvals, root=0)
     # final_eigvecs = comm.bcast(final_eigvecs, root=0)
 
-
-
     # # profiler[depth].disable_by_count()
     # # with open(prof_filename, "w") as f:
     # #     profiler[depth].print_stats(stream=f)
     # return final_eigvals, final_eigvecs
 
 
-def parallel_eigen(main_diag, off_diag, tol_QR=1e-15, max_iterQR=5000, tol_deflation=1e-15):
+def parallel_eigen(
+    main_diag, off_diag, tol_QR=1e-15, max_iterQR=5000, tol_deflation=1e-15
+):
     comm = MPI.COMM_WORLD
     main_diag = comm.bcast(main_diag, root=0)
     off_diag = comm.bcast(off_diag, root=0)
@@ -497,20 +491,19 @@ if __name__ == "__main__":
         # print(f"Rank {rank} waiting for debugger attach on port {port}")
         # debugpy.wait_for_client()
         np.random.seed(42)
-        main_diag = np.ones(n, dtype=np.float64)*2
-        off_diag = np.ones(n-1, dtype=np.float64)
+        main_diag = np.ones(n, dtype=np.float64) * 2
+        off_diag = np.ones(n - 1, dtype=np.float64)
         eig = np.arange(1, n + 1)
         A = np.diag(eig)
         U = scipy.stats.ortho_group.rvs(n)
 
         A = U @ A @ U.T
         A = make_symmetric(A)
-        Lanc=EigenSolver(A)
-        _, main_diag, off_diag=Lanc.Lanczos_PRO(q=np.ones_like(eig),tol=1e-12)
-        T=np.diag(main_diag) + np.diag(off_diag, 1) + np.diag(off_diag, -1)
+        Lanc = EigenSolver(A)
+        _, main_diag, off_diag = Lanc.Lanczos_PRO(q=np.ones_like(eig), tol=1e-12)
+        T = np.diag(main_diag) + np.diag(off_diag, 1) + np.diag(off_diag, -1)
         eig_numpy, eig_vec_numpy = np.linalg.eigh(T)
-        #print(eig_numpy)
-
+        # print(eig_numpy)
 
     else:
         main_diag, off_diag = None, None
@@ -531,7 +524,6 @@ if __name__ == "__main__":
     if rank == 0:
         print("I'm in the last part")
 
-        
         index = np.argsort(eig_numpy)
         eig_numpy = eig_numpy[index]
         eig_vec_numpy[:, index]
@@ -541,7 +533,7 @@ if __name__ == "__main__":
         # print("Eigenvalue divide and conquer", eigvals)
         # print("Eigenvalue numpy", eig_numpy)
 
-        #print("\n\n Errror eigen", eig_numpy - eigvals)
+        # print("\n\n Errror eigen", eig_numpy - eigvals)
 
         print("Norm difference eigenaval", np.linalg.norm(eig_numpy - eigvals, np.inf))
 
@@ -562,18 +554,18 @@ if __name__ == "__main__":
 
         # # print("Eigenvector solver:\n", eigvecs)
         # # print("Eigenvector numpy:\n", eig_vec_numpy)
-        #print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
+        # print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
         # diff= eig_vec_numpy-eigvecs
         # flat_idx = np.argmax(diff)          # → 5   (counting row-major: 0..8)
 
         # # If you want row/column coordinates instead of the flattened index:
         # row, col = np.unravel_index(flat_idx, diff.shape)   # → (1, 2)
         # print(np.max(np.abs(diff),LaEig_vec axis=0))
-        #print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
+        # print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
         # print("Norm difference eigenvec", np.linalg.norm(eig_vec_numpy-eigvecs, np.inf))
 
     # n=1000
     # main_diag = np.random.rand(n)
-    #  = np.random.rand(n - 1) 
+    #  = np.random.rand(n - 1)
     # T = np.diag(main_diag) + np.diag(off_diag, 1) + np.diag(off_diag, -1)
     # parallel_eigen(main_diag, off_diag)off_diag

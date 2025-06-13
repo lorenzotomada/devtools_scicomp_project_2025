@@ -40,22 +40,21 @@ import matplotlib.pyplot as plt
 # QREig_val=np.array(QREig_val)
 # QREig_vec=QREig_vec[:, index_sort]
 # QREig_val=QREig_val[index_sort]
-# print(f"The maximum of the difference between the eigenvalue computed by numpy on A and the developed QR algorithm computed" 
+# print(f"The maximum of the difference between the eigenvalue computed by numpy on A and the developed QR algorithm computed"
 #        f"on the Matrix T is {np.linalg.norm(npEig_val-QREig_val, np.inf)}")
-
 
 
 # def check_column_directions(A, B):
 #     n = A.shape[1]
 #     for i in range(n):
 #         # Normalize the vectors
-#         a = A[:, i] 
-#         b = B[:, i] 
+#         a = A[:, i]
+#         b = B[:, i]
 #         dot = np.dot(a, b)
 #         # Should be close to 1 or -1
 #         if dot<0:
-#             B[:, i] = -B[:, i] 
-        
+#             B[:, i] = -B[:, i]
+
 
 # check_column_directions(QREig_vec, LaEig_vec )
 # print(f"The maximum absoulute error among the components of all the eigenvectors of T is {np.max(np.abs(QREig_vec - LaEig_vec))}")
@@ -142,33 +141,35 @@ import matplotlib.pyplot as plt
 
 # #Time scaling QR
 
-i_max=12
+i_max = 12
 
-time_vector=np.array([])
-error_eigenvalue=np.array([])
+time_vector = np.array([])
+error_eigenvalue = np.array([])
 for i in range(3, i_max):
-    n=2**i
-    #np.random.seed(42)
+    n = 2**i
+    # np.random.seed(42)
     d = np.random.rand(n)
-    off_d=np.random.rand(n-1)
-    T=np.diag(d) + np.diag(off_d, 1) + np.diag(off_d, -1)
-    npEig_val, _ =np.linalg.eigh(T)
-    t_s=time()
-    QREig_val, QREig_vec= QR_algorithm(d, off_d)
-    t_e=time()
-    index_sort=np.argsort(QREig_val)
-    QREig_vec=np.array(QREig_vec)
-    QREig_val=np.array(QREig_val)
-    QREig_vec=QREig_vec[:, index_sort]
-    QREig_val=QREig_val[index_sort]
-    error_eigenvalue=np.append(error_eigenvalue, np.linalg.norm(np.abs(npEig_val-QREig_val), np.inf))
-    time_vector=np.append(time_vector, t_e - t_s)
+    off_d = np.random.rand(n - 1)
+    T = np.diag(d) + np.diag(off_d, 1) + np.diag(off_d, -1)
+    npEig_val, _ = np.linalg.eigh(T)
+    t_s = time()
+    QREig_val, QREig_vec = QR_algorithm(d, off_d)
+    t_e = time()
+    index_sort = np.argsort(QREig_val)
+    QREig_vec = np.array(QREig_vec)
+    QREig_val = np.array(QREig_val)
+    QREig_vec = QREig_vec[:, index_sort]
+    QREig_val = QREig_val[index_sort]
+    error_eigenvalue = np.append(
+        error_eigenvalue, np.linalg.norm(np.abs(npEig_val - QREig_val), np.inf)
+    )
+    time_vector = np.append(time_vector, t_e - t_s)
 
 print(error_eigenvalue)
-p=np.polyfit([2**i for i in range(3, i_max)], time_vector, 3)
+p = np.polyfit([2**i for i in range(3, i_max)], time_vector, 3)
 print(p)
-plt.plot([2**i for i in range(3, i_max)], time_vector, 'ko')
-x=np.linspace(2**3, 2**(i_max-1))
+plt.plot([2**i for i in range(3, i_max)], time_vector, "ko")
+x = np.linspace(2**3, 2 ** (i_max - 1))
 plt.plot(x, np.polyval(p, x))
 plt.show()
 
