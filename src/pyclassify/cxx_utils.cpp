@@ -553,7 +553,7 @@ secular_solver(const double rho,
 
 // PYTHON BINDINGS USING PYBIND11
 
-PYBIND11_MODULE(QR_cpp, m) {
+PYBIND11_MODULE(cxx_utils, m) {
     m.doc() = "Function that computes the eigenvalue and eigenvector"; // Optional module docstring.
 
     m.def("QR_algorithm", &QR_algorithm, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);

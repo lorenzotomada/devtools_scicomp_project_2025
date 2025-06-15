@@ -1,7 +1,7 @@
 from mpi4py import MPI
 import numpy as np
 from time import time
-from QR_cpp import QR_algorithm
+from cxx_utils import QR_algorithm
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
 from zero_finder import secular_solver

@@ -7,7 +7,7 @@ __all__ = [
     "EigenSolver",
 ]
 
-from .QR_cpp import QR_algorithm, Eigen_value_calculator, secular_solver_cxx
+from .cxx_utils import QR_algorithm, Eigen_value_calculator, secular_solver_cxx
 
 from .eigenvalues import (
     eigenvalues_np,

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(QR_binding VERSION 1.0
-  DESCRIPTION "QR method"
+	DESCRIPTION "Python bindings of some helper functions written in C++."
   LANGUAGES CXX)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/pyclassify)
@@ -35,8 +35,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
  
 add_compile_options(-O3 -Wall -Werror -Wpedantic)
 
-pybind11_add_module(QR_cpp ${CMAKE_SOURCE_DIR}/src/pyclassify/QR_bindings.cpp)
-set_target_properties(QR_cpp PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+pybind11_add_module(cxx_utils ${CMAKE_SOURCE_DIR}/src/pyclassify/cxx_utils.cpp)
+set_target_properties(cxx_utils PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
-target_compile_features(QR_cpp PUBLIC cxx_std_17)
-install(TARGETS QR_cpp LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/pyclassify)
+target_compile_features(cxx_utils PUBLIC cxx_std_17)
+install(TARGETS cxx_utils LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/src/pyclassify)
