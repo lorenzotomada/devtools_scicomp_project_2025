@@ -385,6 +385,106 @@ to the provided base file name), opens the file, and parses its content using ya
 </section>
 <section id="submodule-helpers-secular">
 <h1>Submodule: helpers_secular<a class="headerlink" href="#submodule-helpers-secular" title="Link to this heading"></a></h1>
+<dl class="py function" id="module-pyclassify.zero_finder">
+<dt class="sig sig-object py" id="pyclassify.zero_finder.bisection">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.zero_finder.</span></span><span class="sig-name descname"><span class="pre">bisection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.zero_finder.bisection" title="Link to this definition"></a></dt>
+<dd><p>Standard bisection method to find a root of the function f in the interval [a, b].</p>
+<p>This implementation is used in <cite>compute_outer_zero</cite> to locate the outer eigenvalue.</p>
+<p>Parameters:
+f (callable): A continuous function for which f(a) * f(b) &lt; 0.
+a (float): Left endpoint of the interval.
+b (float): Right endpoint of the interval.
+tol (float): Tolerance for convergence. The method stops when the interval is smaller than tol or when f(c) is sufficiently small.
+max_iter (int): Maximum number of iterations before stopping.</p>
+<p>Returns:
+float: Approximation of the root within the specified tolerance.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.zero_finder.compute_Psi">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.zero_finder.</span></span><span class="sig-name descname"><span class="pre">compute_Psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.zero_finder.compute_Psi" title="Link to this definition"></a></dt>
+<dd><p>This function computes the functions Psi1, and Psi2 and their derivative, accordingly to the equation described
+by the notes chapter 5-6 contained in the shared folders.
+The equation utilized are the equation 5.27, 5.25 and 5.29.
+d is assumed to be already a vector whose elements are already sorted.
+Inputs:</p>
+<blockquote>
+<div><p>-i: It is the index of the i-th smallest eigenvalue that is being computed
+-v: Rank one correction
+-d: Diagonal element of the Diagonal matrix described in equation 5.7
+-rho: off diagonal element used for the splitting.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Output:</dt><dd><p>Psi1:  Lamoba function that returns the value of Psi1 at the point x
+Psi2:  Lamoba function that returns the value of Psi2 at the point x
+dPsi1: Lamoba function that returns the value of the derivative dPsi1/dx at the point x
+dPsi2: Lamoba function that returns the value of the derivative dPsi2/dx at the point x</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.zero_finder.compute_outer_zero">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.zero_finder.</span></span><span class="sig-name descname"><span class="pre">compute_outer_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval_end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.zero_finder.compute_outer_zero" title="Link to this definition"></a></dt>
+<dd><p>Computes the outer eigenvalue (lambda[0] if rho &lt; 0, lambda[n-1] if rho &gt; 0) of a rank-one modified diagonal matrix.</p>
+<dl class="simple">
+<dt>The secular function  behaves such that:</dt><dd><ul class="simple">
+<li><p>If rho &gt; 0, the outer eigenvalue lies in (d[n-1], infty), and f is increasing in this interval.</p></li>
+<li><p>If rho &lt; 0, the outer eigenvalue lies in (-infty, d[0]), and f is decreasing in this interval.</p></li>
+</ul>
+</dd>
+</dl>
+<p>This function:
+1. Determines the direction to search based on the sign of rho.
+2. Finds an upper bound (or lower bound for rho &lt; 0) where the secular function changes sign.
+3. Uses the bisection method to find the root in the determined interval.</p>
+<p>Returns:
+float: Approximation of the outer eigenvalue.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.zero_finder.find_root">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.zero_finder.</span></span><span class="sig-name descname"><span class="pre">find_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam_0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.zero_finder.find_root" title="Link to this definition"></a></dt>
+<dd><p>Find the roots of the secular equation contained inside the interval min(d)=d[0] and max(d)=d[-1].
+Inputs:</p>
+<blockquote>
+<div><p>-i: It is the index of the i-th smallest eigenvalue that is being computed
+-left_center: boolen variable. True if the left extreme is the center od the new - shifted reference system.
+-v: Rank one correction
+-d: Diagonal element of the Diagonal matrix described in equation 5.7
+-rho: off diagonal element used for the splitting.
+-lam_0: initial guess of the i-th root of the secular equation
+-tol: absolute or relative tollerence. For lamba value below 1e-6, tols refers to the absolute tolerance (avoiding division by zero). For</p>
+<blockquote>
+<div><p>lambda value greater than 1e-6, tol is the absolute tolerance.</p>
+</div></blockquote>
+<p>-maxiter: Maximum number of iteration of the  iterative solver.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Outputs:</dt><dd><p>-shift + lam_0: i-th smallest eigenvalue
+-lam_0: difference between the i-th eigenvalue and the nearest diagonal element.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.zero_finder.secular_solver_python">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.zero_finder.</span></span><span class="sig-name descname"><span class="pre">secular_solver_python</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.zero_finder.secular_solver_python" title="Link to this definition"></a></dt>
+<dd><p>Computes all the roots of the secular equation.
+Inputs:</p>
+<blockquote>
+<div><p>-v: Rank one correction
+-d: Diagonal element of the Diagonal matrix described in equation 5.7
+-rho: off diagonal element used for the splitting.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Outputs:</dt><dd><p>-eig_val: vector of the roots of the secular equation
+-index: vector of the index of the center of the shifted frame of reference associated to the i-ith root
+-delta: vector of difference between the i-th eigenvalue and the nearest diagonal element.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
@@ -434,7 +534,14 @@ to the provided base file name), opens the file, and parses its content using ya
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#submodule-helpers-secular">Submodule: helpers_secular</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#submodule-helpers-secular">Submodule: helpers_secular</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.bisection"><code class="docutils literal notranslate"><span class="pre">bisection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.compute_Psi"><code class="docutils literal notranslate"><span class="pre">compute_Psi()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.compute_outer_zero"><code class="docutils literal notranslate"><span class="pre">compute_outer_zero()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.find_root"><code class="docutils literal notranslate"><span class="pre">find_root()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.secular_solver_python"><code class="docutils literal notranslate"><span class="pre">secular_solver_python()</span></code></a></li>
+</ul>
+</li>
 </ul>
 
 <div class="relations">
