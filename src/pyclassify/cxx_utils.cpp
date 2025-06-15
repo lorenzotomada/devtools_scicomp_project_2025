@@ -17,7 +17,7 @@ namespace py=pybind11;
 
 
 std::pair<std::vector<double>, std::vector<std::vector<double>> > 
- QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double tol=1e-8, const unsigned int max_iter=5000){
+QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const double tol=1e-8, const unsigned int max_iter=5000){
 
     if(diag.size() != (off_diag.size()+1)){
         std::invalid_argument("The dimension of the diagonal and off-diagonal vector are not compatible");
@@ -330,6 +330,51 @@ Eigen_value_calculator(std::vector<double> diag, std::vector<double> off_diag, c
 }
 
 
+double compute_sum(
+    const std::vector<double>& v,
+    const std::vector<double>& d,
+    const double x,
+    const unsigned int start,
+    const unsigned int end,
+    const bool derivative,
+    const double rho) {
+
+    double sum{0.0};
+    for (unsigned int j = start; j < end; ++j) {
+        double denom = d[j] - x;
+        if (derivative) {
+            sum += v[j] * v[j] / (denom * denom);
+        } else {
+            sum += v[j] * v[j] / denom;
+        }
+    }
+    return rho * sum;
+}
+
+void compute_Psi(
+    const unsigned int i,
+    const std::vector<double>& v,
+    const std::vector<double>& d,
+    const double rho,
+    std::function<double(double)>& Psi_1,
+    std::function<double(double)>& Psi_2,
+    std::function<double(double)>& dPsi_1,
+    std::function<double(double)>& dPsi_2
+) {
+    Psi_1 = [&](double x) {
+        return compute_sum(v, d, x, 0, i + 1, false, rho);
+    };
+    Psi_2 = [&](double x) {
+        return compute_sum(v, d, x, i + 1, static_cast<int>(d.size()), false, rho);
+    };
+    dPsi_1 = [&](double x) {
+        return compute_sum(v, d, x, 0, i + 1, true, rho);
+    };
+    dPsi_2 = [&](double x) {
+        return compute_sum(v, d, x, i + 1, static_cast<int>(d.size()), true, rho);
+    };
+}
+
 std::pair<double, double> find_root(
     const unsigned int i,
     const bool left_center,
@@ -337,217 +382,208 @@ std::pair<double, double> find_root(
     const std::vector<double>& d,
     const double rho,
     double lam_0,
-    const double tol = 1e-12,
+    const double tol = 1e-15,
     const unsigned int maxiter = 100) {
     std::vector<double> diag = d;
-    double shift = 0.0;
+    double shift;
+
     if (left_center) {
-        const double di = d[i];
-        for (double& x : diag) x -= di;
-        lam_0 -= di;
-        shift = di;
+        for (size_t j = 0; j < diag.size(); ++j) {
+            diag[j] -= d[i];
+        }
+        lam_0 -= d[i];
+        shift = d[i];
     } else {
-        const double di1 = d[i + 1];
-        for (double& x : diag) x -= di1;
-        lam_0 -= di1;
-        shift = di1;
+        for (size_t j = 0; j < diag.size(); ++j) {
+            diag[j] -= d[i + 1];
+        }
+        lam_0 -= d[i + 1];
+        shift = d[i + 1];
     }
 
-    auto Psi_1 = [&](const double x) -> double {
-        double sum = 0.0;
-        for (unsigned int j = 0; j <= i; ++j)
-            sum += v[j] * v[j] / (diag[j] - x);
-        return rho * sum;
-    };
-    auto Psi_2 = [&](const double x) -> double {
-        double sum = 0.0;
-        for (unsigned int j = i + 1; j < diag.size(); ++j)
-            sum += v[j] * v[j] / (diag[j] - x);
-        return rho * sum;
-    };
-    auto dPsi_1 = [&](const double x) -> double {
-        double sum = 0.0;
-        for (unsigned int j = 0; j <= i; ++j)
-            sum += v[j] * v[j] / ((diag[j] - x) * (diag[j] - x));
-        return rho * sum;
-    };
-    auto dPsi_2 = [&](const double x) -> double {
-        double sum = 0.0;
-        for (unsigned int j = i + 1; j < diag.size(); ++j)
-            sum += v[j] * v[j] / ((diag[j] - x) * (diag[j] - x));
-        return rho * sum;
-    };
+    std::function<double(double)> Psi_1, Psi_2, dPsi_1, dPsi_2;
+    compute_Psi(i, v, diag, rho, Psi_1, Psi_2, dPsi_1, dPsi_2);
 
     for (unsigned int iter = 0; iter < maxiter; ++iter) {
-        const double delta_i = diag[i] - lam_0;
-        const double delta_i1 = (i + 1 < diag.size()) ? diag[i + 1] - lam_0 : 0.0;
-        const double vPsi_1 = Psi_1(lam_0);
-        const double vPsi_2 = Psi_2(lam_0);
-        const double vdPsi_1 = dPsi_1(lam_0);
-        const double vdPsi_2 = dPsi_2(lam_0);
+        double delta_i = diag[i] - lam_0;
+        double delta_i1 = (i + 1 < static_cast<unsigned int>(d.size())) ? (diag[i + 1] - lam_0) : 0.0;
+        double vPsi_1 = Psi_1(lam_0);
+        double vPsi_2 = Psi_2(lam_0);
+        double vdPsi_1 = dPsi_1(lam_0);
+        double vdPsi_2 = dPsi_2(lam_0);
 
-        const double a = (1.0 + vPsi_1 + vPsi_2) * (delta_i + delta_i1) - (vdPsi_1 + vdPsi_2) * delta_i * delta_i1;
-        const double b = delta_i * delta_i1 * (1.0 + vPsi_1 + vPsi_2);
-        const double c = 1.0 + vPsi_1 + vPsi_2 - delta_i * vdPsi_1 - delta_i1 * vdPsi_2;
-
+        double a = (1.0 + vPsi_1 + vPsi_2) * (delta_i + delta_i1)
+                 - (vdPsi_1 + vdPsi_2) * delta_i * delta_i1;
+        double b = delta_i * delta_i1 * (1.0 + vPsi_1 + vPsi_2);
+        double c = 1.0 + vPsi_1 + vPsi_2 - delta_i * vdPsi_1 - delta_i1 * vdPsi_2;
         double discr = a * a - 4.0 * b * c;
         discr = std::max(discr, 0.0);
-
-        const double eta = (a - rho / std::abs(rho) * std::sqrt(discr)) / (2.0 * c);
+        double eta = (a - (rho / std::abs(rho)) * std::sqrt(discr)) / (2.0 * c);
         lam_0 += eta;
-        if (std::abs(eta) < tol * std::max(1e-6, std::abs(lam_0)))
+        if (std::abs(eta) < tol * std::max(1e-8, std::abs(lam_0))) {
             break;
+        }
     }
-
     return std::make_pair(shift + lam_0, lam_0);
 }
 
 
-double out_range(
-    const std::vector<double>& v,
-    const std::vector<double>& d,
-    const double rho,
-    double lam_0,
-    const double tol = 1e-12,
-    const unsigned int maxiter = 100) {
-    std::vector<double> diag = d;
-    double shift = 0.0;
-    double d_i = 0.0;
+double bisection(
+    const std::function<double(double)>& f,
+    double a,
+    double b,
+    const double tol,
+    const unsigned int max_iter) {
+    unsigned int iter_count = 0;
 
-    if (rho < 0) {
-        for (auto& x : diag) x -= d[0];
-        lam_0 -= d[0];
-        shift = d[0];
-        d_i = diag[0];
-    } else {
-        for (auto& x : diag) x -= d.back();
-        lam_0 -= d.back();
-        shift = d.back();
-        d_i = diag.back();
-    }
-
-    auto Psi_2 = [&](const double x) -> double {
-        double sum = 0.0;
-        for (unsigned int j = 0; j < diag.size(); ++j)
-            sum += v[j] * v[j] / (diag[j] - x);
-        return rho * sum;
-    };
-    auto dPsi_2 = [&](const double x) -> double {
-        double sum = 0.0;
-        for (unsigned int j = 0; j < diag.size(); ++j)
-            sum += v[j] * v[j] / ((diag[j] - x) * (diag[j] - x));
-        return rho * sum;
-    };
-
-    for (unsigned int iter = 0; iter < maxiter; ++iter) {
-        const double c_1 = dPsi_2(lam_0) * (d_i - lam_0) * (d_i - lam_0);
-        const double c_3 = Psi_2(lam_0) - dPsi_2(lam_0) * (d_i - lam_0) + 1.0;
-        const double lam = d_i + c_1 / c_3;
-        if (std::abs(lam_0 - lam) < tol * std::max(1.0, std::abs(lam)))
+    while ((b - a) / 2.0 > tol) {
+        double c = 0.5 * (a + b);
+        if (std::abs(f(c)) < tol) {
+            return c;
+        } else if (f(a) * f(c) < 0.0) {
+            b = c;
+        } else {
+            a = c;
+        }
+        ++iter_count;
+        if (iter_count >= max_iter) {
             break;
-        lam_0 = lam;
+        }
     }
-    return shift + lam_0;
+
+    return 0.5 * (a + b);
 }
 
 
+double compute_outer_zero(
+    const std::vector<double>& v,
+    const std::vector<double>& d,
+    const double rho,
+    const double interval_end,
+    const double tol = 1e-14,
+    const unsigned int max_iter = 1000){
 
-std::tuple<py::array_t<double>, std::vector<unsigned int>, py::array_t<double>>
-secular_solver(const double rho,
-               const std::vector<double>& d,
-               const std::vector<double>& v//,
-               //const std::vector<unsigned int>& indices
-               ) {
+    const double threshold = 1e-11;
+    double update = 0.0;
 
-    std::vector<double> eig_val;
-    std::vector<unsigned int> index;
-    std::vector<double> delta;
+    // Compute L2 norm of v
+    for (size_t i = 0; i < v.size(); ++i) {
+        update += v[i] * v[i];
+    }
+    update = std::sqrt(update);
 
     auto f = [&](double x) -> double {
         double sum = 0.0;
-        for (unsigned int j = 0; j < d.size(); ++j)
-        {
-            sum += (v[j] * v[j]) / (x - d[j]);
+        for (size_t k = 0; k < d.size(); ++k) {
+            double denom = x - d[k];
+            sum += (v[k] * v[k]) / denom;
         }
         return 1.0 - rho * sum;
     };
 
+    double a, b;
+
+    if (rho > 0.0) {
+        a = interval_end + threshold;
+        b = interval_end + 1.0;
+        while (f(a) * f(b) > 0.0) {
+            a = b;
+            b += update;
+        }
+    } else if (rho < 0.0) {
+        b = interval_end - threshold;
+        a = interval_end - 1.0;
+        while (f(a) * f(b) > 0.0) {
+            b = a;
+            a -= update;
+        }
+    }
+
+    return bisection(f, a, b, tol, max_iter);
+}
+
+
+std::tuple<py::array_t<double>, py::array_t<int>, py::array_t<double>>
+secular_solver(
+    const double rho,
+    py::array_t<double, py::array::c_style | py::array::forcecast> d_np,
+    py::array_t<double, py::array::c_style | py::array::forcecast> v_np,
+    py::array_t<unsigned int, py::array::c_style | py::array::forcecast> indices_np) {
+
+    std::vector<double> d(d_np.data(), d_np.data() + d_np.size());
+    std::vector<double> v(v_np.data(), v_np.data() + v_np.size());
+    std::vector<unsigned int> indices(indices_np.data(), indices_np.data() + indices_np.size());
+
+    std::vector<double> eig_val;
+    std::vector<int> index;
+    std::vector<double> delta;
+
     const unsigned int d_size = d.size();
-    if (rho > 0.0)
-    {
-        for  (unsigned int i=0; i< d_size-1;++i) //(unsigned int i : indices)
-        {
+
+    auto f = [&](double x) -> double {
+        double sum = 0.0;
+        for (size_t j = 0; j < v.size(); ++j) {
+            sum += v[j] * v[j] / (x - d[j]);
+        }
+        return 1.0 - rho * sum;
+    };
+
+    if (rho > 0.0) {
+        for (unsigned int i : indices) {
             if (i == d_size-1) { continue; }
             double lam_0 = 0.5 * (d[i] + d[i + 1]);
             bool left_center;
-
-            if (f(lam_0) > 0.0)
-            {
+            if (f(lam_0) > 0.0) {
                 left_center = true;
-                index.push_back(i);
-            }
-            else
-            {
+                index.push_back(static_cast<int>(i));
+            } else {
                 left_center = false;
-                index.push_back(i + 1);
+                index.push_back(static_cast<int>(i + 1));
             }
-
-            double Eig, Delta;
-            std::tie(Eig, Delta) = find_root(i, left_center, v, d, rho, lam_0);
-            eig_val.push_back(Eig);
-            delta.push_back(Delta);
+            auto result = find_root(static_cast<int>(i), left_center, v, d, rho, lam_0);
+            eig_val.push_back(result.first);
+            delta.push_back(result.second);
         }
-
-        //if (indices.back() == d_size - 1)
+        if (indices.back() == d_size - 1)
         {
-            double lam_0 = d[d.size() - 1] + 5.0 * (d[d.size() - 1] - d[d.size() - 2]);
-            // bool left_center = false;
-            index.push_back(static_cast<unsigned int>(d.size() - 1));
-            double Eig = out_range(v, d, rho, lam_0);
+            double lam_0 = d[d.size() - 1];
+            double Eig = compute_outer_zero(v, d, rho, lam_0);
             eig_val.push_back(Eig);
+            index.push_back(static_cast<int>(d.size() - 1));
             delta.push_back(Eig - d[d.size() - 1]);
         }
-    }
-    else
-    {
-         
-        //if (indices[0] == 0)
+    } else { // rho < 0.0
+        if (indices[0] == 0)
         {
-            double lam_0 = d[0] - 5.0 * (d[1] - d[0]);
-            // bool left_center = false;
+            double lam_0 = d[0];
             index.push_back(0);
-            double Eig = out_range(v, d, rho, lam_0);
+            double Eig = compute_outer_zero(v, d, rho, lam_0);
             eig_val.push_back(Eig);
             delta.push_back(Eig - d[0]);
         }
 
-        for (unsigned int i =1; i<=d_size-1;++i) //(unsigned int i : indices)
-        {   
-            if (i == 0) { continue; }
-            double lam_0 = 0.5 * (d[i] + d[i + 1]);
+        for (unsigned int i : indices) {
+            std::cout << "i: " << i << std::endl;
+            std::cout << d[i] << " " << d[i + 1] << std::endl;
+            if (i==0) continue;
+            double lam_0 = 0.5 * (d[i-1] + d[i]);
             bool left_center;
-
-            if (f(lam_0) > 0.0)
-            {
+            if (f(lam_0) > 0.0) {
                 left_center = false;
-                index.push_back(i + 1);
-            }
-            else
-            {
+                index.push_back(static_cast<int>(i + 1));
+            } else {
                 left_center = true;
-                index.push_back(i);
+                index.push_back(static_cast<int>(i));
             }
-
-            double Eig, dummy;
-            std::tie(Eig, dummy) = find_root(i, left_center, v, d, rho, lam_0);
-            eig_val.push_back(Eig);
+            eig_val.push_back(find_root(static_cast<int>(i)-1, left_center, v, d, rho, lam_0).first);
         }
     }
-
+    
     py::array_t<double> eig_val_np(eig_val.size(), eig_val.data());
+    py::array_t<int> index_np(index.size(), index.data());
     py::array_t<double> delta_np(delta.size(), delta.data());
 
-    return std::make_tuple(eig_val_np, index, delta_np);
+    return std::make_tuple(eig_val_np, index_np, delta_np);
 }
 
 
@@ -558,5 +594,5 @@ PYBIND11_MODULE(cxx_utils, m) {
 
     m.def("QR_algorithm", &QR_algorithm, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
     m.def("Eigen_value_calculator", &Eigen_value_calculator, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
-    m.def("secular_solver_cxx", &secular_solver, py::arg("rho"), py::arg("d"), py::arg("v"));//, py::arg("indices"));
+    m.def("secular_solver_cxx", &secular_solver, py::arg("rho"), py::arg("d"), py::arg("v"), py::arg("indices"));
 }

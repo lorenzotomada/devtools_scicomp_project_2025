@@ -1,10 +1,9 @@
 from mpi4py import MPI
 import numpy as np
 from time import time
-from cxx_utils import QR_algorithm
+from cxx_utils import QR_algorithm, secular_solver_cxx
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
-from zero_finder import secular_solver
 from line_profiler import LineProfiler
 
 profile = LineProfiler()
@@ -263,7 +262,7 @@ def parallel_tridiag_eigen(
             idx = np.argsort(D_keep)
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
-            lam, changing_position, delta = secular_solver(
+            lam, changing_position, delta = secular_solver_cxx(
                 beta, D_keep[idx], v_keep[idx]
             )
             lam = np.array(lam)

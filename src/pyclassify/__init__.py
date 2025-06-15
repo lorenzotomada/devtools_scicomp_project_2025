@@ -18,4 +18,4 @@ from .eigenvalues import (
     EigenSolver,
 )
 
-from .zero_finder import compute_Psi, secular_solver
+from .zero_finder import compute_Psi, secular_solver_python

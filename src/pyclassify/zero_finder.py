@@ -77,50 +77,76 @@ def find_root(i, left_center, v, d, rho, lam_0, tol=1e-12, maxiter=100):
     return shift + lam_0, lam_0
 
 
-def out_range(v, d, rho, lam_0, tol=1e-12, maxiter=100):
+def bisection(f, a, b, tol, max_iter):
     """
-    Computes the root of the secular equation outside the range [min(d)=d[0], max(d)=d[-1]].
-    Inputs:
-        -v: Rank one correction
-        -d: Diagonal element of the Diagonal matrix described in equation 5.7
-        -rho: off diagonal element used for the splitting.
-    Outputs:
-        -shift + lam_0: i-th smallest eigenvalue that
+    Standard bisection method to find a root of the function f in the interval [a, b].
+
+    This implementation is used in `compute_outer_zero` to locate the outer eigenvalue.
+
+    Parameters:
+    f (callable): A continuous function for which f(a) * f(b) < 0.
+    a (float): Left endpoint of the interval.
+    b (float): Right endpoint of the interval.
+    tol (float): Tolerance for convergence. The method stops when the interval is smaller than tol or when f(c) is sufficiently small.
+    max_iter (int): Maximum number of iterations before stopping.
+
+    Returns:
+    float: Approximation of the root within the specified tolerance.
     """
+    iter_count = 0
 
-    diag = d.copy()
-    if rho < 0:
-        diag = diag - d[0]
-        lam_0 = lam_0 - d[0]
-        shift = d[0]
-        d_i = diag[0]
-        # Psi_1, Psi_2, dPsi_1, dPsi_2 = compute_Psi(-1, v, diag, rho)
-
-        # for _ in range(maxiter):
-        #     c_1=dPsi_2(lam_0)*(diag[0]-lam_0)**2
-        #     c_3=Psi_2(lam_0) - dPsi_2(lam_0)*(diag[0]-lam_0)+1
-        #     lam=diag[0]+c_1/c_3
-        #     if abs(lam_0-lam) < tol * max(1.0, abs(lam)):
-        #         break
-        #     lam_0=lam
-        # return shift + lam_0
-    else:
-        diag = diag - d[-1]
-        lam_0 = lam_0 - d[-1]
-        shift = d[-1]
-        d_i = diag[-1]
-    Psi_1, Psi_2, dPsi_1, dPsi_2 = compute_Psi(-1, v, diag, rho)
-    for _ in range(maxiter):
-        c_1 = dPsi_2(lam_0) * (d_i - lam_0) ** 2
-        c_3 = Psi_2(lam_0) - dPsi_2(lam_0) * (d_i - lam_0) + 1
-        lam = d_i + c_1 / c_3
-        if abs(lam_0 - lam) < tol * max(1.0, abs(lam)):
+    while (b - a) / 2 > tol:
+        c = (a + b) / 2
+        if np.abs(f(c)) < tol:
+            return c
+        elif f(a) * f(c) < 0:
+            b = c
+        else:
+            a = c
+        iter_count += 1
+        if iter_count >= max_iter:
             break
-        lam_0 = lam
-    return shift + lam_0
+    return (a + b) / 2
 
 
-def secular_solver(rho, d, v):
+def compute_outer_zero(v, d, rho, interval_end, tol=1e-12, max_iter=1000):
+    """
+    Computes the outer eigenvalue (lambda[0] if rho < 0, lambda[n-1] if rho > 0) of a rank-one modified diagonal matrix.
+
+    The secular function  behaves such that:
+      - If rho > 0, the outer eigenvalue lies in (d[n-1], infty), and f is increasing in this interval.
+      - If rho < 0, the outer eigenvalue lies in (-infty, d[0]), and f is decreasing in this interval.
+
+    This function:
+    1. Determines the direction to search based on the sign of rho.
+    2. Finds an upper bound (or lower bound for rho < 0) where the secular function changes sign.
+    3. Uses the bisection method to find the root in the determined interval.
+
+    Returns:
+    float: Approximation of the outer eigenvalue.
+    """
+    threshold = 1e-11
+    update = np.linalg.norm(v)
+
+    f = lambda x: 1 - rho * np.sum([(v * v)[k] / (x - d[k]) for k in range(len(d))])
+
+    if rho > 0:  # f is increasing
+        a = interval_end + threshold
+        b = interval_end + 1
+        while np.sign(f(a) * f(b)) > 0:
+            a = b  # if f(b) is still of the same sign, we set a = b, restricting the window for bisection
+            b += update  # at some point, f(b) will have a different sign
+    elif rho < 0:
+        b = interval_end - threshold
+        a = interval_end - 1
+        while np.sign(f(a) * f(b)) > 0:
+            b = a
+            a -= update
+    x = bisection(f, a, b, tol, max_iter)
+    return x
+
+
+def secular_solver_python(rho, d, v):
     """
     Computes all the roots of the secular equation.
     Inputs:
@@ -149,18 +175,18 @@ def secular_solver(rho, d, v):
             Eig, Delta = find_root(i, left_center, v, d, rho, lam_0)
             eig_val.append(Eig)
             delta.append(Delta)
-        lam_0 = d[-1] + 10 * (d[-1] - d[-2])
-        Eig = out_range(v, d, rho, lam_0)
+        lam_0 = d[-1]
+        Eig = compute_outer_zero(v, d, rho, lam_0)
         eig_val.append(Eig)
         index.append(len(d) - 1)
         delta.append(Eig - d[-1])
 
     else:
         i = 0
-        lam_0 = d[0] - 5 * (d[1] - d[0])
+        lam_0 = d[0]
         left_center = False
         index.append(0)
-        Eig = out_range(v, d, rho, lam_0)
+        Eig = compute_outer_zero(v, d, rho, lam_0)
         eig_val.append(Eig)
         delta.append(Eig - d[0])
 
@@ -189,7 +215,7 @@ if __name__ == "__main__":
     T = np.diag(d) + rho * np.outer(v, v)
     direct_eigvals = np.linalg.eigvalsh(np.diag(d) + rho * np.outer(v, v))
     print("Direct eigvals for comparison:", direct_eigvals)
-    secular_eigvals,_,__ = secular_solver(rho, d, v)
+    secular_eigvals, _, __ = secular_solver(rho, d, v)
     secular_eigvals = np.array(secular_eigvals)
     secular_eigvals.sort()
     print("Secular equation zeros (eigenvalues):", secular_eigvals)
