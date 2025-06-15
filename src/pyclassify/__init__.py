@@ -7,7 +7,7 @@ __all__ = [
     "EigenSolver",
 ]
 
-from .QR_cpp import QR_algorithm, Eigen_value_calculator
+from .cxx_utils import QR_algorithm, Eigen_value_calculator, secular_solver_cxx
 from .parallel_tridiag_eigen import parallel_eigen
 
 from .eigenvalues import (
@@ -19,4 +19,4 @@ from .eigenvalues import (
     EigenSolver,
 )
 
-from .zero_finder import compute_Psi, secular_solver
+from .zero_finder import compute_Psi, secular_solver_python

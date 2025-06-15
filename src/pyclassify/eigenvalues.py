@@ -3,7 +3,7 @@ import scipy.sparse as sp
 import scipy.linalg as spla
 from numpy.linalg import eig, eigh
 from numba import jit, prange
-from .QR_cpp import QR_algorithm, Eigen_value_calculator
+from .cxx_utils import QR_algorithm, Eigen_value_calculator
 from pyclassify.utils import (
     check_square_matrix,
     check_symm_square,

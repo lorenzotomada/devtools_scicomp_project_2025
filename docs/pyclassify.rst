@@ -22,7 +22,7 @@ Submodule: utils
 Submodule: helpers_secular
 ================
 
-.. automodule:: pyclassify.helpers_secular
+.. automodule:: pyclassify.zero_finder
    :members:
    :undoc-members:
    :show-inheritance:

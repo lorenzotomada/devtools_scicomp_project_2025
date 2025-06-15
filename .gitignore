@@ -193,3 +193,6 @@ skbuild/*
 
 # temporary files for vim users
 *.swp
+
+# helper files
+*TMP.py
