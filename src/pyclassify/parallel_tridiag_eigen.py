@@ -1,12 +1,15 @@
 from mpi4py import MPI
 import numpy as np
 from time import time
-from .cxx_utils import QR_algorithm, secular_solver_cxx
+from pyclassify.cxx_utils import QR_algorithm, secular_solver_cxx
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
 from line_profiler import LineProfiler
 import scipy
 from pyclassify.utils import make_symmetric
+from numba import jit
+from pyclassify.eigenvalues import EigenSolver, Lanczos_PRO 
+from pyclassify.zero_finder import secular_solver_python as secular_solver
 
 profile = LineProfiler()
 
@@ -25,8 +28,10 @@ def check_column_directions(A, B):
 
 @profile
 def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
-    """Applying the deflation step to the divide and conquer algorithm to reduce the size of
+    """
+    Applying the deflation step to the divide and conquer algorithm to reduce the size of
     the system to be solved and find the trivial eigenvalues and eigenvectors.
+    Notice that we cannot use jit since we work with scipy sparse matrices.
     Input:
         -D: element on the diagonal.
         -v: rank one update vector
@@ -265,7 +270,7 @@ def parallel_tridiag_eigen(
             idx = np.argsort(D_keep)
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
-            lam, changing_position, delta = secular_solver_cxx(
+            lam, changing_position, delta = secular_solver(
                 beta, D_keep[idx], v_keep[idx]
             )
             lam = np.array(lam)
@@ -481,7 +486,7 @@ def parallel_eigen(
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    n = 2000
+    n = 200
     if rank == 0:
         # import debugpy
         # port = 5678 + rank  # 5678 for rank 0, 5679 for rank 1
@@ -498,7 +503,10 @@ if __name__ == "__main__":
         A = U @ A @ U.T
         A = make_symmetric(A)
         Lanc = EigenSolver(A)
-        _, main_diag, off_diag = Lanc.Lanczos_PRO(q=np.ones_like(eig), tol=1e-12)
+        initial_guess = np.random.rand(A.shape[0])
+        if initial_guess[0] == 0:
+            initial_guess[0] += 1
+        _, main_diag, off_diag = Lanczos_PRO(A=A, q=initial_guess)
         T = np.diag(main_diag) + np.diag(off_diag, 1) + np.diag(off_diag, -1)
         eig_numpy, eig_vec_numpy = np.linalg.eigh(T)
         # print(eig_numpy)
@@ -561,7 +569,16 @@ if __name__ == "__main__":
         # print(np.max(np.abs(diff),LaEig_vec axis=0))
         # print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
         # print("Norm difference eigenvec", np.linalg.norm(eig_vec_numpy-eigvecs, np.inf))
-
+        """
+        D = np.diag(range(n))
+        v = np.ones_like(np.diag(D))
+        beta = 1e-2
+        _ = deflate_eigenpairs(D, v, beta)
+        _ = deflate_eigenpairs(D, v, beta)
+        beginning = time.time()
+        _ = deflate_eigenpairs(D,v,beta)
+        end = time.time()
+        """
     # n=1000
     # main_diag = np.random.rand(n)
     #  = np.random.rand(n - 1)
