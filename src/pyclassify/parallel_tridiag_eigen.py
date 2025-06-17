@@ -1,7 +1,11 @@
 from mpi4py import MPI
 import numpy as np
 from time import time
-from pyclassify.cxx_utils import QR_algorithm, secular_solver_cxx, deflate_eigenpairs_cxx
+from pyclassify.cxx_utils import (
+    QR_algorithm,
+    secular_solver_cxx,
+    deflate_eigenpairs_cxx,
+)
 from zero_finder import secular_solver_python as secular_solver
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
@@ -271,7 +275,7 @@ def parallel_tridiag_eigen(
             idx = np.argsort(D_keep)
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
-            #lam, changing_position, delta = secular_solver( beta, D_keep[idx], v_keep[idx] )
+            # lam, changing_position, delta = secular_solver( beta, D_keep[idx], v_keep[idx] )
             lam, changing_position, delta = secular_solver_cxx(
                 beta, D_keep[idx], v_keep[idx], np.arange(reduced_dim)
             )
@@ -490,7 +494,7 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     n = 1000
     if rank == 0:
-        
+
         # import debugpy
         # port = 5678 + rank  # 5678 for rank 0, 5679 for rank 1
         # debugpy.listen(("localhost", port))
@@ -498,7 +502,7 @@ if __name__ == "__main__":
         # debugpy.wait_for_client()
         np.random.seed(42)
         main_diag = np.ones(n, dtype=np.float64) * 2.0
-        off_diag = np.ones(n - 1, dtype=np.float64) *1.0
+        off_diag = np.ones(n - 1, dtype=np.float64) * 1.0
         # eig = np.arange(1, n + 1)
         # A = np.diag(eig)
         # U = scipy.stats.ortho_group.rvs(n)
@@ -545,9 +549,7 @@ if __name__ == "__main__":
 
         print("Norm difference eigenaval", np.linalg.norm(eig_numpy - eigvals, np.inf))
 
-  
         check_column_directions(eigvecs, eig_vec_numpy)
-
 
         # import sys
         # np.set_printoptions(threshold=sys.maxsize)
@@ -558,12 +560,12 @@ if __name__ == "__main__":
 
         # # print("Eigenvector solver:\n", eigvecs)
         # # print("Eigenvector numpy:\n", eig_vec_numpy)
-        #print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
-        diff= eig_vec_numpy-eigvecs
-        flat_idx = np.argmax(diff)          # → 5   (counting row-major: 0..8)
+        # print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
+        diff = eig_vec_numpy - eigvecs
+        flat_idx = np.argmax(diff)  # → 5   (counting row-major: 0..8)
 
         # # If you want row/column coordinates instead of the flattened index:
-        row, col = np.unravel_index(flat_idx, diff.shape)   # → (1, 2)
+        row, col = np.unravel_index(flat_idx, diff.shape)  # → (1, 2)
         print(np.max(np.abs(diff)))
         # print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
         # print("Norm difference eigenvec", np.linalg.norm(eig_vec_numpy-eigvecs, np.inf))
