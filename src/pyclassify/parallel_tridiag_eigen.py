@@ -1,12 +1,15 @@
 from mpi4py import MPI
 import numpy as np
 from time import time
-from .cxx_utils import QR_algorithm, secular_solver_cxx
+from pyclassify.cxx_utils import QR_algorithm, secular_solver_cxx, deflate_eigenpairs_cxx
+from zero_finder import secular_solver_python as secular_solver
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
 from line_profiler import LineProfiler
 import scipy
 from pyclassify.utils import make_symmetric
+from pyclassify.eigenvalues import EigenSolver, Lanczos_PRO
+
 
 profile = LineProfiler()
 
@@ -255,9 +258,12 @@ def parallel_tridiag_eigen(
         n1 = len(eigvals_left)
         D = np.concatenate((eigvals_left, eigvals_right))
         v_vec = np.concatenate((eigvecs_left[-1, :], eigvecs_right[0, :]))
-        deflated_eigvals, deflated_eigvecs, D_keep, v_keep, P = deflate_eigenpairs(
-            D, v_vec, tol_factor
+        deflated_eigvals, deflated_eigvecs, D_keep, v_keep, P = deflate_eigenpairs_cxx(
+            D, v_vec, beta, tol_factor
         )
+        # deflated_eigvals, deflated_eigvecs, D_keep, v_keep, P = deflate_eigenpairs(
+        #     D, v_vec, beta, tol_factor
+        # )
         reduced_dim = len(D_keep)
         if D_keep.size > 0:
             # M = np.diag(D_keep) + beta * np.outer(v_keep, v_keep)
@@ -265,8 +271,9 @@ def parallel_tridiag_eigen(
             idx = np.argsort(D_keep)
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
+            #lam, changing_position, delta = secular_solver( beta, D_keep[idx], v_keep[idx] )
             lam, changing_position, delta = secular_solver_cxx(
-                beta, D_keep[idx], v_keep[idx]
+                beta, D_keep[idx], v_keep[idx], np.arange(reduced_dim)
             )
             lam = np.array(lam)
             # #diff=lam_s-lam
@@ -429,7 +436,7 @@ def parallel_tridiag_eigen(
     #     if colnorm > 1e-14:
     #         local_block[:, c] /= colnorm
 
-    # gathered_blocks = comm.gather(local_block, root=0)
+    # gathranered_blocks = comm.gather(local_block, root=0)
     # gathered_cols = comm.gather(my_cols, root=0)
 
     # if rank == 0:
@@ -481,24 +488,27 @@ def parallel_eigen(
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    n = 2000
+    n = 1000
     if rank == 0:
+        
         # import debugpy
         # port = 5678 + rank  # 5678 for rank 0, 5679 for rank 1
         # debugpy.listen(("localhost", port))
         # print(f"Rank {rank} waiting for debugger attach on port {port}")
         # debugpy.wait_for_client()
         np.random.seed(42)
-        main_diag = np.ones(n, dtype=np.float64) * 2
-        off_diag = np.ones(n - 1, dtype=np.float64)
-        eig = np.arange(1, n + 1)
-        A = np.diag(eig)
-        U = scipy.stats.ortho_group.rvs(n)
+        main_diag = np.ones(n, dtype=np.float64) * 2.0
+        off_diag = np.ones(n - 1, dtype=np.float64) *1.0
+        # eig = np.arange(1, n + 1)
+        # A = np.diag(eig)
+        # U = scipy.stats.ortho_group.rvs(n)
 
-        A = U @ A @ U.T
-        A = make_symmetric(A)
-        Lanc = EigenSolver(A)
-        _, main_diag, off_diag = Lanc.Lanczos_PRO(q=np.ones_like(eig), tol=1e-12)
+        # A = U @ A @ U.T
+        # A = make_symmetric(A)
+
+        # #Lanc = EigenSolver(A)
+        # #_, main_diag, off_diag = Lanc.Lanczos_PRO(q=np.ones_like(eig), tol=1e-12)
+        # _, main_diag, off_diag = Lanczos_PRO(A, np.ones_like(eig)*1.0, tol=1e-12)
         T = np.diag(main_diag) + np.diag(off_diag, 1) + np.diag(off_diag, -1)
         eig_numpy, eig_vec_numpy = np.linalg.eigh(T)
         # print(eig_numpy)
@@ -535,13 +545,9 @@ if __name__ == "__main__":
 
         print("Norm difference eigenaval", np.linalg.norm(eig_numpy - eigvals, np.inf))
 
-        for count, i in enumerate(eigvecs[0, :]):
-            if i < 0:
-                eigvecs[:, count] = (-1) * eigvecs[:, count]
+  
+        check_column_directions(eigvecs, eig_vec_numpy)
 
-        for count, i in enumerate(eig_vec_numpy[0, :]):
-            if i < 0:
-                eig_vec_numpy[:, count] = (-1) * eig_vec_numpy[:, count]
 
         # import sys
         # np.set_printoptions(threshold=sys.maxsize)
@@ -552,13 +558,13 @@ if __name__ == "__main__":
 
         # # print("Eigenvector solver:\n", eigvecs)
         # # print("Eigenvector numpy:\n", eig_vec_numpy)
-        # print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
-        # diff= eig_vec_numpy-eigvecs
-        # flat_idx = np.argmax(diff)          # → 5   (counting row-major: 0..8)
+        #print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
+        diff= eig_vec_numpy-eigvecs
+        flat_idx = np.argmax(diff)          # → 5   (counting row-major: 0..8)
 
         # # If you want row/column coordinates instead of the flattened index:
-        # row, col = np.unravel_index(flat_idx, diff.shape)   # → (1, 2)
-        # print(np.max(np.abs(diff),LaEig_vec axis=0))
+        row, col = np.unravel_index(flat_idx, diff.shape)   # → (1, 2)
+        print(np.max(np.abs(diff)))
         # print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
         # print("Norm difference eigenvec", np.linalg.norm(eig_vec_numpy-eigvecs, np.inf))
 

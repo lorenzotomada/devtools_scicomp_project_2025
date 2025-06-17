@@ -158,7 +158,7 @@ def power_method_numba(A, max_iter=500, tol=1e-7, x=None):
     return x @ A @ x
 
 
-@jit(nopython=True)
+#@jit(nopython=True)
 def Lanczos_PRO(A, q, m=None, tol=np.sqrt(np.finfo(float).eps)):
     r"""
     Perform the Lanczos algorithm for symmetric matrices.

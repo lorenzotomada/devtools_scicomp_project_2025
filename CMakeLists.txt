@@ -7,6 +7,14 @@ project(QR_binding VERSION 1.0
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/pyclassify)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/pyclassify)
 
+include(FetchContent)
+# Fetch Eigen 3.4.0 (or whatever version you need)
+FetchContent_Declare(
+  eigen
+  URL  https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+)
+FetchContent_MakeAvailable(eigen)
+
 set(PYBIND11_FINDPYTHON ON)
 
 # To find pybind11 on Ulysses:
@@ -36,6 +44,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-O3 -Wall -Werror -Wpedantic)
 
 pybind11_add_module(cxx_utils ${CMAKE_SOURCE_DIR}/src/pyclassify/cxx_utils.cpp)
+
+target_link_libraries(cxx_utils   PRIVATE    Eigen3::Eigen  )
 set_target_properties(cxx_utils PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 target_compile_features(cxx_utils PUBLIC cxx_std_17)

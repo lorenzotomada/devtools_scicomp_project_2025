@@ -14,6 +14,7 @@
 
 
 namespace py=pybind11;	
+#include <pybind11/eigen.h>
 
 
 std::pair<std::vector<double>, std::vector<std::vector<double>> > 
@@ -585,6 +586,183 @@ secular_solver(
 }
 
 
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <unordered_set>
+
+/**
+ * Applies the deflation step in a divide-and-conquer eigenvalue algorithm.
+ *
+ * @param D          Diagonal entries of the matrix (as Eigen::VectorXd).
+ * @param v          Rank-one update vector (modified in-place).
+ * @param beta       Scalar multiplier for the rank-one update.
+ * @param tol_factor Factor to scale the deflation tolerance (default 1e-12).
+ * @return A tuple containing:
+ *     - deflated_eigvals: Vector of trivial eigenvalues (Eigen::VectorXd).
+ *     - deflated_eigvecs: Matrix whose columns are the trivial eigenvectors (Eigen::MatrixXd).
+ *     - D_keep: Remaining diagonal entries after deflation (Eigen::VectorXd).
+ *     - v_keep: Remaining rank-one vector entries after deflation (Eigen::VectorXd).
+ *     - P_final:   Combined permutation & Givens rotation as an Eigen::SparseMatrix<double>.
+ */
+
+
+/**
+ * Applies the deflation step in a divide-and-conquer eigenvalue algorithm.
+ *
+ * @param D          Diagonal entries of the matrix (as Eigen::VectorXd).
+ * @param v          Rank-one update vector (modified in-place).
+ * @param beta       Scalar multiplier for the rank-one update.
+ * @param tol_factor Factor to scale the deflation tolerance (default 1e-12).
+ * @return A tuple containing:
+ *     - deflated_eigvals: Vector of trivial eigenvalues (Eigen::VectorXd).
+ *     - deflated_eigvecs: Matrix whose columns are the trivial eigenvectors (Eigen::MatrixXd).
+ *     - D_keep: Remaining diagonal entries after deflation (Eigen::VectorXd).
+ *     - v_keep: Remaining rank-one vector entries after deflation (Eigen::VectorXd).
+ *     - P_final: Combined permutation & rotation as an Eigen::SparseMatrix<double>.
+ */
+std::tuple<
+    Eigen::VectorXd,
+    Eigen::MatrixXd,
+    Eigen::VectorXd,
+    Eigen::VectorXd,
+    Eigen::SparseMatrix<double>>
+deflateEigenpairs(
+    const Eigen::VectorXd& D,
+    Eigen::VectorXd v,
+    double beta,
+    double tol_factor = 1e-12
+) {
+    int n = D.size();
+    // 1) Build full matrix M and compute norm for tolerance
+    Eigen::MatrixXd M = D.asDiagonal();          
+    M += beta * v * v.transpose();               
+    double norm_T = M.norm();                    
+    double tol = tol_factor * norm_T;            
+
+    // 2) Prepare containers for deflation
+    std::vector<int> keep_indices, deflated_indices;
+    Eigen::VectorXd deflated_eigvals = Eigen::VectorXd::Zero(n);
+    std::vector<Eigen::VectorXd> deflated_eigvecs_list;
+    int j = 0;  
+
+    // 3) Zero-component deflation
+    for (int i = 0; i < n; ++i) {
+        if (std::abs(v(i)) < tol) {
+            deflated_eigvals(j) = D(i);
+            Eigen::VectorXd e_vec = Eigen::VectorXd::Zero(n);
+            e_vec(i) = 1.0;
+            deflated_eigvecs_list.push_back(e_vec);
+            deflated_indices.push_back(i);
+            ++j;
+        } else {
+            keep_indices.push_back(i);
+        }
+    }
+
+    // 4) Build permutation P: [keep_indices, deflated_indices]
+    std::vector<int> new_order;
+    new_order.reserve(n);
+    new_order.insert(new_order.end(), keep_indices.begin(), keep_indices.end());
+    new_order.insert(new_order.end(), deflated_indices.begin(), deflated_indices.end());
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P(n);
+    P.indices() = Eigen::VectorXi::Map(new_order.data(), n);
+
+    // 5) Extract subproblem D_keep and v_keep
+    Eigen::VectorXd D_keep(static_cast<int>(keep_indices.size()));
+    Eigen::VectorXd v_keep(static_cast<int>(keep_indices.size()));
+    for (int idx = 0; idx < static_cast<int>(keep_indices.size()); ++idx) {
+        D_keep(idx) = D(keep_indices[idx]);
+        v_keep(idx) = v(keep_indices[idx]);
+    }
+
+    // 6) Givens rotations for near-duplicate entries
+    std::unordered_set<int> to_check;
+    to_check.reserve(keep_indices.size());
+    for (int i = 0; i < static_cast<int>(keep_indices.size()); ++i)
+        to_check.insert(i);
+    std::vector<std::tuple<int,int,double,double>> rotations;
+    std::vector<int> vec_idx_list;
+    std::vector<int> to_check_copy(to_check.begin(), to_check.end());
+
+    for (size_t idx_i = 0; idx_i + 1 < to_check_copy.size(); ++idx_i) {
+        int i = to_check_copy[idx_i];
+        if (to_check.find(i) == to_check.end()) continue;
+        for (int k = i + 1; k < static_cast<int>(D_keep.size()); ++k) {
+            if (std::abs(D_keep(k) - D_keep(i)) < tol) {
+                to_check.erase(k);
+                double r = std::hypot(v_keep(i), v_keep(k));
+                double c = v_keep(i) / r;
+                double s = -v_keep(k) / r;
+                v_keep(i) = r;
+                v_keep(k) = 0.0;
+                rotations.emplace_back(i, k, c, s);
+                deflated_eigvals(j) = D_keep(i);
+                ++j;
+                // local eigenvector in full basis
+                Eigen::VectorXd tmp = Eigen::VectorXd::Zero(n);
+                tmp(k) = c;
+                tmp(i) = s;
+                deflated_eigvecs_list.push_back(P.transpose() * tmp);
+                vec_idx_list.push_back(k);
+            }
+        }
+    }
+
+    // 7) Final ordering after rotations
+    std::vector<int> final_order(to_check.begin(), to_check.end());
+    final_order.insert(final_order.end(), vec_idx_list.begin(), vec_idx_list.end());
+
+    // 8) Resize deflated_eigvals to actual number found
+    deflated_eigvals.conservativeResize(j);
+
+    // 9) Build P2: accumulate sparse Givens rotations
+    Eigen::SparseMatrix<double> P2(n,n);
+    P2.setIdentity();
+    for (auto &rot: rotations) {
+        int i,k; double c,s; std::tie(i,k,c,s) = rot;
+        Eigen::SparseMatrix<double> G(n,n);
+        G.setIdentity();
+        G.coeffRef(i,i) = c;
+        G.coeffRef(k,k) = c;
+        G.coeffRef(i,k) = -s;
+        G.coeffRef(k,i) = s;
+        P2 = P2 * G;
+    }
+
+    // 10) Build permutation matrix P3 from final_order
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P3(n);
+    P3.indices() = Eigen::VectorXi::Map(final_order.data(), n);
+
+    // 11) Convert P and P3 to sparse<double> and combine all transforms
+    Eigen::SparseMatrix<double> P_sparse  = P.toDenseMatrix().cast<double>().sparseView();
+    Eigen::SparseMatrix<double> P3_sparse = P3.toDenseMatrix().cast<double>().sparseView();
+    Eigen::SparseMatrix<double> P_final   = P3_sparse * P2 * P_sparse;
+
+    // 12) Extract final D_keep and v_keep for reduced problem
+    std::vector<int> final_keep(to_check.begin(), to_check.end());
+    Eigen::VectorXd D_keep_final(static_cast<int>(final_keep.size()));
+    Eigen::VectorXd v_keep_final(static_cast<int>(final_keep.size()));
+    for (int idx = 0; idx < static_cast<int>(final_keep.size()); ++idx) {
+        D_keep_final(idx) = D_keep(final_keep[idx]);
+        v_keep_final(idx) = v_keep(final_keep[idx]);
+    }
+
+    // 13) Assemble deflated eigenvectors matrix
+    Eigen::MatrixXd deflated_eigvecs(n, static_cast<int>(deflated_eigvecs_list.size()));
+    for (int col = 0; col < static_cast<int>(deflated_eigvecs_list.size()); ++col) {
+        deflated_eigvecs.col(col) = deflated_eigvecs_list[col];
+    }
+
+    return std::make_tuple(
+        deflated_eigvals,
+        deflated_eigvecs.transpose(),
+        D_keep_final,
+        v_keep_final,
+        P_final
+    );
+}
+
+
 // PYTHON BINDINGS USING PYBIND11
 
 PYBIND11_MODULE(cxx_utils, m) {
@@ -593,4 +771,5 @@ PYBIND11_MODULE(cxx_utils, m) {
     m.def("QR_algorithm", &QR_algorithm, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
     m.def("Eigen_value_calculator", &Eigen_value_calculator, py::arg("diag"), py::arg("off_diag"), py::arg("tol")=1e-8, py::arg("max_iter")=5000);
     m.def("secular_solver_cxx", &secular_solver, py::arg("rho"), py::arg("d"), py::arg("v"), py::arg("indices"));
+    m.def("deflate_eigenpairs_cxx", &deflateEigenpairs, py::arg("D"), py::arg("v"), py::arg("beta"), py::arg("tol_factor") = 1e-12);
 }
