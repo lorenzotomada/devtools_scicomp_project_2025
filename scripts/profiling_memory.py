@@ -1,6 +1,5 @@
-from pyclassify import parallel_tridiag_eigen, Lanczos_PRO
+from pyclassify import Lanczos_PRO
 from pyclassify.utils import read_config, make_symmetric
-from time import time
 import numpy as np
 import argparse
 from mpi4py import MPI
@@ -18,14 +17,14 @@ seed = 8422
 np.random.seed(seed)
 
 
-def parallel_eig(d, off_d, nprocs):
+def parallel_eig(diag, off_diag, nprocs):
     print("inside parallel_eig")
     comm = MPI.COMM_SELF.Spawn(
         sys.executable, args=["scripts/run.py"], maxprocs=nprocs
     )
     print("sending")
-    comm.send(d, dest=0, tag=11)
-    comm.send(off_d, dest=0, tag=12)
+    comm.send(diag, dest=0, tag=11)
+    comm.send(off_diag, dest=0, tag=12)
     print("Sent data to child, waiting for results...")
     sys.stdout.flush()
 
@@ -44,6 +43,8 @@ def compute_eigvals(A, n_procs):
     if initial_guess[0] == 0:
         initial_guess[0] += 1
     Q, diag, off_diag = Lanczos_PRO(A, np.ones_like(np.diag(A)) * 1.)
+    main_diag = np.ones(A.shape[0], dtype=np.float64) * 2.0
+    off_diag = np.ones(A.shape[0] - 1, dtype=np.float64) * 1.0
     eigvals, _, __, total_mem_children = parallel_eig(diag, off_diag, n_procs)
     print("Eigenvalues computed")
     return total_mem_children
