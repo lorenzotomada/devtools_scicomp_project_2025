@@ -8,7 +8,8 @@ from pyclassify.cxx_utils import (
 )
 from pyclassify.utils import make_symmetric
 from pyclassify.eigenvalues import EigenSolver, Lanczos_PRO
-#from pyclassify.zero_finder import secular_solver_python as secular_solver
+
+# from pyclassify.zero_finder import secular_solver_python as secular_solver
 from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
 from line_profiler import LineProfiler

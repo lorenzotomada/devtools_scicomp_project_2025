@@ -19,9 +19,7 @@ np.random.seed(seed)
 
 def parallel_eig(diag, off_diag, nprocs):
     print("inside parallel_eig")
-    comm = MPI.COMM_SELF.Spawn(
-        sys.executable, args=["scripts/run.py"], maxprocs=nprocs
-    )
+    comm = MPI.COMM_SELF.Spawn(sys.executable, args=["scripts/run.py"], maxprocs=nprocs)
     print("sending")
     comm.send(diag, dest=0, tag=11)
     comm.send(off_diag, dest=0, tag=12)
@@ -38,11 +36,11 @@ def parallel_eig(diag, off_diag, nprocs):
 
 
 def compute_eigvals(A, n_procs):
-    #A = A.toarray()
+    # A = A.toarray()
     initial_guess = np.random.rand(A.shape[0])
     if initial_guess[0] == 0:
         initial_guess[0] += 1
-    Q, diag, off_diag = Lanczos_PRO(A, np.ones_like(np.diag(A)) * 1.)
+    Q, diag, off_diag = Lanczos_PRO(A, np.ones_like(np.diag(A)) * 1.0)
     main_diag = np.ones(A.shape[0], dtype=np.float64) * 2.0
     off_diag = np.ones(A.shape[0] - 1, dtype=np.float64) * 1.0
     eigvals, _, __, total_mem_children = parallel_eig(diag, off_diag, n_procs)
@@ -132,7 +130,7 @@ fieldnames = [
     "mem_children_mb",
     "mem_total_mb",
     "mem_numpy_mb",
-    "mem_scipy_mb"
+    "mem_scipy_mb",
 ]
 
 write_header = not os.path.exists(log_file)
@@ -141,15 +139,17 @@ with open(log_file, mode="a", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=fieldnames)
     if write_header:
         writer.writeheader()
-    writer.writerow({
-        "matrix_size": dim,
-        "n_processes": n_procs,
-        "mem_parent_mb": round(delta_mem_parent, 2),
-        "mem_children_mb": round(total_mem_children, 2),
-        "mem_total_mb": round(total_mem_all, 2),
-        "mem_numpy_mb": round(mem_np, 2),
-        "mem_scipy_mb": round(mem_sp, 2)
-    })
+    writer.writerow(
+        {
+            "matrix_size": dim,
+            "n_processes": n_procs,
+            "mem_parent_mb": round(delta_mem_parent, 2),
+            "mem_children_mb": round(total_mem_children, 2),
+            "mem_total_mb": round(total_mem_all, 2),
+            "mem_numpy_mb": round(mem_np, 2),
+            "mem_scipy_mb": round(mem_sp, 2),
+        }
+    )
 
 if plot:
     import matplotlib.pyplot as plt
@@ -161,7 +161,12 @@ if plot:
     plt.figure(figsize=(8, 5))
     for size in sorted(df["matrix_size"].unique()):
         subset = df[df["matrix_size"] == size]
-        plt.plot(subset["n_processes"], subset["mem_total_mb"], marker="o", label=f"Size {size}")
+        plt.plot(
+            subset["n_processes"],
+            subset["mem_total_mb"],
+            marker="o",
+            label=f"Size {size}",
+        )
     plt.xlabel("Number of Processes")
     plt.ylabel("Total Memory (MB)")
     plt.title("Total Memory vs. Number of Processes")
@@ -175,8 +180,20 @@ if plot:
     plt.figure(figsize=(8, 5))
     for size in sorted(df["matrix_size"].unique()):
         subset = df[df["matrix_size"] == size]
-        plt.plot(subset["n_processes"], subset["mem_parent_mb"], marker="s", linestyle="-", label=f"Parent (size {size})")
-        plt.plot(subset["n_processes"], subset["mem_children_mb"], marker="^", linestyle="--", label=f"Children (size {size})")
+        plt.plot(
+            subset["n_processes"],
+            subset["mem_parent_mb"],
+            marker="s",
+            linestyle="-",
+            label=f"Parent (size {size})",
+        )
+        plt.plot(
+            subset["n_processes"],
+            subset["mem_children_mb"],
+            marker="^",
+            linestyle="--",
+            label=f"Children (size {size})",
+        )
     plt.xlabel("Number of Processes")
     plt.ylabel("Memory (MB)")
     plt.title("Parent vs. Children Memory vs. Number of Processes")
@@ -190,9 +207,26 @@ if plot:
     fixed_nprocs = df["n_processes"].mode()[0]
     subset = df[df["n_processes"] == fixed_nprocs]
     plt.figure(figsize=(8, 5))
-    plt.plot(subset["matrix_size"], subset["mem_total_mb"], marker="o", label="Parent + Children")
-    plt.plot(subset["matrix_size"], subset["mem_numpy_mb"], marker="x", linestyle="--", label="NumPy")
-    plt.plot(subset["matrix_size"], subset["mem_scipy_mb"], marker="^", linestyle=":", label="SciPy")
+    plt.plot(
+        subset["matrix_size"],
+        subset["mem_total_mb"],
+        marker="o",
+        label="Parent + Children",
+    )
+    plt.plot(
+        subset["matrix_size"],
+        subset["mem_numpy_mb"],
+        marker="x",
+        linestyle="--",
+        label="NumPy",
+    )
+    plt.plot(
+        subset["matrix_size"],
+        subset["mem_scipy_mb"],
+        marker="^",
+        linestyle=":",
+        label="SciPy",
+    )
     plt.xlabel("Matrix Size")
     plt.ylabel("Memory (MB)")
     plt.title(f"Memory vs. Matrix Size (n_procs={fixed_nprocs})")
@@ -205,7 +239,9 @@ if plot:
     # Plot 4: Separate parent/children memory vs matrix size (fixed nprocs)
     plt.figure(figsize=(8, 5))
     plt.plot(subset["matrix_size"], subset["mem_parent_mb"], marker="s", label="Parent")
-    plt.plot(subset["matrix_size"], subset["mem_children_mb"], marker="^", label="Children")
+    plt.plot(
+        subset["matrix_size"], subset["mem_children_mb"], marker="^", label="Children"
+    )
     plt.xlabel("Matrix Size")
     plt.ylabel("Memory (MB)")
     plt.title(f"Parent vs. Children Memory vs. Matrix Size (n_procs={fixed_nprocs})")
@@ -221,8 +257,22 @@ if plot:
     # NumPy and SciPy (plotted once, same for all n_processes)
     numpy_avg = df.groupby("matrix_size")["mem_numpy_mb"].mean()
     scipy_avg = df.groupby("matrix_size")["mem_scipy_mb"].mean()
-    plt.plot(numpy_avg.index, numpy_avg.values, marker="x", linestyle="--", color="gray", label="NumPy")
-    plt.plot(scipy_avg.index, scipy_avg.values, marker="^", linestyle=":", color="black", label="SciPy")
+    plt.plot(
+        numpy_avg.index,
+        numpy_avg.values,
+        marker="x",
+        linestyle="--",
+        color="gray",
+        label="NumPy",
+    )
+    plt.plot(
+        scipy_avg.index,
+        scipy_avg.values,
+        marker="^",
+        linestyle=":",
+        color="black",
+        label="SciPy",
+    )
 
     # Your method for each n_processes value
     for nproc in sorted(df["n_processes"].unique()):

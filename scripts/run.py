@@ -29,7 +29,7 @@ mem_before = proc.memory_info().rss / 1024 / 1024  # in MB
 
 t_s = time.time()
 eigvals, eigvecs = parallel_tridiag_eigen(
-   main_diag, off_diag, comm=MPI.COMM_WORLD, min_size=1, tol_factor=1e-10
+    main_diag, off_diag, comm=MPI.COMM_WORLD, min_size=1, tol_factor=1e-10
 )
 t_e = time.time()
 
