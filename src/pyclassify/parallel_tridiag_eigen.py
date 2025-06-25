@@ -7,7 +7,8 @@ from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
 from line_profiler import LineProfiler
 import scipy
-
+from pyclassify.utils import make_symmetric
+from pyclassify.eigenvalues import EigenSolver, Lanczos_PRO
 
 profile = LineProfiler()
 
@@ -301,9 +302,17 @@ def parallel_tridiag_eigen(
         D = np.concatenate((eigvals_left, eigvals_right))
         D_size=D.size
         v_vec = np.concatenate((eigvecs_left[-1, :], eigvecs_right[0, :]))
+
         deflated_eigvals, deflated_eigvecs, D_keep, v_keep, P = deflate_eigenpairs_cxx(
             D, v_vec, beta, tol_factor
         )
+
+        # Pdeflated_eigvals, Pdeflated_eigvecs, PD_keep, Pv_keep, PP = deflate_eigenpairs(
+        #     D, v_vec, beta, tol_factor
+        # )
+
+        
+
         D_keep=np.array(D_keep)
 
         reduced_dim = len(D_keep)
@@ -313,13 +322,16 @@ def parallel_tridiag_eigen(
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
             
+            # T= np.diag(D_keep) + beta * np.outer(v_keep, v_keep)
+            # lam , _ = np.linalg.eigh(T)
+
             lam, changing_position, delta = secular_solver_cxx(
-                beta, D_keep[idx], v_keep[idx], np.arange(reduced_dim)
+                beta, D_keep[idx], v_keep[idx] , np.arange(reduced_dim)
             )
             lam = np.array(lam)
             delta=np.array(delta)
             changing_position=np.array(changing_position)
-            # #diff=lam_s-lam
+
         else:
             lam = np.array([])
         
@@ -350,9 +362,9 @@ def parallel_tridiag_eigen(
     v_keep=comm.bcast(v_keep, root=0)
     my_count = counts[rank]
     type_lam=comm.bcast(lam.dtype, root=0)
-    # type_D=comm.bcast(D_keep.dtype, root=0)
+
     lam_buffer=np.empty(my_count, dtype=type_lam)
-    # D_buffer=np.empty(my_count, dtype=type_D)
+
     P=comm.bcast(P, root=0)
     D_size=comm.bcast(D_size)
     changing_position=comm.bcast(changing_position, root=0)
@@ -381,11 +393,6 @@ def parallel_tridiag_eigen(
         root=0
     )
 
-    # # Scatterv with matching MPI datatype
-    # comm.Scatterv([lam, counts, displs, MPI._typedict[type_lam] ],
-    #           lam_buffer, root=0)
-    # comm.Scatterv([D_keep, counts, displs, MPI._typedict[type_lam] ],
-    #           D_buffer, root=0)
 
     initial_point=displs[rank]
 
@@ -403,8 +410,6 @@ def parallel_tridiag_eigen(
 
     for j_rel in range(lam_buffer.size):
         y = np.zeros(D_size)
-        # y[:reduced_dim]=v_keep/(lam[j]-D_keep)
-        # y /= np.linalg.norm(y)
         j=j_rel + initial_point
         diff = lam[j] - D_keep
         diff[idx_inv[changing_position[j]]] = delta[j]
@@ -544,192 +549,6 @@ def parallel_tridiag_eigen(
 
 
 
-    # for eigval, vec in zip(deflated_eigvals, deflated_eigvecs):
-    #     # vec = Q_block @ vec
-    #     vec = np.concatenate((eigvecs_left @ vec[:n1], eigvecs_right @ vec[n1:]))
-    #     eigenpairs.append((eigval, vec))
-    # eigenpairs.sort(key=lambda x: x[0])
-    # final_eigvals = np.array([ev for ev, _ in eigenpairs])
-    # final_eigvecs = np.column_stack([vec for _, vec in eigenpairs])
-    # else:
-    #     final_eigvals, final_eigvecs = None, None
-
-    # final_eigvals = comm.bcast(final_eigvals, root=0)
-    # final_eigvecs = comm.bcast(final_eigvecs, root=0)
-
-    # return final_eigvals, final_eigvecs
-
-
-
-
-
-
-# @profile
-# def parallel_tridiag_eigen(
-#     diag,
-#     off,
-#     comm=None,
-#     tol_factor=1e-16,
-#     min_size=1,
-#     depth=0,
-#     profiler=None,
-#     tol_QR=1e-8,
-#     max_iterQR=5000,
-# ):
-#     """
-#     Computes eigenvalues and eigenvectors of a symmetric tridiagonal matrix.
-#         Input:
-#         -diag: diagonal part of the tridiagonal matrix
-#         -off: off diagonal part of the tridiagonal matrix
-#         -comm: MPI communicator
-#         -tol_factor: tollerance for the deflating step
-
-#         Output:
-#         -final_eigvals: return the eigenvalues of the tridiagonal matrix
-#         -final_eigvecs: return the eigenvectors of the tridiagonal matrix
-
-#     """
-
-#     if comm is None:
-#         comm = MPI.COMM_WORLD
-#     rank = comm.Get_rank()
-#     size = comm.Get_size()
-#     current_rank = MPI.COMM_WORLD.Get_rank()
-#     n = len(diag)
-#     prof_filename = f"Profile_folder/profile.rank{current_rank}.depth{depth}.lprof"
-
-
-#     if n <= min_size or size == 1:
-#         eigvals, eigvecs = QR_algorithm(diag, off, tol_QR, max_iterQR)
-#         eigvecs = np.array(eigvecs)
-#         eigvals = np.array(eigvals)
-
-#         index_sort = np.argsort(eigvals)
-#         eigvecs = eigvecs[:, index_sort]
-#         eigvals = eigvals[index_sort]
-#         return eigvals, eigvecs
-
-#     k = n // 2
-#     diag1, diag2 = diag[:k].copy(), diag[k:].copy()
-#     off1 = off[: k - 1].copy() if k > 1 else np.array([])
-#     off2 = off[k:] if k < n - 1 else np.array([])
-#     beta = off[k - 1].copy()
-
-#     diag1[-1] -= beta
-#     diag2[0] -= beta
-
-#     # Parallel Recursion
-#     left_size = size // 2 if size > 1 else 1
-#     color = 0 if rank < left_size else 1
-#     subcomm = comm.Split(color=color, key=rank)
-
-#     if color == 0:
-#         eigvals_left, eigvecs_left = parallel_tridiag_eigen(
-#             diag1,
-#             off1,
-#             comm=subcomm,
-#             tol_factor=tol_factor,
-#             min_size=min_size,
-#             depth=depth + 1,
-#             profiler=profiler,
-#         )
-#     else:
-#         eigvals_right, eigvecs_right = parallel_tridiag_eigen(
-#             diag2,
-#             off2,
-#             comm=subcomm,
-#             tol_factor=tol_factor,
-#             min_size=min_size,
-#             depth=depth + 1,
-#             profiler=profiler,
-#         )
-
-
-
-
-#     if rank == 0:
-#         eigvals_right = comm.recv(source=left_size, tag=77)
-#         eigvecs_right = comm.recv(source=left_size, tag=78)
-#     elif rank == left_size:
-#         comm.send(eigvals_right, dest=0, tag=77)
-#         comm.send(eigvecs_right, dest=0, tag=78)
-    
-
-#     if rank == 0:
-
-#         # Merge Step
-#         n1 = len(eigvals_left)
-#         D = np.concatenate((eigvals_left, eigvals_right))
-#         v_vec = np.concatenate((eigvecs_left[-1, :], eigvecs_right[0, :]))
-#         deflated_eigvals, deflated_eigvecs, D_keep, v_keep, P = deflate_eigenpairs_cxx(
-#             D, v_vec, beta, tol_factor
-#         )
-#         D_keep=np.array(D_keep)
-
-#         reduced_dim = len(D_keep)
-
-#         if D_keep.size > 0:
-#             idx = np.argsort(D_keep)
-#             idx_inv = np.arange(0, reduced_dim)
-#             idx_inv = idx_inv[idx]
-            
-#             lam, changing_position, delta = secular_solver_cxx(
-#                 beta, D_keep[idx], v_keep[idx], np.arange(reduced_dim)
-#             )
-#             lam = np.array(lam)
-#             delta=np.array(delta)
-#             changing_position=np.array(changing_position)
-#             # #diff=lam_s-lam
-#         else:
-#             lam = np.array([])
-        
-
-#         for k in range(lam.size):
-#             numerator = lam - D_keep[k]
-#             denominator = np.concatenate((D_keep[:k], D_keep[k + 1 :])) - D_keep[k]
-#             numerator[:-1] = numerator[:-1] / denominator
-#             v_keep[k] = np.sqrt(np.abs(np.prod(numerator) / beta)) * np.sign(v_keep[k])
-
-#         eigenpairs = []
-
-#         for j in range(lam.size):
-#             y = np.zeros(D.size)
-#             # y[:reduced_dim]=v_keep/(lam[j]-D_keep)
-#             # y /= np.linalg.norm(y)
-
-#             diff = lam[j] - D_keep
-#             diff[idx_inv[changing_position[j]]] = delta[j]
-#             y[:reduced_dim] = v_keep / (diff)
-#             y_norm = np.linalg.norm(y)
-#             if y_norm > 1e-15:
-#                 y /= y_norm
-
-#             y = P.T @ y
-#             vec = np.concatenate((eigvecs_left @ y[:n1], eigvecs_right @ y[n1:]))
-#             vec /= np.linalg.norm(vec)
-#             eigenpairs.append((lam[j], vec))
-
-#         for eigval, vec in zip(deflated_eigvals, deflated_eigvecs):
-#             # vec = Q_block @ vec
-#             vec = np.concatenate((eigvecs_left @ vec[:n1], eigvecs_right @ vec[n1:]))
-#             eigenpairs.append((eigval, vec))
-#         eigenpairs.sort(key=lambda x: x[0])
-#         final_eigvals = np.array([ev for ev, _ in eigenpairs])
-#         final_eigvecs = np.column_stack([vec for _, vec in eigenpairs])
-#     else:
-#         final_eigvals, final_eigvecs = None, None
-
-#     final_eigvals = comm.bcast(final_eigvals, root=0)
-#     final_eigvecs = comm.bcast(final_eigvecs, root=0)
-
-#     return final_eigvals, final_eigvecs
-
-
-
-
-
-
-
 
 def parallel_eigen(
     main_diag, off_diag, tol_QR=1e-15, max_iterQR=5000, tol_deflation=1e-15
@@ -752,7 +571,7 @@ def parallel_eigen(
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    n = 900
+    n = 100
     if rank == 0:
 
         # import debugpy
@@ -760,9 +579,11 @@ if __name__ == "__main__":
         # debugpy.listen(("localhost", port))
         # print(f"Rank {rank} waiting for debugger attach on port {port}")
         # debugpy.wait_for_client()
-        # np.random.seed(42)
-        main_diag = np.ones(n, dtype=np.float64) * 2.0
-        off_diag = np.ones(n - 1, dtype=np.float64) *1.0
+        np.random.seed(42)
+        # main_diag = np.ones(n, dtype=np.float64) * 2.0
+        # off_diag = np.ones(n - 1, dtype=np.float64) *1.0
+        main_diag = (np.random.rand(n) * 2).astype(np.float64)
+        off_diag = (np.random.rand(n - 1) *1).astype(np.float64)
         # eig = np.arange(1, n + 1)
         # A = np.diag(eig)
         # U = scipy.stats.ortho_group.rvs(n)

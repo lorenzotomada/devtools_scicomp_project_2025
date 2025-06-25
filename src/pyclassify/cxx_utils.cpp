@@ -589,6 +589,7 @@ secular_solver(
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <unordered_set>
+#include <set>
 
 /**
  * Applies the deflation step in a divide-and-conquer eigenvalue algorithm.
@@ -632,6 +633,7 @@ deflateEigenpairs(
     double beta,
     double tol_factor = 1e-12
 ) {
+    
     int n = D.size();
     // 1) Build full matrix M and compute norm for tolerance
     Eigen::MatrixXd M = D.asDiagonal();          
@@ -659,6 +661,8 @@ deflateEigenpairs(
         }
     }
 
+    
+
     // 4) Build permutation P: [keep_indices, deflated_indices]
     std::vector<int> new_order;
     new_order.reserve(n);
@@ -666,6 +670,7 @@ deflateEigenpairs(
     new_order.insert(new_order.end(), deflated_indices.begin(), deflated_indices.end());
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P(n);
     P.indices() = Eigen::VectorXi::Map(new_order.data(), n);
+
 
     // 5) Extract subproblem D_keep and v_keep
     Eigen::VectorXd D_keep(static_cast<int>(keep_indices.size()));
@@ -676,8 +681,7 @@ deflateEigenpairs(
     }
 
     // 6) Givens rotations for near-duplicate entries
-    std::unordered_set<int> to_check;
-    to_check.reserve(keep_indices.size());
+    std::set<int> to_check;
     for (int i = 0; i < static_cast<int>(keep_indices.size()); ++i)
         to_check.insert(i);
     std::vector<std::tuple<int,int,double,double>> rotations;
@@ -707,10 +711,13 @@ deflateEigenpairs(
             }
         }
     }
+    
 
     // 7) Final ordering after rotations
     std::vector<int> final_order(to_check.begin(), to_check.end());
     final_order.insert(final_order.end(), vec_idx_list.begin(), vec_idx_list.end());
+
+
 
     // 8) Resize deflated_eigvals to actual number found
     deflated_eigvals.conservativeResize(j);
@@ -728,15 +735,23 @@ deflateEigenpairs(
         G.coeffRef(k,i) = s;
         P2 = P2 * G;
     }
+    
 
-    // 10) Build permutation matrix P3 from final_order
-    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P3(n);
-    P3.indices() = Eigen::VectorXi::Map(final_order.data(), n);
+        // 10) Build permutation matrix P3 from final_order
+    Eigen::SparseMatrix<double> P3(n, n);
+    std::vector<Eigen::Triplet<double>> triplets;
+    for (int new_pos = 0; new_pos < static_cast<int>(final_order.size()); ++new_pos) {
+        int old_pos = final_order[new_pos];
+        triplets.emplace_back(new_pos, old_pos, 1.0);
+    }
+    P3.setFromTriplets(triplets.begin(), triplets.end());
+
 
     // 11) Convert P and P3 to sparse<double> and combine all transforms
     Eigen::SparseMatrix<double> P_sparse  = P.toDenseMatrix().cast<double>().sparseView();
-    Eigen::SparseMatrix<double> P3_sparse = P3.toDenseMatrix().cast<double>().sparseView();
-    Eigen::SparseMatrix<double> P_final   = P3_sparse * P2 * P_sparse;
+
+    Eigen::SparseMatrix<double> P_final   = P3 * P2 * P_sparse.transpose();
+
 
     // 12) Extract final D_keep and v_keep for reduced problem
     std::vector<int> final_keep(to_check.begin(), to_check.end());
@@ -755,7 +770,7 @@ deflateEigenpairs(
 
     return std::make_tuple(
         deflated_eigvals,
-        deflated_eigvecs.transpose(),
+        deflated_eigvecs.transpose(), // Transpose to match expected output
         D_keep_final,
         v_keep_final,
         P_final
