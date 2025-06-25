@@ -24,35 +24,44 @@ echo '------------------------------------------------------'
 #
 
 cd $SLURM_SUBMIT_DIR           
-export SLURM_NTASKS_PER_NODE=1  # due to Ulysses's bug
 
-module load cuda/12.1
-conda init
-source ~/.bashrc
-conda activate /scratch/ltomada/miniconda3/envs/dtsc
+module load cmake/3.29.1
+module load intel/2021.2
+module load openmpi3/3.1.4
 
-#touch log/timings.csv
+conda activate devtools_scicomp
 
-density=0.2
-tol=0.0001
-max_iter=1000
+# Ranges over which we iterate
+n_processes=(1 2)
+matrix_sizes=(10 50 100 500)
 
-echo "function,dim,time">logs/timings.csv
+last_dim="${matrix_sizes[-1]}"
+last_nproc="${n_processes[-1]}"
 
-for dim in 100 500 1000; do
-    echo "d: $dim" # for readability
-    echo "dim: $dim" > experiments/config.yaml    
-    echo "density: $density" >> experiments/config.yaml
-    echo "tol: $tol" >> experiments/config.yaml
-    echo "max_iter: $max_iter" >> experiments/config.yaml
+CONFIG_FILE="experiments/config.yaml"
 
-    python scripts/run.py
 
-    echo "dim: $dim - times saved in logs/timings.csv" 
-    echo '--------------------------------------------------'
+# Backup the original config
+cp $CONFIG_FILE ${CONFIG_FILE}.bak
+
+for dim in "${matrix_sizes[@]}"; do
+  for n_p in "${n_processes[@]}"; do
+    sed -i "s/^dim: .*/dim: $dim/" $CONFIG_FILE
+    sed -i "s/^n_processes: .*/n_processes: $n_processes/" $CONFIG_FILE
+    sed -i "s/^plot: .*/plot: false/" $CONFIG_FILE
+    echo "Running with size=$dim and n_processes=$n_p"
+
+    if [[ "$dim" == "$last_dim" && "$n_p" == "$last_nproc" ]]; then
+      echo "Plotting the results in the logs folder..."
+      sed -i "s/^plot: .*/plot: true/" $CONFIG_FILE
+    fi
+    
+    mpirun -np 1 python scripts/profiling_memory.py
+  done
 done
 
+# Restore the original config file
+mv ${CONFIG_FILE}.bak $CONFIG_FILE
 
-python scripts/plot_scalability.py
+#python scripts/plot_scalability.py
 echo "Experiment completed!"
-#rm -rf tmp_data

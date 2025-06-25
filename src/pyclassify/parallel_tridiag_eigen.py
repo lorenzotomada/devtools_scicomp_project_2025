@@ -7,8 +7,6 @@ from line_profiler import profile, LineProfiler
 import scipy.sparse as sp
 from line_profiler import LineProfiler
 import scipy
-from pyclassify.utils import make_symmetric
-from pyclassify.eigenvalues import EigenSolver, Lanczos_PRO
 
 
 profile = LineProfiler()
@@ -28,8 +26,10 @@ def check_column_directions(A, B):
 
 @profile
 def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
-    """Applying the deflation step to the divide and conquer algorithm to reduce the size of
+    """
+    Applying the deflation step to the divide and conquer algorithm to reduce the size of
     the system to be solved and find the trivial eigenvalues and eigenvectors.
+    Notice that we cannot use jit since we work with scipy sparse matrices.
     Input:
         -D: element on the diagonal.
         -v: rank one update vector
@@ -325,49 +325,6 @@ def parallel_tridiag_eigen(
         
         counts, displs = find_interval_extreme(reduced_dim, size)
 
-#---------------------Changing from here ------------------------------------------------
-
-    #     for k in range(lam.size):
-    #         numerator = lam - D_keep[k]
-    #         denominator = np.concatenate((D_keep[:k], D_keep[k + 1 :])) - D_keep[k]
-    #         numerator[:-1] = numerator[:-1] / denominator
-    #         v_keep[k] = np.sqrt(np.abs(np.prod(numerator) / beta)) * np.sign(v_keep[k])
-
-    #     eigenpairs = []
-
-    #     for j in range(lam.size):
-    #         y = np.zeros(D.size)
-    #         # y[:reduced_dim]=v_keep/(lam[j]-D_keep)
-    #         # y /= np.linalg.norm(y)
-
-    #         diff = lam[j] - D_keep
-    #         diff[idx_inv[changing_position[j]]] = delta[j]
-    #         y[:reduced_dim] = v_keep / (diff)
-    #         y_norm = np.linalg.norm(y)
-    #         if y_norm > 1e-15:
-    #             y /= y_norm
-
-    #         y = P.T @ y
-    #         vec = np.concatenate((eigvecs_left @ y[:n1], eigvecs_right @ y[n1:]))
-    #         vec /= np.linalg.norm(vec)
-    #         eigenpairs.append((lam[j], vec))
-
-    #     for eigval, vec in zip(deflated_eigvals, deflated_eigvecs):
-    #         # vec = Q_block @ vec
-    #         vec = np.concatenate((eigvecs_left @ vec[:n1], eigvecs_right @ vec[n1:]))
-    #         eigenpairs.append((eigval, vec))
-    #     eigenpairs.sort(key=lambda x: x[0])
-    #     final_eigvals = np.array([ev for ev, _ in eigenpairs])
-    #     final_eigvecs = np.column_stack([vec for _, vec in eigenpairs])
-    # else:
-    #     final_eigvals, final_eigvecs = None, None
-
-    # final_eigvals = comm.bcast(final_eigvals, root=0)
-    # final_eigvecs = comm.bcast(final_eigvecs, root=0)
-
-    # return final_eigvals, final_eigvecs
-
-#-------------------to here -------------------------------------
     else:
         counts = None
         displs = None
@@ -795,27 +752,29 @@ def parallel_eigen(
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    n = 1500
+    n = 900
     if rank == 0:
-        
+
         # import debugpy
         # port = 5678 + rank  # 5678 for rank 0, 5679 for rank 1
         # debugpy.listen(("localhost", port))
         # print(f"Rank {rank} waiting for debugger attach on port {port}")
         # debugpy.wait_for_client()
         # np.random.seed(42)
-        main_diag = np.ones(n, dtype=np.float64) * 5.0
-        off_diag = np.ones(n - 1, dtype=np.float64) *2.0
+        main_diag = np.ones(n, dtype=np.float64) * 2.0
+        off_diag = np.ones(n - 1, dtype=np.float64) *1.0
         # eig = np.arange(1, n + 1)
         # A = np.diag(eig)
         # U = scipy.stats.ortho_group.rvs(n)
 
         # A = U @ A @ U.T
         # A = make_symmetric(A)
+        # Lanc = EigenSolver(A)
+        # initial_guess = np.random.rand(A.shape[0])
+        # if initial_guess[0] == 0:
+        #     initial_guess[0] += 1
+        # _, main_diag, off_diag = Lanczos_PRO(A=A, q=initial_guess)
 
-        # #Lanc = EigenSolver(A)
-        # #_, main_diag, off_diag = Lanc.Lanczos_PRO(q=np.ones_like(eig), tol=1e-12)
-        # _, main_diag, off_diag = Lanczos_PRO(A, np.ones_like(eig)*1.0, tol=1e-12)
         T = np.diag(main_diag) + np.diag(off_diag, 1) + np.diag(off_diag, -1)
         eig_numpy, eig_vec_numpy = np.linalg.eigh(T)
         # print(eig_numpy)
@@ -828,7 +787,7 @@ if __name__ == "__main__":
 
     t_s = time()
     eigvals, eigvecs = parallel_tridiag_eigen(
-        main_diag, off_diag, comm=comm, min_size=1, tol_factor=1e-8, tol_QR=1e-16
+        main_diag, off_diag, comm=comm, min_size=1, tol_factor=1e-8, tol_QR=1e-14
     )
     t_e = time()
     profile_filename = f"profile_rank{comm.Get_rank()}.lprof"
@@ -852,9 +811,7 @@ if __name__ == "__main__":
 
         print("Norm difference eigenaval", np.linalg.norm(eig_numpy - eigvals, np.inf))
 
-  
         check_column_directions(eigvecs, eig_vec_numpy)
-
 
         # import sys
         # np.set_printoptions(threshold=sys.maxsize)
@@ -865,16 +822,25 @@ if __name__ == "__main__":
 
         # # print("Eigenvector solver:\n", eigvecs)
         # # print("Eigenvector numpy:\n", eig_vec_numpy)
-        #print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
-        diff= eig_vec_numpy-eigvecs
-        flat_idx = np.argmax(diff)          # → 5   (counting row-major: 0..8)
+        # print("\n\n\nDifference :\n", eig_vec_numpy - eigvecs)
+        diff = eig_vec_numpy - eigvecs
+        flat_idx = np.argmax(diff)  # → 5   (counting row-major: 0..8)
 
         # # If you want row/column coordinates instead of the flattened index:
-        row, col = np.unravel_index(flat_idx, diff.shape)   # → (1, 2)
+        row, col = np.unravel_index(flat_idx, diff.shape)  # → (1, 2)
         print(np.max(np.abs(diff)))
         # print("\n\n", eig_vec_numpy[:, col], eigvecs[:, col])
         # print("Norm difference eigenvec", np.linalg.norm(eig_vec_numpy-eigvecs, np.inf))
-
+        """
+        D = np.diag(range(n))
+        v = np.ones_like(np.diag(D))
+        beta = 1e-2
+        _ = deflate_eigenpairs(D, v, beta)
+        _ = deflate_eigenpairs(D, v, beta)
+        beginning = time.time()
+        _ = deflate_eigenpairs(D,v,beta)
+        end = time.time()
+        """
     # n=1000
     # main_diag = np.random.rand(n)
     #  = np.random.rand(n - 1)

@@ -1,0 +1,4 @@
+dim: 200
+density: 0.2
+n_processes: 2
+plot: true

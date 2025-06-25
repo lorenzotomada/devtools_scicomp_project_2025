@@ -18,8 +18,8 @@ authors = [
 dynamic = ["dependencies"]
 
 [tool.scikit-build]
-# Optional: specify the build directory
 build-dir = "build"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -30,3 +30,4 @@ dependencies = { file = ["requirements.txt"] }
 
 [project.optional-dependencies]
 test = ["pytest"]
+

@@ -196,3 +196,6 @@ skbuild/*
 
 # helper files
 *TMP.py
+
+# files from profiling
+*.lprof

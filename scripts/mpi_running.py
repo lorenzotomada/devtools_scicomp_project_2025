@@ -1,5 +1,4 @@
 # from pyclassify.parallel_tridiag_eigen import parallel_eigen
-from pyclassify import parallel_tridiag_eigen
 from time import time
 import numpy as np
 from mpi4py import MPI
@@ -10,7 +9,7 @@ def parallel_eig(d, off_d, nprocs):
 
     print("inside parallel_eig")
     comm = MPI.COMM_SELF.Spawn(
-        sys.executable, args=["parallel_tridiag_eigen.py"], maxprocs=nprocs
+        sys.executable, args=["./parallel_tridiag_eigen.py"], maxprocs=nprocs
     )
     print("sending")
     comm.send(d, dest=0, tag=11)
@@ -27,7 +26,7 @@ def parallel_eig(d, off_d, nprocs):
     return eigvals, eigvecs, delta_t
 
 
-n = 1000
+n = 100
 nprocs = 4
 # np.random.seed(42)
 d = np.random.rand(n) * 2
