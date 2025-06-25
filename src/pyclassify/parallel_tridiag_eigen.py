@@ -316,9 +316,7 @@ def parallel_tridiag_eigen(
         #     D, v_vec, beta, tol_factor
         # )
 
-        
-
-        D_keep=np.array(D_keep)
+        D_keep = np.array(D_keep)
 
         reduced_dim = len(D_keep)
 
@@ -326,12 +324,12 @@ def parallel_tridiag_eigen(
             idx = np.argsort(D_keep)
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
-            
+
             # T= np.diag(D_keep) + beta * np.outer(v_keep, v_keep)
             # lam , _ = np.linalg.eigh(T)
 
             lam, changing_position, delta = secular_solver_cxx(
-                beta, D_keep[idx], v_keep[idx] , np.arange(reduced_dim)
+                beta, D_keep[idx], v_keep[idx], np.arange(reduced_dim)
             )
             lam = np.array(lam)
             delta = np.array(delta)
@@ -366,18 +364,17 @@ def parallel_tridiag_eigen(
     D_keep = comm.bcast(D_keep, root=0)
     v_keep = comm.bcast(v_keep, root=0)
     my_count = counts[rank]
-    type_lam=comm.bcast(lam.dtype, root=0)
+    type_lam = comm.bcast(lam.dtype, root=0)
 
-    lam_buffer=np.empty(my_count, dtype=type_lam)
+    lam_buffer = np.empty(my_count, dtype=type_lam)
 
-    P=comm.bcast(P, root=0)
-    D_size=comm.bcast(D_size)
-    changing_position=comm.bcast(changing_position, root=0)
-    delta=comm.bcast(delta, root=0)
-    idx_inv=comm.bcast(idx_inv, root=0)
-    n1=comm.bcast(n1, root=0)
-    reduced_dim=comm.bcast(reduced_dim, root=0)
-
+    P = comm.bcast(P, root=0)
+    D_size = comm.bcast(D_size)
+    changing_position = comm.bcast(changing_position, root=0)
+    delta = comm.bcast(delta, root=0)
+    idx_inv = comm.bcast(idx_inv, root=0)
+    n1 = comm.bcast(n1, root=0)
+    reduced_dim = comm.bcast(reduced_dim, root=0)
 
     # map numpy dtype → MPI datatype
     if lam.dtype == np.float64:
@@ -397,7 +394,6 @@ def parallel_tridiag_eigen(
         lam_buffer,  # recvbuf on every rank
         root=0,
     )
-
 
     initial_point = displs[rank]
 
@@ -543,8 +539,6 @@ def parallel_tridiag_eigen(
     return final_eig_val, final_eig_vecs
 
 
-
-
 def parallel_eigen(
     main_diag, off_diag, tol_QR=1e-15, max_iterQR=5000, tol_deflation=1e-15
 ):
@@ -578,7 +572,7 @@ if __name__ == "__main__":
         # main_diag = np.ones(n, dtype=np.float64) * 2.0
         # off_diag = np.ones(n - 1, dtype=np.float64) *1.0
         main_diag = (np.random.rand(n) * 2).astype(np.float64)
-        off_diag = (np.random.rand(n - 1) *1).astype(np.float64)
+        off_diag = (np.random.rand(n - 1) * 1).astype(np.float64)
         # eig = np.arange(1, n + 1)
         # A = np.diag(eig)
         # U = scipy.stats.ortho_group.rvs(n)
