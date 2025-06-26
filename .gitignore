@@ -199,3 +199,4 @@ skbuild/*
 
 # files from profiling
 *.lprof
+*Profiling*

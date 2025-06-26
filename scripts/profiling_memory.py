@@ -1,15 +1,18 @@
 from pyclassify import Lanczos_PRO
-from pyclassify.utils import read_config, make_symmetric
+from pyclassify.utils import read_config, make_symmetric, profile_numpy_eigvals, profile_scipy_eigvals, poisson_2d_structure
 import numpy as np
+import scipy
 import argparse
 from mpi4py import MPI
-import sys
 import scipy
 import scipy.sparse as sp
 import psutil
 import gc
 import os
 import csv
+import sys
+sys.path.append('scripts')
+#from mpi_running import compute_eigvals
 
 
 # Seed for reproducibility
@@ -17,69 +20,10 @@ seed = 8422
 np.random.seed(seed)
 
 
-def parallel_eig(diag, off_diag, nprocs):
-    print("inside parallel_eig")
-    comm = MPI.COMM_SELF.Spawn(sys.executable, args=["scripts/run.py"], maxprocs=nprocs)
-    print("sending")
-    comm.send(diag, dest=0, tag=11)
-    comm.send(off_diag, dest=0, tag=12)
-    print("Sent data to child, waiting for results...")
-    sys.stdout.flush()
-
-    eigvals = comm.recv(source=0, tag=22)
-    eigvecs = comm.recv(source=0, tag=23)
-    delta_t = comm.recv(source=0, tag=24)
-    total_mem_children = comm.recv(source=0, tag=25)
-
-    comm.Disconnect()
-    return eigvals, eigvecs, delta_t, total_mem_children
-
-
-def compute_eigvals(A, n_procs):
-    # A = A.toarray()
-    initial_guess = np.random.rand(A.shape[0])
-    if initial_guess[0] == 0:
-        initial_guess[0] += 1
-    Q, diag, off_diag = Lanczos_PRO(A, np.ones_like(np.diag(A)) * 1.0)
-    main_diag = np.ones(A.shape[0], dtype=np.float64) * 2.0
-    off_diag = np.ones(A.shape[0] - 1, dtype=np.float64) * 1.0
-    eigvals, _, __, total_mem_children = parallel_eig(diag, off_diag, n_procs)
-    print("Eigenvalues computed")
-    return total_mem_children
-
-
-def profile_numpy_eigvals(A):
-    gc.collect()
-    process = psutil.Process()
-    mem_before = process.memory_info().rss / 1024 / 1024
-
-    # NumPy symmetric eig solver
-    eigvals, eigvecs = np.linalg.eigh(A)
-
-    gc.collect()
-    mem_after = process.memory_info().rss / 1024 / 1024
-    delta_mem = mem_after - mem_before
-    return delta_mem
-
-
-def profile_scipy_eigvals(A):
-    gc.collect()
-    process = psutil.Process()
-    mem_before = process.memory_info().rss / 1024 / 1024
-
-    # SciPy symmetric eig solver
-    eigvals, eigvecs = scipy.linalg.eigh(A)
-
-    gc.collect()
-    mem_after = process.memory_info().rss / 1024 / 1024
-    delta_mem = mem_after - mem_before
-    return delta_mem
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str, required=False, help="config file:")
 args = parser.parse_args()
-config_file = args.config if args.config else "./experiments/config"
+config_file = args.config if args.config else "experiments/config"
 
 kwargs = read_config(config_file)
 dim = kwargs["dim"]
@@ -87,22 +31,49 @@ density = kwargs["density"]
 n_procs = kwargs["n_processes"]
 plot = kwargs["plot"]
 
-A = sp.random(dim, dim, density=density, format="csr")
-A = make_symmetric(A)
 
-eig = np.arange(1, dim + 1)
-A = np.diag(eig)
-U = scipy.stats.ortho_group.rvs(dim)
+def parallel_eig(diag, off_diag, nprocs):
+    print("Spawning a communicator")
+    comm = MPI.COMM_SELF.Spawn(sys.executable, args=["scripts/run.py"], maxprocs=nprocs)
 
-A = U @ A @ U.T
-A = make_symmetric(A)
-A_sp = sp.csr_matrix(A)
+    print("Sending data to children")
+    comm.send(diag, dest=0, tag=11)
+    comm.send(off_diag, dest=0, tag=12)
+
+    print("Waiting for results...")
+    sys.stdout.flush()
+
+    eigvals = comm.recv(source=0, tag=22)
+    eigvecs = comm.recv(source=0, tag=23)
+    delta_t = comm.recv(source=0, tag=24)
+    total_mem_children = comm.recv(source=0, tag=25)
+    comm.Disconnect()
+
+    print('Data recieved!')
+    return eigvals, eigvecs, delta_t, total_mem_children
+
+
+def compute_eigvals(A, n_procs):
+    print('Reducing using Lanczos')
+    Q, diag, off_diag = Lanczos_PRO(A_np, np.ones_like(np.diag(A_np)) * 1.0)
+
+    print('Done. Now computing eigenvalues.')
+    eigvals, eigvecs, delta_t, total_mem_children = parallel_eig(diag, off_diag, n_procs)
+
+    print("Eigenvalues computed")
+    return eigvals, eigvecs, delta_t, total_mem_children
+
+
+A = poisson_2d_structure(dim)
+A_np = A.toarray()
+
+Q, diag, off_diag = Lanczos_PRO(A_np, np.ones_like(np.diag(A_np)) * 1.0) # To compile using numba
 
 gc.collect()
 process = psutil.Process()
 mem_before = process.memory_info().rss / 1024 / 1024
 
-total_mem_children = compute_eigvals(A, n_procs)
+eigvals, eigvecs, delta_t, total_mem_children = compute_eigvals(A_np, n_procs)
 
 gc.collect()
 mem_after = process.memory_info().rss / 1024 / 1024
@@ -114,10 +85,10 @@ print(f"[Parent] Memory used by parent: {delta_mem_parent:.2f} MB")
 print(f"[Parent] Memory used by all child processes: {total_mem_children:.2f} MB")
 print(f"[Parent] Total memory across all processes: {total_mem_all:.2f} MB")
 
-mem_np = profile_numpy_eigvals(A)
+mem_np = profile_numpy_eigvals(A_np)
 print(f"NumPy eigh memory usage: {mem_np:.2f} MB")
 
-mem_sp = profile_scipy_eigvals(A)
+mem_sp = profile_scipy_eigvals(A_np)
 print(f"SciPy eigh memory usage: {mem_sp:.2f} MB")
 
 os.makedirs("logs", exist_ok=True)
