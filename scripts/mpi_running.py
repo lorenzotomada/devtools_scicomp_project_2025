@@ -9,7 +9,9 @@ def parallel_eig(d, off_d, nprocs):
 
     print("inside parallel_eig")
     comm = MPI.COMM_SELF.Spawn(
-        sys.executable, args=["src/pyclassify/parallel_tridiag_eigen.py"], maxprocs=nprocs
+        sys.executable,
+        args=["src/pyclassify/parallel_tridiag_eigen.py"],
+        maxprocs=nprocs,
     )
     print("sending")
     comm.send(d, dest=0, tag=11)
