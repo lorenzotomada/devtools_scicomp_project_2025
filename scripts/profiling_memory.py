@@ -138,7 +138,6 @@ if plot:
     import numpy as np
 
     df = pd.read_csv("logs/memory_profile.csv")
-    df = df.groupby(["matrix_size", "n_processes"], as_index=False).mean()
 
     nproc_values = sorted(df["n_processes"].unique())
 
@@ -164,8 +163,8 @@ if plot:
         label="SciPy",
     )
 
-    for i, nproc in enumerate(nproc_values):
-        subset = df[df["n_processes"] == nproc]
+    for nproc in nproc_values:
+        subset = df[df["n_processes"] == nproc].sort_values("matrix_size")
         label = f"Divide and Conquer ({nproc} proc{'s' if nproc > 1 else ''})"
         plt.plot(
             subset["matrix_size"],

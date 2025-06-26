@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Ranges over which we iterate
-n_processes=(1 2)
-matrix_sizes=(5 10 20)
+n_processes=(1 2 4 8)
+matrix_sizes=(10 100 500 1000)
 
 last_dim="${matrix_sizes[-1]}"
 last_nproc="${n_processes[-1]}"
@@ -20,7 +20,7 @@ for dim in "${matrix_sizes[@]}"; do
     echo "------------------"
 
     sed -i "s/^dim: .*/dim: $dim/" $CONFIG_FILE
-    sed -i "s/^n_processes: .*/n_processes: $n_processes/" $CONFIG_FILE
+    sed -i "s/^n_processes: .*/n_processes: $n_p/" $CONFIG_FILE
     sed -i "s/^plot: .*/plot: false/" $CONFIG_FILE
     echo "Running with size=$dim and n_processes=$n_p"
 
