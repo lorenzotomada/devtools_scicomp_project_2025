@@ -30,16 +30,18 @@ def parallel_eig(diag, off_diag, nprocs):
     total_mem_children = comm.recv(source=0, tag=25)
     comm.Disconnect()
 
-    print('Data recieved!')
+    print("Data recieved!")
     return eigvals, eigvecs, delta_t, total_mem_children
 
 
 def compute_eigvals(A, n_procs):
-    print('Reducing using Lanczos')
+    print("Reducing using Lanczos")
     Q, diag, off_diag = Lanczos_PRO(A_np, np.ones_like(np.diag(A_np)) * 1.0)
 
-    print('Done. Now computing eigenvalues.')
-    eigvals, eigvecs, delta_t, total_mem_children = parallel_eig(diag, off_diag, n_procs)
+    print("Done. Now computing eigenvalues.")
+    eigvals, eigvecs, delta_t, total_mem_children = parallel_eig(
+        diag, off_diag, n_procs
+    )
 
     print("Eigenvalues computed")
     return eigvals, eigvecs, delta_t, total_mem_children
@@ -62,7 +64,7 @@ A_np = A.toarray()
 
 # Alternatively, consider for instance:
 # A = sp.random(dim, dim, density=density, format="csr") # uncomment if you want to use a random matrix instead
-# or 
+# or
 # eig = np.arange(1, dim + 1)
 # A = np.diag(eig)
 # U = scipy.stats.ortho_group.rvs(dim)
@@ -71,19 +73,19 @@ A_np = A.toarray()
 # A = make_symmetric(A)
 # A_sp = sp.csr_matrix(A)
 
-print('---------------\nCalling Lanczos a first time to compile it...')
+print("---------------\nCalling Lanczos a first time to compile it...")
 Q, diag, off_diag = Lanczos_PRO(A_np, np.ones_like(np.diag(A_np)) * 1.0)
-print('Done! Now we compute the eigenvalues.\n---------------')
+print("Done! Now we compute the eigenvalues.\n---------------")
 
 eigvals, eigvecs, delta_t, total_mem_children = compute_eigvals(A_np, n_procs)
 exact_eigvals, exact_eigvecs = np.linalg.eig(A.toarray())
-print('---------------')
+print("---------------")
 sorted_indices = np.argsort(exact_eigvals)
 exact_eigvals = exact_eigvals[sorted_indices]
 exact_eigvecs = exact_eigvecs[:, sorted_indices]
 
-max_error = np.max(np.abs(exact_eigvals-eigvals))
-print(f'The maximum error between real and computed eigenvalues is {max_error}')
+max_error = np.max(np.abs(exact_eigvals - eigvals))
+print(f"The maximum error between real and computed eigenvalues is {max_error}")
 
 if max_error < 1e-8:
-    print('Pretty small, huh?')
+    print("Pretty small, huh?")

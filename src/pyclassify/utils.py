@@ -5,6 +5,7 @@ import os
 import psutil
 import gc
 import yaml
+
 # import cProfile
 # from memory_profiler import memory_usage
 # import cupy as cp
@@ -130,10 +131,16 @@ def poisson_2d_structure(n, k=None):
     if k is None:
         k = max(1, int(n**0.5))  # simulate ±sqrt(n) diagonal positions
 
-    diagonals = [-1*np.ones(n-1), -1*np.ones(n-k), 4*np.ones(n), -1*np.ones(n-k), -1*np.ones(n-1)]
+    diagonals = [
+        -1 * np.ones(n - 1),
+        -1 * np.ones(n - k),
+        4 * np.ones(n),
+        -1 * np.ones(n - k),
+        -1 * np.ones(n - 1),
+    ]
     offsets = [-1, -k, 0, k, 1]
 
-    return sp.diags(diagonals, offsets, shape=(n, n), format='csr')
+    return sp.diags(diagonals, offsets, shape=(n, n), format="csr")
 
 
 def profile_numpy_eigvals(A):
@@ -195,7 +202,7 @@ def profile_scipy_eigvals(A):
 
 
 ######### OUTDATED FUNCTIONS: working but no longer used #########
-# 
+#
 # def profile_with_cprofile(log_file, dim, func_name, func, *args, **kwargs):
 #    """
 #    Function used to profile the code using cProfile.
@@ -273,39 +280,39 @@ def profile_scipy_eigvals(A):
 #    df.to_csv(log_file, index=False)
 #
 #    return result
-# 
-# 
-# 
+#
+#
+#
 # def get_memory_usage_mb():
 #     """
 #     Function to get the current process memory usage in MB.
 #     """
 #     return psutil.Process(os.getpid()).memory_info().rss / (1024**2)
-# 
-# 
+#
+#
 # def mpi_profiled(func):
 #     """
 #     Decorator to profile time and memory across MPI ranks.
 #     """
-# 
+#
 #     def wrapper(*args, **kwargs):
 #         comm = MPI.COMM_WORLD
 #         rank = comm.Get_rank()
-# 
+#
 #         mem_before = get_memory_usage_mb()
 #         start = time.time()
 #         result = func(*args, **kwargs)
 #         end = time.time()
 #         mem_after = get_memory_usage_mb()
-# 
+#
 #         delta_mem = mem_after - mem_before
 #         duration = end - start
-# 
+#
 #         # Now we gather all the info
 #         # We will be measuring the total memory used by all processes and the time spent by the process that took the longest to complete
 #         all_mem = comm.gather(delta_mem, root=0)
 #         all_time = comm.gather(duration, root=0)
-# 
+#
 #         if (
 #             rank == 0
 #         ):  # we only return if the rank is 0 (no need to return the same information multiple times)
@@ -317,10 +324,10 @@ def profile_scipy_eigvals(A):
 #             }
 #         else:
 #             return None
-# 
+#
 #     return wrapper
-# 
-# 
+#
+#
 # def profile_serial(func, *args, **kwargs):
 #     """
 #     Instead, this function is used to profile regular functions that do not use MPI internally.
