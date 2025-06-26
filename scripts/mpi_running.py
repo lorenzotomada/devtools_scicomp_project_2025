@@ -12,6 +12,7 @@ from pyclassify.eigenvalues import Lanczos_PRO
 seed = 8422
 np.random.seed(seed)
 
+
 def parallel_eig(diag, off_diag, nprocs):
     print("Spawning a communicator")
     comm = MPI.COMM_SELF.Spawn(sys.executable, args=["scripts/run.py"], maxprocs=nprocs)
