@@ -130,14 +130,9 @@ QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const dou
                     diag[0]=c*c*a_0+s*s*diag[1]-2*s*c*b_1;
                     diag[1]=c*c*diag[1]+s*s*a_0+2*s*c*b_1;
                     
-
                 }
-
             }
-
-      
         }
-
 
 
         unsigned j, k;
@@ -170,8 +165,7 @@ QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const dou
                 Q[k]=tmp*c-Q[k+n]*s;
                 Q[k+n]=tmp*s+Q[k+n]*c;
             }
-    
-            
+         
         }
 
         iter++;
@@ -181,9 +175,7 @@ QR_algorithm(std::vector<double>  diag, std::vector<double>  off_diag, const dou
         }
     }
 
-    if(iter==max_iter){
-        std::cout<<"Converges failed"<<std::endl;
-    }
+    if(iter==max_iter) { std::cout<<"The QR method did not converge."<<std::endl; }
 
     std::vector<std::vector<double>> eig_vec(n,std::vector<double> (n, 0));
     //std::cout<<"Iteration: "<<iter<<std::endl;
@@ -207,7 +199,6 @@ Eigen_value_calculator(std::vector<double> diag, std::vector<double> off_diag, c
     }
 
     const unsigned int n = diag.size();
-
 
 
 
@@ -331,6 +322,12 @@ Eigen_value_calculator(std::vector<double> diag, std::vector<double> off_diag, c
 }
 
 
+/* Now we implement all the functions that are needed to solve the secular equation following the ETH lecture notes in the references. 
+ * This procedure involves defining the secular function, creating a nonlinear solver and computing the zero for each interval.
+ * Notice that the outer zero is computed using bisection as a consequence of the fact that the procedure described in the notes only ensures
+ * conergence in the inner intervals. */
+
+
 double compute_sum(
     const std::vector<double>& v,
     const std::vector<double>& d,
@@ -352,6 +349,7 @@ double compute_sum(
     return rho * sum;
 }
 
+
 void compute_Psi(
     const unsigned int i,
     const std::vector<double>& v,
@@ -362,6 +360,7 @@ void compute_Psi(
     std::function<double(double)>& dPsi_1,
     std::function<double(double)>& dPsi_2
 ) {
+    /* Function to compute the psi_s that appear in the secular function. */
     Psi_1 = [&](double x) {
         return compute_sum(v, d, x, 0, i + 1, false, rho);
     };
@@ -376,6 +375,7 @@ void compute_Psi(
     };
 }
 
+
 std::pair<double, double> find_root(
     const unsigned int i,
     const bool left_center,
@@ -385,6 +385,8 @@ std::pair<double, double> find_root(
     double lam_0,
     const double tol = 1e-15,
     const unsigned int maxiter = 100) {
+    
+    /* Function to compute the inner root in the i-th interval */	
     std::vector<double> diag = d;
     double shift;
 
@@ -435,6 +437,7 @@ double bisection(
     double b,
     const double tol,
     const unsigned int max_iter) {
+
     unsigned int iter_count = 0;
 
     while ((b - a) / 2.0 > tol) {
@@ -462,16 +465,26 @@ double compute_outer_zero(
     const double rho,
     const double interval_end,
     const double tol = 1e-14,
-    const unsigned int max_iter = 1000){
+    const unsigned int max_iter = 100){
 
-    const double threshold = 1e-11;
+    // This function calls bisection on a sliding interval. The reason for that is to ensure that we are in the condition to be able to use bisection.
+
+    double threshold = 1e-11;
     double update = 0.0;
 
-    // Compute L2 norm of v
+    // Compute L2 norm of v and use it for the update
+    
     for (size_t i = 0; i < v.size(); ++i) {
         update += v[i] * v[i];
     }
-    update = std::sqrt(update);
+    // update = std::sqrt(update); // actually we use the square of the norm to avoid having to compute the square root
+    
+    // another possibility for the update is this one (which is cheaper, but might cause troubles if the elements of d are too close to each other):
+
+    //if (rho>=0)
+    //    update = d[d.size() - 1] - d[d.size() - 2]; // cheaper than computing the norm each time
+    //else
+    //	update = d[1] - d[0]
 
     auto f = [&](double x) -> double {
         double sum = 0.0;
@@ -487,13 +500,30 @@ double compute_outer_zero(
     if (rho > 0.0) {
         a = interval_end + threshold;
         b = interval_end + 1.0;
-        while (f(a) * f(b) > 0.0) {
-            a = b;
-            b += update;
+	
+        // Ensure that f(a) has the correct sign
+        while (f(a)>0){
+            // we are on the wrong side of the zero!
+            b = a;
+            threshold = threshold*0.5;
+            a = interval_end + threshold;
         }
+            
+        while (f(a) * f(b) > 0.0) {
+                a = b;
+                b += update;
+            }
+
     } else if (rho < 0.0) {
         b = interval_end - threshold;
         a = interval_end - 1.0;
+	
+	// also in this case, ensure we are on the correct side of the zero
+        while (f(b)>0){
+            a = b;
+            threshold = threshold*0.5;
+            b = interval_end - threshold;
+        }
         while (f(a) * f(b) > 0.0) {
             b = a;
             a -= update;
