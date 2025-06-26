@@ -307,19 +307,19 @@ This is done to ensure that the input matrix <cite>A</cite> is both:
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.check_symm_square">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">check_symm_square</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.check_symm_square" title="Link to this definition"></a></dt>
-<dd><p>Checks if the input matrix is a square symmetric matrix of type SciPy sparse matrix.
-This is done to ensure that the input matrix <cite>A</cite> is all of the following:
-1. A numpy array or a scipy sparse matrix.
-2. A square matrix.
-3. Symmetric.</p>
+<dd><p>Checks if the input matrix is a square symmetric matrix of type NumPy ndarray or SciPy sparse matrix. It uses check_square_matrix.</p>
+<p>This function performs the following steps:
+1. Verifies the input type is either <cite>np.ndarray</cite> or <cite>sp.spmatrix</cite>.
+2. Checks that the matrix is square.
+3. Validates that the matrix is symmetric.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>sp.spmatrix</em>) – The matrix to be checked.</p>
+<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The matrix to be validated.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input is not a NumPy array or SciPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If number of rows != number of columns or the matrix is not symmetric.</p></li>
+<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy sparse matrix.</p></li>
+<li><p><strong>ValueError</strong> – If the matrix is not square or not symmetric.</p></li>
 </ul>
 </dd>
 </dl>
@@ -328,12 +328,13 @@ This is done to ensure that the input matrix <cite>A</cite> is all of the follow
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.make_symmetric">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">make_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.make_symmetric" title="Link to this definition"></a></dt>
-<dd><p>Ensures the input matrix is symmetric by averaging it with its transpose.</p>
-<p>This function first checks if the matrix is square using the <cite>check_square_matrix</cite> function.
-Then, it makes the matrix symmetric by averaging it with its transpose.</p>
+<dd><p>Ensures that the input matrix is symmetric by averaging it with its transpose.</p>
+<p>This function performs the following steps:
+1. Checks if the matrix is a square matrix using <cite>check_square_matrix</cite>.
+2. Computes the symmetric version of the matrix using the formula: (A + A.T) / 2.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The input square matrix to be made symmetric.</p>
+<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em><em> or </em><em>sp.spmatrix</em>) – The input matrix to be symmetrized.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The symmetric version of the input matrix.</p>
@@ -343,8 +344,8 @@ Then, it makes the matrix symmetric by averaging it with its transpose.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the input matrix is not a NumPy array or SciPy sparse matrix.</p></li>
-<li><p><strong>ValueError</strong> – If the input matrix is not square.</p></li>
+<li><p><strong>TypeError</strong> – If the input is not a NumPy array or a SciPy sparse matrix.</p></li>
+<li><p><strong>ValueError</strong> – If the matrix is not square.</p></li>
 </ul>
 </dd>
 </dl>
@@ -353,28 +354,90 @@ Then, it makes the matrix symmetric by averaging it with its transpose.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.max_iteration_warning">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">max_iteration_warning</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.max_iteration_warning" title="Link to this definition"></a></dt>
-<dd><p>Function to warn the user that the maximum number of iteration has been reached,
-hence suggesting that the method did not converge.</p>
+<dd><p>Prints a warning message indicating that the maximum number of iterations has been reached.</p>
+<p>This function is used to alert the user that the iterative method likely did not converge,
+and suggests that a lower tolerance or alternative approach may be needed.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="pyclassify.utils.poisson_2d">
-<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">poisson_2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.poisson_2d" title="Link to this definition"></a></dt>
-<dd><p>Helper function to return an nxn scipy sparse matrix, in particular the one resulting from the discretization of the Laplacian on a 2D grid.</p>
+<dt class="sig sig-object py" id="pyclassify.utils.poisson_2d_structure">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">poisson_2d_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.poisson_2d_structure" title="Link to this definition"></a></dt>
+<dd><p>Constructs a sparse matrix of size n x n with the same 5-diagonal structure
+as the 2D Poisson matrix (main, ±1, ±k). Used for testing structure, not actual PDEs: in real
+life, this function would return a matrix of size $n^2$.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – Size of the square matrix.</p></li>
+<li><p><strong>k</strong> (<em>int</em><em> or </em><em>None</em>) – The offset for the “long-range” diagonals. If None, uses k = int(sqrt(n)).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A sparse matrix with 5 diagonals for testing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>scipy.sparse.spmatrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.utils.profile_numpy_eigvals">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">profile_numpy_eigvals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.profile_numpy_eigvals" title="Link to this definition"></a></dt>
+<dd><p>Profiles the memory usage of computing eigenvalues and eigenvectors using NumPy.</p>
+<p>This function performs the following steps:
+1. Measures memory before the eigendecomposition.
+2. Computes eigenvalues and eigenvectors using <cite>np.linalg.eigh</cite>.
+3. Measures memory after the computation.
+4. Returns the difference in memory usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em>) – A symmetric NumPy array.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Memory used in MB during the computation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.utils.profile_scipy_eigvals">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">profile_scipy_eigvals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.utils.profile_scipy_eigvals" title="Link to this definition"></a></dt>
+<dd><p>Profiles the memory usage of computing eigenvalues and eigenvectors using SciPy.</p>
+<p>This function performs the following steps:
+1. Measures memory before the eigendecomposition.
+2. Computes eigenvalues and eigenvectors using <cite>scipy.linalg.eigh</cite>.
+3. Measures memory after the computation.
+4. Returns the difference in memory usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>A</strong> (<em>np.ndarray</em>) – A symmetric NumPy array.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Memory used in MB during the computation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pyclassify.utils.read_config">
 <span class="sig-prename descclassname"><span class="pre">pyclassify.utils.</span></span><span class="sig-name descname"><span class="pre">read_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#pyclassify.utils.read_config" title="Link to this definition"></a></dt>
-<dd><p>Reads a YAML configuration file and returns its contents as a dictionary.</p>
-<p>This function constructs the absolute path to a YAML file (by appending the ‘.yaml’ extension
-to the provided base file name), opens the file, and parses its content using yaml.safe_load.</p>
+<dd><p>Reads a YAML configuration file and loads its contents into a dictionary.</p>
+<p>This function performs the following steps:
+1. Constructs the absolute path to the YAML file by appending ‘.yaml’ to the given base name.
+2. Opens and parses the file using <cite>yaml.safe_load</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>str</em>) – The base name of the YAML file (without the ‘.yaml’ extension).</p>
+<dd class="field-odd"><p><strong>file</strong> (<em>str</em>) – The base name of the YAML file (without extension).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A dictionary containing the configuration parameters loaded from the YAML file.</p>
+<dd class="field-even"><p>A dictionary containing the configuration parameters.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
@@ -530,7 +593,9 @@ Inputs:</p>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.check_symm_square"><code class="docutils literal notranslate"><span class="pre">check_symm_square()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.make_symmetric"><code class="docutils literal notranslate"><span class="pre">make_symmetric()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.max_iteration_warning"><code class="docutils literal notranslate"><span class="pre">max_iteration_warning()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.poisson_2d"><code class="docutils literal notranslate"><span class="pre">poisson_2d()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.poisson_2d_structure"><code class="docutils literal notranslate"><span class="pre">poisson_2d_structure()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.profile_numpy_eigvals"><code class="docutils literal notranslate"><span class="pre">profile_numpy_eigvals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.profile_scipy_eigvals"><code class="docutils literal notranslate"><span class="pre">profile_scipy_eigvals()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.utils.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 </ul>
 </li>
