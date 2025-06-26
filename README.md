@@ -2,9 +2,6 @@ Names: Gaspare Li Causi, Lorenzo Tomada
 
 email: glicausi@sissa.it, ltomada@sissa.it
 
-# TODO
-Running example in run.sh
-
 # Introduction
 This repository contains the final project for the course in Development Tools in Scientific Computing.
 
@@ -42,6 +39,10 @@ All the scripts in the `scripts` folder are either used for profiling or to prov
 
 # How to run
 We provide an example of running code in the `script` folder.
+Assuming that you are in the root folder of the project, it sufficies to use
+```bash
+python scripts/mpi_running.py
+```
 In the `shell` folder, we provide a `submit.sbatch` file to run using `SLURM`, as well as a `submit.sh` to run the same experiment locally.
 In particular, these two files perform memory profiling.
 
