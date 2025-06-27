@@ -200,3 +200,6 @@ skbuild/*
 # files from profiling
 *.lprof
 *Profiling*
+
+# SLURM logs
+*dtsc*

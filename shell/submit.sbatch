@@ -1,13 +1,12 @@
 #!/bin/bash
 
-#SBATCH --partition=gpu2
+#SBATCH --partition=regular1
 #SBATCH --job-name=dtsc
 #SBATCH --nodes=1
-#SBATCH --gpus=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --gpus-per-task=1
+#SBATCH --ntasks=4
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=10000
-#SBATCH --time=12:00:00
+#SBATCH --time=06:00:00
 #SBATCH --mail-user=ltomada@sissa.it
 #SBATCH --output=%x.o%j.%N
 #SBATCH --error=%x.e%j.%N
@@ -29,11 +28,12 @@ module load cmake/3.29.1
 module load intel/2021.2
 module load openmpi3/3.1.4
 
+conda init
 conda activate devtools_scicomp
 
 # Ranges over which we iterate
-n_processes=(1 2 4 8)
-matrix_sizes=(10 100 500 1000)
+n_processes=(1 2 4)
+matrix_sizes=(10 15 20)
 
 last_dim="${matrix_sizes[-1]}"
 last_nproc="${n_processes[-1]}"
