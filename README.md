@@ -2,6 +2,11 @@ Names: Gaspare Li Causi, Lorenzo Tomada
 
 email: glicausi@sissa.it, ltomada@sissa.it
 
+# TODO:
+- documentation in the script folder (explain what we are doing)
+- run using ulysses
+- find a way to import functions in memory profiling
+
 # Introduction
 This repository contains the final project for the course in Development Tools in Scientific Computing.
 
@@ -43,8 +48,14 @@ Assuming that you are in the root folder of the project, it sufficies to use
 ```bash
 python scripts/mpi_running.py
 ```
-In the `shell` folder, we provide a `submit.sbatch` file to run using `SLURM`, as well as a `submit.sh` to run the same experiment locally.
-In particular, these two files perform memory profiling.
+The previous command will run the script using as configuration file (containing, e.g., matrix size and number of processes) the file `experiments/config.yaml`.
+It is also possible to provide paths to other configuration files by passing the corresponding path through the `--config=path/to/file` command.
+
+Notice that the script is *not* called using `mpirun`, but internally it uses MPI.
+This is done by spawning a communicator inside the script.
+
+In addition, in the `shell` folder, we provide a `submit.sbatch` file to run using `SLURM`, as well as a `submit.sh` to run the same experiment locally.
+These two files perform memory profiling.
 
 # To install using Ulysses:
 ```bash
