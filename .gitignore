@@ -203,3 +203,6 @@ skbuild/*
 
 # SLURM logs
 *dtsc*
+
+# Backup files
+*.bak

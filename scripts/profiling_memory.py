@@ -47,7 +47,7 @@ else:
 kwargs = comm.bcast(kwargs, root=0)
 dim = kwargs["dim"]
 density = kwargs["density"]
-n_procs = kwargs["n_processes"]
+n_procs = size  # kwargs["n_processes"]
 plot = kwargs["plot"]
 
 # Now we build the matrix on rank 0
@@ -61,7 +61,7 @@ else:
 A_np = comm.bcast(A_np, root=0)
 
 
-# On rank 0, we use the Lanczos method
+# On rank 0, we use the Lanczos method.
 # We actually call it twice: the first time to ensure that the function is JIT-compiled by Numba, the second one for memory profiling
 if rank == 0:
     print("Precompiling Lanczos...")
@@ -80,6 +80,7 @@ if rank == 0:
 else:
     diag = off_diag = None
 
+# Now we broadcast diag and off_diag to all other ranks so we can use parallel_tridiag_eigen
 diag = comm.bcast(diag, root=0)
 off_diag = comm.bcast(off_diag, root=0)
 
@@ -97,19 +98,23 @@ delta_mem = mem_after - mem_before
 
 total_mem_children = comm.reduce(delta_mem, op=MPI.SUM, root=0)
 
+# Collect the information across all ranks
 if rank == 0:
+    print(f"########################## SIZE = {size} #####################")
     total_mem_all = delta_mem_lanczos
     print("Eigenvalues computed.")
     process = psutil.Process()
 
     print(f"Total memory across all processes: {total_mem_all:.2f} MB")
 
+    # We also profile numpy and scipy memory consumption
     mem_np = profile_numpy_eigvals(A_np)
     print(f"NumPy eig memory usage: {mem_np:.2f} MB")
 
     mem_sp = profile_scipy_eigvals(A_np)
     print(f"SciPy eig memory usage: {mem_sp:.2f} MB")
 
+    # Save to the logs folder
     os.makedirs("logs", exist_ok=True)
     log_file = "logs/memory_profile.csv"
     fieldnames = [
@@ -140,6 +145,8 @@ if rank == 0:
         )
 
     if plot:
+        # We only plot if all the runs have been done already. In this way, we get a complete memory usage graph.
+
         import matplotlib.pyplot as plt
         import pandas as pd
 
@@ -194,5 +201,5 @@ if rank == 0:
         )
         plt.subplots_adjust(right=0.75)
 
-        plt.savefig("logs/mem_vs_size_all_methods.png", bbox_inches="tight")
+        plt.savefig("logs/memory_profiling.png", bbox_inches="tight")
         plt.show()

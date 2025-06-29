@@ -2,11 +2,6 @@ Names: Gaspare Li Causi, Lorenzo Tomada
 
 email: glicausi@sissa.it, ltomada@sissa.it
 
-# TODO:
-- documentation in the script folder (explain what we are doing)
-- run using ulysses
-- find a way to import functions in memory profiling
-
 # Introduction
 This repository contains the final project for the course in Development Tools in Scientific Computing.
 
@@ -36,7 +31,7 @@ In order to solve an eigenvalue problem, we considered multiple strategies.
 1. The most trivial one was to implement the power method in order to be able to compute (at least) the biggest eigenvalue. We then used `numba` to try and optimize it, but in this case just-in-time compilation was not extremely beneficial.The implementation of the power method is contained in `eigenvalues.py`.
 2. Lanczos + QR: this is an approach (tailored to the case of symmetric matrices) to compute *all* the eigenvalues and eigenvectors. Notice that, also in the case of the QR method,`numba` was not very beneficial in terms of speed-up, resulting in a pretty slow methodology. For this reason, we implemented the QR method in `C++` and used `pybind11` to expose it to `Python`. All the code written in `C++` can be found in `cxx_utils.cpp`.
 3. `CuPy` implementation of all of the above: we implemented all the above methodologies using `CuPy` to see whether using GPU could speed up computations. Since this was not the case, we commented all the lines of code involving `CuPy`, so that installation of the package is no longer required and we can use our code also on machines that do not have GPU.
-4. The core of the project is the implementation (as well as a generalization of the simplified case in which $\rho=1$ considered in our reference) of the _divide et implera_ method for the computation of eigenvalues of a symmetric matrix. Some helpers were originally written in `Python` and then translated to `C++` for efficiency reasons: their original implementation is in `zero_finder.py` and is still present in the project for testing purposes. The translated version can be found in `cxx_utils.cpp`. Instead, the implementation of the actual method to compute the eigenvalues starting from a tridiagonal matrix is contained in `parallel_tridiag_eigen.py` and makes use of `mpi4py`.
+4. The core of the project is the implementation (as well as a generalization of the simplified case in which $\rho=1$ considered in our reference) of the _divide et implera_ method for the computation of eigenvalues of a symmetric matrix. Some helpers were originally written in `Python` and then translated to `C++` for efficiency reasons: their original implementation is in `zero_finder.py` and is still present in the project for testing purposes. The translated version can be found in `cxx_utils.cpp`. Instead, the implementation of the actual method to compute the eigenvalues starting from a tridiagonal matrix is contained in `parallel_tridiag_eigen.py` and makes use of `mpi4py`. Notice that the implementation of deflation in `cxx_utils.cpp` is done using the `Eigen` library.
 
 # Results
 The results of the profiling (runtime vs matrix size, memory consumption, scalability, and so on) are discussed in detail in `Documentation.ipynb`.
@@ -54,16 +49,34 @@ It is also possible to provide paths to other configuration files by passing the
 Notice that the script is *not* called using `mpirun`, but internally it uses MPI.
 This is done by spawning a communicator inside the script.
 
-In addition, in the `shell` folder, we provide a `submit.sbatch` file to run using `SLURM`, as well as a `submit.sh` to run the same experiment locally.
-These two files perform memory profiling.
+In addition, in the `shell` folder, we provide a `submit.sbatch` file to run using `SLURM`, as well as a `submit.sh`.
+They are used to perform memory profiling.
 
-# To install using Ulysses:
+The `submit.sbatch` file is supposed to be used on Ulysses (or any other cluster using `SLURM`).
+It is supposed to show how to send a job (in which our package is emplyed) using `SLURM`.
+Notice, however, that due to Ulysse's problems with `MPI` the profiling for  
+As a result, we also provide `submit.sh`, which is supposed to be run on a workstation.
+It executes `mpirun -np [n_procs] python scripts/profile_memory.py`, basically doing the same as the `submit.sbatch` script, but without using `SLURM`.
+Notice that it assumes that `shell/load_modules.sh` has already been executed (see the next section).
+
+We also remark that the script to perform memory profiling `scripts/profile_memory.py` does not spam an `MPI` communicator, but is supposed to be called using `mpirun`. The reason for that is to provide a more extensive list of examples of how our package can be used.
+
+Notice that it is possible that `scripts/mpi_running.py` will not run on systems using `SLURM` due to the fact that we are using a specific way to spawn an `MPI` communicator.
+Nevertheless, the package still works: as done in `scripts/profile_memory.py`: it sufficies to run a file that can be used in combination with `mpirun` or `srun`.
+
+# How to install:
+If you are using Ulysses or a SISSA workstation, it is likely that you will need to load a couple of modules to be able to install the package.
+The exact modules change according to the device you are currently using, but it is sufficient that you have `CMake`, `gcc` and `OpenMPI`.
+
+To streamline the installation process, we provide the script `shell/load_modules.sh`.
+This script loads the modules that are required on Ulysses/my workstation (according to the flag that is passed).
+To use it, run:
 ```bash
-source shell/load_modules.sh
+source shell/load_modules.sh Ulysses # or source shell/load_modules.sh workstation
 ```
-The previous line will load CMake and gcc. Both are needed to compile the project.
-In addition, it will enable the istallation of `mpi4py`.
-After that, you can just write
+The previous line will allow the istallation of `mpi4py` and the automatic compilation of the `C++` source file used in the project.
+
+Once the needed modules are loaded, you can regularly install via `pip` using the following command:
 ```bash
 python -m pip install .
 ```
