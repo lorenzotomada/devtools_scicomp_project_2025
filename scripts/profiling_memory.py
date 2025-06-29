@@ -100,7 +100,6 @@ total_mem_children = comm.reduce(delta_mem, op=MPI.SUM, root=0)
 
 # Collect the information across all ranks
 if rank == 0:
-    print(f"########################## SIZE = {size} #####################")
     total_mem_all = delta_mem_lanczos
     print("Eigenvalues computed.")
     process = psutil.Process()

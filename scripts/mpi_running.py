@@ -1,11 +1,12 @@
 from time import time
 import numpy as np
 import scipy
+import scipy.sparse as sp
 from mpi4py import MPI
 import sys
 import numpy as np
 import argparse
-from pyclassify.utils import read_config, poisson_2d_structure
+from pyclassify.utils import read_config, poisson_2d_structure, make_symmetric
 from pyclassify.eigenvalues import Lanczos_PRO
 
 
@@ -58,27 +59,26 @@ dim = kwargs["dim"]
 density = kwargs["density"]
 n_procs = kwargs["n_processes"]
 
-
-A = poisson_2d_structure(dim)
-A_np = A.toarray()
+# You could use (for low values of dim, else accuracy suffers):
+# A = poisson_2d_structure(dim)
+# A_np = A.toarray()
 
 # Alternatively, consider for instance:
-# A = sp.random(dim, dim, density=density, format="csr") # uncomment if you want to use a random matrix instead
-# or
-# eig = np.arange(1, dim + 1)
-# A = np.diag(eig)
-# U = scipy.stats.ortho_group.rvs(dim)
+eig = np.arange(1, dim + 1)
+A = np.diag(eig)
+U = scipy.stats.ortho_group.rvs(dim)
 
-# A = U @ A @ U.T
-# A = make_symmetric(A)
-# A_sp = sp.csr_matrix(A)
+A = U @ A @ U.T
+A = make_symmetric(A)
+A_np = A
 
 print("---------------\nCalling Lanczos a first time to compile it...")
 Q, diag, off_diag = Lanczos_PRO(A_np, np.ones_like(np.diag(A_np)) * 1.0)
 print("Done! Now we compute the eigenvalues.\n---------------")
 
 eigvals, eigvecs, delta_t, total_mem_children = compute_eigvals(A_np, n_procs)
-exact_eigvals, exact_eigvecs = np.linalg.eig(A.toarray())
+print("Now computing eigenvalues using np")
+exact_eigvals, exact_eigvecs = np.linalg.eig(A_np)
 print("---------------")
 sorted_indices = np.argsort(exact_eigvals)
 exact_eigvals = exact_eigvals[sorted_indices]
@@ -86,6 +86,7 @@ exact_eigvecs = exact_eigvecs[:, sorted_indices]
 
 max_error = np.max(np.abs(exact_eigvals - eigvals))
 print(f"The maximum error between real and computed eigenvalues is {max_error}")
+
 
 if max_error < 1e-8:
     print("Pretty small, huh?")
