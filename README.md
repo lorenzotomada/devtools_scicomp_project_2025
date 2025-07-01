@@ -12,7 +12,7 @@ This is done following an efficient strategy specialized for symmetric matrices,
 The implementation of the solver is done using `mpi4py`. Moreover, the package relies on a `C++` backend that is automatically compiled when running `python -m pip install .`.
 A more detailed discussion on dependencies and on how to install the package is provided at the end of the `README.md` file.
 ## Repo structure
-We implemented various GitHub workflows, which include unit testing, documentation generation and code formatting.
+We implemented various `GitHub` workflows, which include unit testing, documentation generation and code formatting.
 
 1. Unit tests are performed using `pytest`. They are run automatically after each push. There are three test files in the `test` folder, namely `test_eigensolvers.py` (using to test the implementation of the Lanczos method and the QR algorithm), `test_zero_finder.py` (used to ensure correctness of helper functions for the divide et impera algorithm), and `test_utils.py` (to test that some helper functions work as expected).
 2. All the code is commented in detail in terms of docstrings and comments corresponding to the most salient lines of code. The documentation is generated automatially using `sphinx` at each push and deployed to `GitHub` pages.
@@ -31,11 +31,16 @@ In order to solve an eigenvalue problem, we considered multiple strategies.
 1. The most trivial one was to implement the power method in order to be able to compute (at least) the biggest eigenvalue. We then used `numba` to try and optimize it, but in this case just-in-time compilation was not extremely beneficial.The implementation of the power method is contained in `eigenvalues.py`.
 2. Lanczos + QR: this is an approach (tailored to the case of symmetric matrices) to compute *all* the eigenvalues and eigenvectors. Notice that, also in the case of the QR method,`numba` was not very beneficial in terms of speed-up, resulting in a pretty slow methodology. For this reason, we implemented the QR method in `C++` and used `pybind11` to expose it to `Python`. All the code written in `C++` can be found in `cxx_utils.cpp`.
 3. `CuPy` implementation of all of the above: we implemented all the above methodologies using `CuPy` to see whether using GPU could speed up computations. Since this was not the case, we commented all the lines of code involving `CuPy`, so that installation of the package is no longer required and we can use our code also on machines that do not have GPU.
-4. The core of the project is the implementation (as well as a generalization of the simplified case in which $\rho=1$ considered in our reference) of the _divide et implera_ method for the computation of eigenvalues of a symmetric matrix. Some helpers were originally written in `Python` and then translated to `C++` for efficiency reasons: their original implementation is in `zero_finder.py` and is still present in the project for testing purposes. The translated version can be found in `cxx_utils.cpp`. Instead, the implementation of the actual method to compute the eigenvalues starting from a tridiagonal matrix is contained in `parallel_tridiag_eigen.py` and makes use of `mpi4py`. Notice that the implementation of deflation in `cxx_utils.cpp` is done using the `Eigen` library.
+4. The core of the project is the implementation (as well as a generalization of the simplified case in which $\rho=1$ considered in our reference) of the _divide et impera_ method for the computation of eigenvalues of a symmetric matrix. Some helpers were originally written in `Python` and then translated to `C++` for efficiency reasons: their original implementation is in `zero_finder.py` and is still present in the project for testing purposes. The translated version can be found in `cxx_utils.cpp`. Instead, the implementation of the actual method to compute the eigenvalues starting from a tridiagonal matrix is contained in `parallel_tridiag_eigen.py` and makes use of `mpi4py`. Notice that the implementation of deflation in `cxx_utils.cpp` is done using the `Eigen` library.
 
 # Results
 The results of the profiling (runtime vs matrix size, memory consumption, scalability, and so on) are discussed in detail in `Documentation.ipynb`.
 All the scripts in the `scripts` folder are either used for profiling or to provide running examples.
+
+## Important remark
+The method that we implemented was tested thoroughly at all stages of development using `pytest`.
+Nevertheless, the algorithm that we chose seems to lack robustness, meaning that there exist some matrices for which the results are not accurate (even though most of the times they are).
+We are convinced that this issue is related to stability issues, as is fairly common in numerical linear algebra.
 
 # How to run
 We provide an example of running code in the `script` folder.
@@ -58,6 +63,14 @@ Notice, however, that due to Ulysse's problems with `MPI` the profiling for
 As a result, we also provide `submit.sh`, which is supposed to be run on a workstation.
 It executes `mpirun -np [n_procs] python scripts/profile_memory.py`, basically doing the same as the `submit.sbatch` script, but without using `SLURM`.
 Notice that it assumes that `shell/load_modules.sh` has already been executed (see the next section).
+Examples:
+```bash
+sbatch shell/subsmit.sbatch
+```
+and
+```bash
+./shell/submit.sh
+```
 
 We also remark that the script to perform memory profiling `scripts/profile_memory.py` does not spam an `MPI` communicator, but is supposed to be called using `mpirun`. The reason for that is to provide a more extensive list of examples of how our package can be used.
 

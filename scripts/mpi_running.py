@@ -6,11 +6,11 @@ from mpi4py import MPI
 import sys
 import numpy as np
 import argparse
-from pyclassify.utils import read_config, poisson_2d_structure, make_symmetric
+from pyclassify.utils import read_config, make_symmetric
 from pyclassify.eigenvalues import Lanczos_PRO
 
 
-seed = 8422
+seed = 84
 np.random.seed(seed)
 
 
@@ -59,11 +59,6 @@ dim = kwargs["dim"]
 density = kwargs["density"]
 n_procs = kwargs["n_processes"]
 
-# You could use (for low values of dim, else accuracy suffers):
-# A = poisson_2d_structure(dim)
-# A_np = A.toarray()
-
-# Alternatively, consider for instance:
 eig = np.arange(1, dim + 1)
 A = np.diag(eig)
 U = scipy.stats.ortho_group.rvs(dim)

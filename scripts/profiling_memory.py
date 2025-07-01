@@ -4,7 +4,6 @@ from pyclassify.utils import (
     make_symmetric,
     profile_numpy_eigvals,
     profile_scipy_eigvals,
-    poisson_2d_structure,
 )
 from pyclassify.parallel_tridiag_eigen import parallel_tridiag_eigen
 
@@ -20,7 +19,7 @@ import sys
 from mpi4py import MPI
 
 
-seed = 8422
+seed = 84
 np.random.seed(seed)
 
 
@@ -53,8 +52,13 @@ plot = kwargs["plot"]
 # Now we build the matrix on rank 0
 # It is a scipy sparse matrix with the structure of a 2D Poisson problem matrix obtained using finite differences
 if rank == 0:
-    A = poisson_2d_structure(dim)
-    A_np = A.toarray()
+    eig = np.arange(1, dim + 1)
+    A = np.diag(eig)
+    U = scipy.stats.ortho_group.rvs(dim)
+
+    A = U @ A @ U.T
+    A = make_symmetric(A)
+    A_np = A
 else:
     A_np = None
 
