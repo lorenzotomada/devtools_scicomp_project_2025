@@ -29,7 +29,6 @@ def check_column_directions(A, B):
             B[:, i] = -B[:, i]
 
 
-
 def find_interval_extreme(total_dimension, n_processor):
     """
     Computes the intervals for vector for being scattered.
@@ -159,7 +158,6 @@ def parallel_tridiag_eigen(
     eigvecs_left = subcomm.bcast(eigvecs_left, root=0)
     eigvals_right = subcomm.bcast(eigvals_right, root=0)
     eigvecs_right = subcomm.bcast(eigvecs_right, root=0)
-
 
     if rank == 0:
 
@@ -348,7 +346,6 @@ def parallel_tridiag_eigen(
     # 2) Everyone exchanges counts via allgather:
     recvcounts = comm.allgather(local_count)
 
-
     final_eig_val = np.empty(D_size, dtype=eig_val.dtype)
 
     displs = np.append([0], np.cumulative_sum(recvcounts[:-1]).astype(int))
@@ -401,7 +398,6 @@ def parallel_eigen(
     )
     return eigvals, eigvecs
 
- 
 
 # ORIGINAL DEFLATION IMPLEMENTATION
 # @profile
