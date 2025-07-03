@@ -29,139 +29,6 @@ def check_column_directions(A, B):
             B[:, i] = -B[:, i]
 
 
-@profile
-def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
-    """
-    Applying the deflation step to the divide and conquer algorithm to reduce the size of
-    the system to be solved and find the trivial eigenvalues and eigenvectors.
-    Notice that we cannot use jit since we work with scipy sparse matrices.
-    Input:
-        -D: element on the diagonal.
-        -v: rank one update vector
-        -beta: scalar value that multiplies the rank one update
-
-    Output:
-        -deflated_eigvals: Vector containing the trivial eigenvalue
-        -deflated_eigvecs: Matrix containing the trivial eigenvectors
-        -D_keep: element on the diagonal after the deflation.
-        -v_keep: rank one update vector after the deflation
-        -P_3 @ P_2 @ P: Permutation matrix
-    """
-
-    norm_T = np.linalg.norm(
-        np.diag(D) + beta * np.outer(v, v)
-    )  # Normalize tolerance to matrix size
-    # abs_v=np.abs(v)
-    # norm_T=0.5*(np.max(np.abs(D)) + beta * np.max(abs_v)*np.sum(abs_v))
-    tol = tol_factor * norm_T
-    keep_indices = []
-    deflated_eigvals = np.zeros_like(D)
-    deflated_eigvecs = []
-    deflated_indices = []
-    reduced_dimension = len(D)
-
-    # Zero component deflation
-    e_vec = np.zeros(len(D))
-    j = 0
-    for i in range(len(D)):
-        if abs(v[i]) < tol:
-            deflated_eigvals[j] = D[i]
-            e_vec[i] = 1.0  # Standard basis vector
-            deflated_eigvecs.append(e_vec.copy())
-            deflated_indices.append(i)
-            e_vec[i] = 0.0
-            j += 1
-        else:
-            keep_indices.append(i)
-
-    new_order = keep_indices + deflated_indices
-    reduced_dimension = len(keep_indices)
-
-    # Create permutation matrix P (use sparse)
-    n = len(D)
-    P = sp.lil_array((n, n))  # Use sparse format
-    P_2 = sp.eye(n, format="csr")  # Efficient multiplication format
-    P_3 = sp.lil_array((n, n))  # Permutation matrix
-
-    for new_pos, old_pos in enumerate(new_order):
-        P[new_pos, old_pos] = 1  # Assign 1s to move elements accordingly
-
-    P = P.tocsr()  # Convert to CSR format for fast multiplication
-
-    D_keep = D[keep_indices]
-    v_keep = v[keep_indices]
-
-    to_check = set(
-        np.arange(reduced_dimension, dtype=np.int64)
-    )  # Use set for fast lookup
-    rotation_matrix = []
-    vec_idx_list = []  # Use list instead of np.append()
-
-    to_check_copy = list(to_check)  # Convert to list for iteration
-
-    for i in to_check_copy[:-1]:
-        if i not in to_check:
-            continue  # Skip if the index was removed
-
-        # Find duplicates in a vectorized way
-        idx_duplicate_vec = np.where(np.abs(D_keep[i + 1 :] - D_keep[i]) < tol)[0]
-        if len(idx_duplicate_vec):
-            idx_duplicate_vec += i + 1  # Adjust indices
-
-            for idx_duplicate in idx_duplicate_vec:
-                to_check.discard(idx_duplicate)  # O(1) removal instead of np.delete()
-
-                # Compute Givens rotation parameters
-                r = np.hypot(
-                    v_keep[i], v_keep[idx_duplicate]
-                )  # More stable than sqrt(x^2 + y^2)
-                c = v_keep[i] / r
-                s = -v_keep[idx_duplicate] / r
-
-                v_keep[i] = r
-                v_keep[idx_duplicate] = 0
-
-                # Store transformation
-                rotation_matrix.append((i, idx_duplicate, c, s))
-                deflated_eigvals[j] = D_keep[i]
-                j += 1
-
-                # Efficient eigenvector computation
-                eig_vec_local = np.zeros(n)
-                eig_vec_local[idx_duplicate] = c
-                eig_vec_local[i] = s
-                deflated_eigvecs.append(P.T @ eig_vec_local)
-
-                vec_idx_list.append(
-                    idx_duplicate
-                )  # Use list instead of slow np.append()
-
-    new_order = np.concatenate(
-        (list(to_check), vec_idx_list)
-    )  # Efficient concatenation
-    new_order = new_order.astype(int)
-    deflated_eigvals = deflated_eigvals[:j]
-
-    # Apply Givens rotations
-    for i, j, c, s in rotation_matrix:
-        G = sp.eye(n, n, format="csr")  # Sparse identity matrix
-        G[i, i] = G[j, j] = c
-        G[i, j] = -s
-        G[j, i] = s
-        P_2 = P_2 @ G  # Sparse multiplication
-
-    for new_pos, old_pos in enumerate(new_order):
-        P_3[new_pos, old_pos] = 1  # Assign 1s
-
-    P_3 = P_3.tocsr()
-
-    to_check = [i for i in to_check]
-    reduced_dimension = len(to_check)
-    D_keep = D_keep[to_check]
-    v_keep = v_keep[to_check]
-
-    return deflated_eigvals, np.array(deflated_eigvecs), D_keep, v_keep, P_3 @ P_2 @ P
-
 
 def find_interval_extreme(total_dimension, n_processor):
     """
@@ -293,12 +160,6 @@ def parallel_tridiag_eigen(
     eigvals_right = subcomm.bcast(eigvals_right, root=0)
     eigvecs_right = subcomm.bcast(eigvecs_right, root=0)
 
-    # if rank == 0:
-    #     eigvals_right = comm.recv(source=left_size, tag=77)
-    #     eigvecs_right = comm.recv(source=left_size, tag=78)
-    # elif rank == left_size:
-    #     comm.send(eigvals_right, dest=0, tag=77)
-    #     comm.send(eigvecs_right, dest=0, tag=78)
 
     if rank == 0:
 
@@ -312,10 +173,6 @@ def parallel_tridiag_eigen(
             D, v_vec, beta, tol_factor
         )
 
-        # Pdeflated_eigvals, Pdeflated_eigvecs, PD_keep, Pv_keep, PP = deflate_eigenpairs(
-        #     D, v_vec, beta, tol_factor
-        # )
-
         D_keep = np.array(D_keep)
 
         reduced_dim = len(D_keep)
@@ -324,9 +181,6 @@ def parallel_tridiag_eigen(
             idx = np.argsort(D_keep)
             idx_inv = np.arange(0, reduced_dim)
             idx_inv = idx_inv[idx]
-
-            # T= np.diag(D_keep) + beta * np.outer(v_keep, v_keep)
-            # lam , _ = np.linalg.eigh(T)
 
             lam, changing_position, delta = secular_solver_cxx(
                 beta, D_keep[idx], v_keep[idx], np.arange(reduced_dim)
@@ -492,14 +346,8 @@ def parallel_tridiag_eigen(
     local_count = eig_val.size  # or however many elements you’ll send
 
     # 2) Everyone exchanges counts via allgather:
-    #    this returns a Python list of length `size` on every rank
     recvcounts = comm.allgather(local_count)
 
-    # # 1) Gather all the counts to rank 0
-    # counts = comm.gather(local_count, root=0)
-
-    # # 2) Broadcast that list from rank 0 back to everyone
-    # recvcounts = comm.bcast(counts, root=0)
 
     final_eig_val = np.empty(D_size, dtype=eig_val.dtype)
 
@@ -527,15 +375,12 @@ def parallel_tridiag_eigen(
     )
 
     # 5) Reshape on every rank (or just on rank 0 if you prefer)
-    #    total_pairs == sum(recvcounts)
     final_eig_vecs = flat_all.reshape(D_size, D_size)
     final_eig_vecs = final_eig_vecs.T
     index_sort = np.argsort(final_eig_val)
     final_eig_vecs = final_eig_vecs[:, index_sort]
     final_eig_val = final_eig_val[index_sort]
-    # if rank==0:
-    #     print(final_eig_val)
-    #     print(final_eig_vecs)
+
     return final_eig_val, final_eig_vecs
 
 
@@ -556,7 +401,143 @@ def parallel_eigen(
     )
     return eigvals, eigvecs
 
+ 
 
+# ORIGINAL DEFLATION IMPLEMENTATION
+# @profile
+# def deflate_eigenpairs(D, v, beta, tol_factor=1e-12):
+#     """
+#     Applying the deflation step to the divide and conquer algorithm to reduce the size of
+#     the system to be solved and find the trivial eigenvalues and eigenvectors.
+#     Notice that we cannot use jit since we work with scipy sparse matrices.
+#     Input:
+#         -D: element on the diagonal.
+#         -v: rank one update vector
+#         -beta: scalar value that multiplies the rank one update
+
+#     Output:
+#         -deflated_eigvals: Vector containing the trivial eigenvalue
+#         -deflated_eigvecs: Matrix containing the trivial eigenvectors
+#         -D_keep: element on the diagonal after the deflation.
+#         -v_keep: rank one update vector after the deflation
+#         -P_3 @ P_2 @ P: Permutation matrix
+#     """
+
+#     norm_T = np.linalg.norm(
+#         np.diag(D) + beta * np.outer(v, v)
+#     )  # Normalize tolerance to matrix size
+#     # abs_v=np.abs(v)
+#     # norm_T=0.5*(np.max(np.abs(D)) + beta * np.max(abs_v)*np.sum(abs_v))
+#     tol = tol_factor * norm_T
+#     keep_indices = []
+#     deflated_eigvals = np.zeros_like(D)
+#     deflated_eigvecs = []
+#     deflated_indices = []
+#     reduced_dimension = len(D)
+
+#     # Zero component deflation
+#     e_vec = np.zeros(len(D))
+#     j = 0
+#     for i in range(len(D)):
+#         if abs(v[i]) < tol:
+#             deflated_eigvals[j] = D[i]
+#             e_vec[i] = 1.0  # Standard basis vector
+#             deflated_eigvecs.append(e_vec.copy())
+#             deflated_indices.append(i)
+#             e_vec[i] = 0.0
+#             j += 1
+#         else:
+#             keep_indices.append(i)
+
+#     new_order = keep_indices + deflated_indices
+#     reduced_dimension = len(keep_indices)
+
+#     # Create permutation matrix P (use sparse)
+#     n = len(D)
+#     P = sp.lil_array((n, n))  # Use sparse format
+#     P_2 = sp.eye(n, format="csr")  # Efficient multiplication format
+#     P_3 = sp.lil_array((n, n))  # Permutation matrix
+
+#     for new_pos, old_pos in enumerate(new_order):
+#         P[new_pos, old_pos] = 1  # Assign 1s to move elements accordingly
+
+#     P = P.tocsr()  # Convert to CSR format for fast multiplication
+
+#     D_keep = D[keep_indices]
+#     v_keep = v[keep_indices]
+
+#     to_check = set(
+#         np.arange(reduced_dimension, dtype=np.int64)
+#     )  # Use set for fast lookup
+#     rotation_matrix = []
+#     vec_idx_list = []  # Use list instead of np.append()
+
+#     to_check_copy = list(to_check)  # Convert to list for iteration
+
+#     for i in to_check_copy[:-1]:
+#         if i not in to_check:
+#             continue  # Skip if the index was removed
+
+#         # Find duplicates in a vectorized way
+#         idx_duplicate_vec = np.where(np.abs(D_keep[i + 1 :] - D_keep[i]) < tol)[0]
+#         if len(idx_duplicate_vec):
+#             idx_duplicate_vec += i + 1  # Adjust indices
+
+#             for idx_duplicate in idx_duplicate_vec:
+#                 to_check.discard(idx_duplicate)  # O(1) removal instead of np.delete()
+
+#                 # Compute Givens rotation parameters
+#                 r = np.hypot(
+#                     v_keep[i], v_keep[idx_duplicate]
+#                 )  # More stable than sqrt(x^2 + y^2)
+#                 c = v_keep[i] / r
+#                 s = -v_keep[idx_duplicate] / r
+
+#                 v_keep[i] = r
+#                 v_keep[idx_duplicate] = 0
+
+#                 # Store transformation
+#                 rotation_matrix.append((i, idx_duplicate, c, s))
+#                 deflated_eigvals[j] = D_keep[i]
+#                 j += 1
+
+#                 # Efficient eigenvector computation
+#                 eig_vec_local = np.zeros(n)
+#                 eig_vec_local[idx_duplicate] = c
+#                 eig_vec_local[i] = s
+#                 deflated_eigvecs.append(P.T @ eig_vec_local)
+
+#                 vec_idx_list.append(
+#                     idx_duplicate
+#                 )  # Use list instead of slow np.append()
+
+#     new_order = np.concatenate(
+#         (list(to_check), vec_idx_list)
+#     )  # Efficient concatenation
+#     new_order = new_order.astype(int)
+#     deflated_eigvals = deflated_eigvals[:j]
+
+#     # Apply Givens rotations
+#     for i, j, c, s in rotation_matrix:
+#         G = sp.eye(n, n, format="csr")  # Sparse identity matrix
+#         G[i, i] = G[j, j] = c
+#         G[i, j] = -s
+#         G[j, i] = s
+#         P_2 = P_2 @ G  # Sparse multiplication
+
+#     for new_pos, old_pos in enumerate(new_order):
+#         P_3[new_pos, old_pos] = 1  # Assign 1s
+
+#     P_3 = P_3.tocsr()
+
+#     to_check = [i for i in to_check]
+#     reduced_dimension = len(to_check)
+#     D_keep = D_keep[to_check]
+#     v_keep = v_keep[to_check]
+
+#     return deflated_eigvals, np.array(deflated_eigvecs), D_keep, v_keep, P_3 @ P_2 @ P
+
+# This portion of the script was used during the intense debugging phase.
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
