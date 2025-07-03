@@ -65,7 +65,7 @@ It executes `mpirun -np [n_procs] python scripts/profile_memory.py`, basically d
 Notice that it assumes that `shell/load_modules.sh` has already been executed (see the next section).
 Examples:
 ```bash
-sbatch shell/subsmit.sbatch
+sbatch shell/submit.sbatch
 ```
 and
 ```bash

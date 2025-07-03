@@ -277,6 +277,99 @@ class EigenSolver:
         self.Q = None
         self.tol_deflation = tol_deflation
 
+    def Lanczos_PRO(self, A=None, q=None, m=None, tol=np.sqrt(np.finfo(float).eps)):
+        r"""
+        Perform the Lanczos algorithm for symmetric matrices.
+
+        This function computes an orthogonal matrix Q and tridiagonal matrix T such that
+        .. math:: `A \approx Q T Q^T,`
+        where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+        of large symmetric matrices.
+
+        Args:
+            A (np.ndarray): A symmetric square matrix of size n x n.
+            q (np.ndarray, optional): Initial vector of size n. Default value is None (a random one is created).
+            m (int, optional): Number of eigenvalues to compute. Must be less than or equal to n.
+                    If None, defaults to the size of A.
+            tol (float, optional): Tolerance for orthogonality checks (default is sqrt(machine epsilon)).
+
+        Returns:
+            tuple: A tuple (Q, alpha, beta) where:
+                - Q (np.ndarray): Orthogonal matrix of size n x m.
+                - alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.
+                - beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.
+
+        Raises:
+            TypeError: If the input is not a NumPy array or SciPy/CuPy sparse matrix.
+            ValueError: If number of rows != number of columns or the matrix is not symmetric or it m is
+                        greater than the size of A.
+        """
+
+        if A is None:
+            A = self.A
+
+        if q is None:
+            q = np.random.rand(A.shape[0])
+            if q[0] == 0:
+                q[0] += 1
+
+        else:
+            check_square_matrix(A)
+
+        if m == None:
+            m = A.shape[0]
+
+        if m > A.shape[0]:
+            raise ValueError("The value of m cannot be greater than the size of A!")
+
+        q = q / np.linalg.norm(q)
+        Q = np.zeros((m, A.shape[0]))
+        Q[0] = q
+        r = A @ q
+        alpha = []
+        beta = []
+        alpha.append(q @ r)
+        r = r - alpha[0] * q
+        beta.append(np.linalg.norm(r))
+
+        for j in range(1, m):
+            q = r / beta[j - 1]
+            if np.any(np.abs(q @ Q[: j - 1].T) > tol):
+                partial = np.zeros((j, len(q)), dtype=np.float64)
+                for i in prange(j):
+                    h = 0.0
+                    # Compute the dot product: h = q dot Q[i]
+
+                    h = q @ Q[i]
+                    # Store the contribution: h * Q[i] into the ith row
+
+                    partial[i] = h * Q[i]
+
+                # Reduce the contributions (summing the partial projections)
+                q = q - np.sum(partial, axis=0)
+
+            q = q / np.linalg.norm(q)
+            Q[j] = q
+            r = A @ q - beta[j - 1] * Q[j - 1]
+            alpha.append(q @ r)
+            r = r - alpha[j] * q
+            beta.append(np.linalg.norm(r))
+
+            if np.abs(beta[j]) < 1e-15:
+                alpha = np.array(alpha)
+                beta = np.array(beta)
+                self.diag = alpha
+                self.off_diag = beta[:-1]
+                self.Q = Q
+                return Q, alpha, beta[:-1]
+
+        alpha = np.array(alpha)
+        beta = np.array(beta)
+        self.diag = alpha
+        self.off_diag = beta[:-1]
+        self.Q = np.array(Q)
+        return Q, alpha, beta[:-1]
+
     @property
     def initial_guess(self):
         q = np.random.rand(self.A.shape[0])
@@ -350,18 +443,8 @@ class EigenSolver:
         Q_triangular = np.array(Q_triangular)
         return np.array(eig), Q_triangular @ self.Q.T
 
-    # def parallel_tridiagMatrix_eig_solver(self, diag=None, off_diag=None):
-    #     if diag is None and off_diag is None:
-    #         if self.diag is None:
-    #             _, __, ___ = self.Lanczos_PRO(
-    #                 tol=self.tol
-    #             )  # this already sets self.diag = alpha, self.off_diag = beta
-    #         diag = self.diag
-    #         off_diag = self.off_diag
-    #     if len(diag) != (len(off_diag) + 1):
-    #         raise ValueError("Mismatch  between diagonal and off diagonal size")
 
-    #     return(parallel_eigen(self.diag, self.off_diag, self.tol_QR, self.max_iterQR, self.tol_deflation))
+
 
 
 # import cupy as cp
