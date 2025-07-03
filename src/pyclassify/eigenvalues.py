@@ -444,9 +444,6 @@ class EigenSolver:
         return np.array(eig), Q_triangular @ self.Q.T
 
 
-
-
-
 # import cupy as cp
 # import cupy.linalg as cpla
 # from cupyx.scipy.sparse.linalg import eigsh as eigsh_cp
