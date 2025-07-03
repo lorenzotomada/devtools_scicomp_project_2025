@@ -61,7 +61,7 @@ for dim in "${matrix_sizes[@]}"; do
       sed -i "s/^plot: .*/plot: true/" $CONFIG_FILE
     fi
 
-    srun --mpi=openmpi -n ${n_p} python scripts/profiling_memory.py
+    srun --mpi=openmpi -n ${n_p} python scripts/profiling_memory_and_time.py
   done
 done
 

@@ -5,6 +5,7 @@ import os
 import psutil
 import gc
 import yaml
+from time import time
 
 # import cProfile
 # from memory_profiler import memory_usage
@@ -162,14 +163,17 @@ def profile_numpy_eigvals(A):
     gc.collect()
     process = psutil.Process()
     mem_before = process.memory_info().rss / 1024 / 1024
+    time_begin = time()
 
     # NumPy symmetric eig solver
     eigvals, eigvecs = np.linalg.eigh(A)
 
+    time_end = time()
+    elapsed_time = time_end - time_begin
     gc.collect()
     mem_after = process.memory_info().rss / 1024 / 1024
     delta_mem = mem_after - mem_before
-    return delta_mem
+    return delta_mem, elapsed_time
 
 
 def profile_scipy_eigvals(A):
@@ -191,14 +195,16 @@ def profile_scipy_eigvals(A):
     gc.collect()
     process = psutil.Process()
     mem_before = process.memory_info().rss / 1024 / 1024
+    time_begin = time()
 
-    # SciPy symmetric eig solver
     eigvals, eigvecs = scipy.linalg.eigh(A)
 
+    time_end = time()
+    elapsed_time = time_end - time_begin
     gc.collect()
     mem_after = process.memory_info().rss / 1024 / 1024
     delta_mem = mem_after - mem_before
-    return delta_mem
+    return delta_mem, elapsed_time
 
 
 ######### OUTDATED FUNCTIONS: working but no longer used #########

@@ -2,7 +2,7 @@
 
 # Ranges over which we iterate
 n_processes=(1 2 4 8)
-matrix_sizes=(10 50 100 500 1000)
+matrix_sizes=(10 50 100 500 1000 1500)
 
 last_dim="${matrix_sizes[-1]}"
 last_nproc="${n_processes[-1]}"
@@ -30,7 +30,7 @@ for dim in "${matrix_sizes[@]}"; do
       sed -i "s/^plot: .*/plot: true/" $CONFIG_FILE
     fi
 
-    mpirun -np ${n_p} python scripts/profiling_memory.py
+    mpirun -np ${n_p} python scripts/profiling_memory_and_time.py
   done
 done
 
