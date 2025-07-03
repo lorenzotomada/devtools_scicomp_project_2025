@@ -51,6 +51,48 @@ Eigen_value_calculator (if the user is only interested in the computation of the
 or QR_algorithm, if eigenvectors are needed as well.</p>
 <p>We refer the interested reader to their implementation in C++ for further details.</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="pyclassify.EigenSolver.Lanczos_PRO">
+<span class="sig-name descname"><span class="pre">Lanczos_PRO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">np.float64(1.4901161193847656e-08)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.Lanczos_PRO" title="Link to this definition"></a></dt>
+<dd><p>Perform the Lanczos algorithm for symmetric matrices.</p>
+<p>This function computes an orthogonal matrix Q and tridiagonal matrix T such that
+.. math:: <cite>A approx Q T Q^T,</cite>
+where A is a symmetric matrix. The algorithm is useful for finding a few eigenvalues and eigenvectors
+of large symmetric matrices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>np.ndarray</em>) – A symmetric square matrix of size n x n.</p></li>
+<li><p><strong>q</strong> (<em>np.ndarray</em><em>, </em><em>optional</em>) – Initial vector of size n. Default value is None (a random one is created).</p></li>
+<li><p><strong>m</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of eigenvalues to compute. Must be less than or equal to n.
+If None, defaults to the size of A.</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for orthogonality checks (default is sqrt(machine epsilon)).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A tuple (Q, alpha, beta) where:</dt><dd><ul class="simple">
+<li><p>Q (np.ndarray): Orthogonal matrix of size n x m.</p></li>
+<li><p>alpha (np.ndarray): Vector of size m containing the diagonal elements of the tridiagonal matrix.</p></li>
+<li><p>beta (np.ndarray): Vector of size m-1 containing the off-diagonal elements of the tridiagonal matrix.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If the input is not a NumPy array or SciPy/CuPy sparse matrix.</p></li>
+<li><p><strong>ValueError</strong> – If number of rows != number of columns or the matrix is not symmetric or it m is
+    greater than the size of A.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pyclassify.EigenSolver.compute_eigenval">
 <span class="sig-name descname"><span class="pre">compute_eigenval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.EigenSolver.compute_eigenval" title="Link to this definition"></a></dt>
 <dd><p>Compute (only) the eigenvalues of a symmetric triangular matrix, passed as argument in the form of diagonal and
