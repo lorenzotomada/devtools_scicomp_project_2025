@@ -94,6 +94,8 @@ Once the needed modules are loaded, you can regularly install via `pip` using th
 python -m pip install .
 ```
 
+Notice that, under the hood, a couple of complex things are going on: the `C++` functions are compiled to a shared library using `pybind11` (automatically taking care of the dependence on `Eigen`), then the library is placed in the right folder and suitable paths are updated, so that the `Python` code is automatically able to import `C++` utils.
+
 ## Additional note
 There is the possibility that you may need to write the following command:
 ```bash

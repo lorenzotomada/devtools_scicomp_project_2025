@@ -32,7 +32,7 @@ conda init
 conda activate devtools_scicomp
 
 # Ranges over which we iterate
-n_processes=(1 2 4 8)
+n_processes=(2 4 8)
 matrix_sizes=(10 50 100 500 1000)
 
 last_dim="${matrix_sizes[-1]}"

@@ -20,7 +20,7 @@ from time import time
 from mpi4py import MPI
 
 
-seed = 84
+seed = 10
 np.random.seed(seed)
 
 
@@ -111,7 +111,8 @@ delta_mem = mem_after - mem_before
 delta_t_parallel = time_after_parallel - time_before_parallel
 
 total_mem_children = comm.reduce(delta_mem, op=MPI.SUM, root=0)
-total_time_children = comm.reduce(delta_t_parallel, op=MPI.SUM, root=0)
+# total_time_children = comm.reduce(delta_t_parallel, op=MPI.SUM, root=0) #only if we want the sum!
+total_time_children = delta_t_parallel
 
 # Collect the information across all ranks
 if rank == 0:

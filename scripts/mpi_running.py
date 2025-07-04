@@ -10,7 +10,7 @@ from pyclassify.utils import read_config, make_symmetric
 from pyclassify.eigenvalues import Lanczos_PRO
 
 
-seed = 84
+seed = 10
 np.random.seed(seed)
 
 
