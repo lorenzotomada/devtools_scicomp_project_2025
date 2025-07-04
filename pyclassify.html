@@ -591,6 +591,48 @@ Inputs:</p>
 </dd></dl>
 
 </section>
+<section id="submodule-parallel-tridiag-eigen">
+<h1>Submodule: parallel_tridiag_eigen<a class="headerlink" href="#submodule-parallel-tridiag-eigen" title="Link to this heading"></a></h1>
+<dl class="py function" id="module-pyclassify.parallel_tridiag_eigen">
+<dt class="sig sig-object py" id="pyclassify.parallel_tridiag_eigen.check_column_directions">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.parallel_tridiag_eigen.</span></span><span class="sig-name descname"><span class="pre">check_column_directions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.parallel_tridiag_eigen.check_column_directions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.parallel_tridiag_eigen.find_interval_extreme">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.parallel_tridiag_eigen.</span></span><span class="sig-name descname"><span class="pre">find_interval_extreme</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total_dimension</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_processor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.parallel_tridiag_eigen.find_interval_extreme" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Computes the intervals for vector for being scattered.</dt><dd><dl class="simple">
+<dt>Input:</dt><dd><p>-total_dimension: the dimension of the vector that has to be splitted
+-n_processor:     the number of processor to which the scatter vector has to be sent</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.parallel_tridiag_eigen.parallel_eigen">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.parallel_tridiag_eigen.</span></span><span class="sig-name descname"><span class="pre">parallel_eigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off_diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_QR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterQR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_deflation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-15</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.parallel_tridiag_eigen.parallel_eigen" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyclassify.parallel_tridiag_eigen.parallel_tridiag_eigen">
+<span class="sig-prename descclassname"><span class="pre">pyclassify.parallel_tridiag_eigen.</span></span><span class="sig-name descname"><span class="pre">parallel_tridiag_eigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">off</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profiler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_QR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterQR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyclassify.parallel_tridiag_eigen.parallel_tridiag_eigen" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>Computes eigenvalues and eigenvectors of a symmetric tridiagonal matrix.</dt><dd><p>Input:
+-diag: diagonal part of the tridiagonal matrix
+-off: off diagonal part of the tridiagonal matrix
+-comm: MPI communicator
+-tol_factor: tollerance for the deflating step</p>
+<p>Output:
+-final_eigvals: return the eigenvalues of the tridiagonal matrix
+-final_eigvecs: return the eigenvectors of the tridiagonal matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 
 
           </div>
@@ -647,6 +689,13 @@ Inputs:</p>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.compute_outer_zero"><code class="docutils literal notranslate"><span class="pre">compute_outer_zero()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.find_root"><code class="docutils literal notranslate"><span class="pre">find_root()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pyclassify.zero_finder.secular_solver_python"><code class="docutils literal notranslate"><span class="pre">secular_solver_python()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#submodule-parallel-tridiag-eigen">Submodule: parallel_tridiag_eigen</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.parallel_tridiag_eigen.check_column_directions"><code class="docutils literal notranslate"><span class="pre">check_column_directions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.parallel_tridiag_eigen.find_interval_extreme"><code class="docutils literal notranslate"><span class="pre">find_interval_extreme()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.parallel_tridiag_eigen.parallel_eigen"><code class="docutils literal notranslate"><span class="pre">parallel_eigen()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyclassify.parallel_tridiag_eigen.parallel_tridiag_eigen"><code class="docutils literal notranslate"><span class="pre">parallel_tridiag_eigen()</span></code></a></li>
 </ul>
 </li>
 </ul>

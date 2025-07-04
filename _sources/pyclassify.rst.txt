@@ -27,3 +27,10 @@ Submodule: helpers_secular
    :undoc-members:
    :show-inheritance:
 
+Submodule: parallel_tridiag_eigen
+================
+
+.. automodule:: pyclassify.parallel_tridiag_eigen
+   :members:
+   :undoc-members:
+   :show-inheritance:
