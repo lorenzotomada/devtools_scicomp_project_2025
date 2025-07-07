@@ -10,8 +10,8 @@ from pyclassify.utils import read_config, make_symmetric
 from pyclassify.eigenvalues import Lanczos_PRO
 
 
-seed = 10
-np.random.seed(seed)
+seed = 100
+# np.random.seed(seed)
 
 
 def parallel_eig(diag, off_diag, nprocs):
@@ -85,3 +85,7 @@ print(f"The maximum error between real and computed eigenvalues is {max_error}")
 
 if max_error < 1e-8:
     print("Pretty small, huh?")
+else:
+    print(
+        "Please notice that no seed has been set, so it might be that this was an unlucky case. Please try again"
+    )

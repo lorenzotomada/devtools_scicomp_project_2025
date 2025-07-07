@@ -20,7 +20,7 @@ from time import time
 from mpi4py import MPI
 
 
-seed = 10
+seed = 1000
 np.random.seed(seed)
 
 
@@ -85,7 +85,7 @@ if rank == 0:
     gc.collect()
     mem_after_lanczos = proc.memory_info().rss / 1024 / 1024  # MB
     delta_mem_lanczos = mem_after_lanczos - mem_before_lanczos
-    delta_t_lanzos = end_lanczos - begin_lanczos
+    delta_t_lanczos = end_lanczos - begin_lanczos
 
     print("Done. Now computing eigenvalues...")
 else:
@@ -116,13 +116,15 @@ total_time_children = delta_t_parallel
 
 # Collect the information across all ranks
 if rank == 0:
-    total_mem_all = delta_mem_lanczos
-    total_time_all = delta_t_lanzos + total_time_children
+    total_mem_all = delta_mem_lanczos + total_mem_children
+    total_time_all = delta_t_lanczos + total_time_children
     print("Eigenvalues computed.")
     process = psutil.Process()
 
     print(f"[D&I] Total memory across all processes: {total_mem_all:.4f} MB")
-    print(f"[D&I] Total time: across all processes: {total_time_all:.4f} s")
+    print(
+        f"[D&I] Total time (rank 0, which also performs Lanczos): {total_time_all:.4f} s"
+    )
     # We also profile numpy and scipy memory consumption
     mem_np, time_np = profile_numpy_eigvals(A_np)
     print(f"[NumPy] eig memory usage: {mem_np:.4f} MB")
@@ -164,7 +166,7 @@ if rank == 0:
                 "mem_total_mb": round(total_mem_all, 2),
                 "mem_numpy_mb": round(mem_np, 2),
                 "mem_scipy_mb": round(mem_sp, 2),
-                "time_lanczos": round(delta_t_lanzos, 2),
+                "time_lanczos": round(delta_t_lanczos, 2),
                 "time_tridiag": round(total_time_children, 2),
                 "time_total": round(total_time_all, 2),
                 "time_numpy": round(time_np, 2),
