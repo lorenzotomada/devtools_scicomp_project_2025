@@ -19,7 +19,8 @@ import sys
 from time import time
 from mpi4py import MPI
 
-from line_profiler import  LineProfiler
+from line_profiler import LineProfiler
+
 profile = LineProfiler()
 profile.add_function(parallel_tridiag_eigen)
 
