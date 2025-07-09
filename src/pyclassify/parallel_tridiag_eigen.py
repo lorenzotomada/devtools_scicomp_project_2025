@@ -49,7 +49,7 @@ def find_interval_extreme(total_dimension, n_processor):
     return counts, displs
 
 
-@profile
+#@profile
 def parallel_tridiag_eigen(
     diag,
     off,

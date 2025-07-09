@@ -19,6 +19,10 @@ import sys
 from time import time
 from mpi4py import MPI
 
+from line_profiler import  LineProfiler
+profile = LineProfiler()
+profile.add_function(parallel_tridiag_eigen)
+
 
 seed = 1000
 np.random.seed(seed)
@@ -99,11 +103,14 @@ gc.collect()
 proc = psutil.Process()
 mem_before = proc.memory_info().rss / 1024 / 1024  # MB
 time_before_parallel = time()
-
+profile.enable()
 eigvals, eigvecs = parallel_tridiag_eigen(
     diag, off_diag, comm=comm, min_size=1, tol_factor=1e-10
 )
-
+profile.disable()
+profile_filename = f"Profiling_files/profile_rank{comm.Get_rank()}.lprof"
+with open(profile_filename, "w") as f:
+    profile.print_stats(stream=f)
 time_after_parallel = time()
 gc.collect()
 mem_after = proc.memory_info().rss / 1024 / 1024
