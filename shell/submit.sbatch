@@ -40,8 +40,10 @@ last_nproc="${n_processes[-1]}"
 
 CONFIG_FILE="experiments/config.yaml"
 
-#rm -rf logs
-echo "IMPORTANT: please remember to delete the logs folder before calling this script."
+mkdir -p logs
+rm logs/*
+mkdir -p Profiling_files
+rm Profiling_files/*
 
 # Backup the original config
 cp $CONFIG_FILE ${CONFIG_FILE}.bak
