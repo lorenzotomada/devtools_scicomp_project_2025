@@ -23,7 +23,7 @@ from line_profiler import LineProfiler
 
 profile = LineProfiler()
 profile.add_function(parallel_tridiag_eigen)
-os.makedirs("Profiling_files", exist_ok=True) # to save the outputs of profiling
+os.makedirs("Profiling_files", exist_ok=True)  # to save the outputs of profiling
 
 seed = 1000
 np.random.seed(seed)
@@ -91,7 +91,7 @@ if rank == 0:
     mem_after_lanczos = proc.memory_info().rss / 1024 / 1024  # MB
     delta_mem_lanczos = mem_after_lanczos - mem_before_lanczos
     delta_t_lanczos = end_lanczos - begin_lanczos
-    print(f'delta_t_lanczos: {delta_t_lanczos:.4f} s')
+    print(f"delta_t_lanczos: {delta_t_lanczos:.4f} s")
 
     print("Done. Now computing eigenvalues...")
 else:
